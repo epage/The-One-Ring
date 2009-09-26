@@ -101,7 +101,6 @@ def build_package(distribution):
 		"fremantle": "64x64-theonering.png", # Fremantle natively uses 48x48
 		"mer": "64x64-theonering.png",
 	}[distribution]
-	p["/usr/bin"] = [ "theonering.py" ]
 	for relPath, files in unflatten_files(find_files(".")).iteritems():
 		fullPath = "/usr/lib/theonering"
 		if relPath:
@@ -110,7 +109,7 @@ def build_package(distribution):
 			"|".join((oldName, newName))
 			for (oldName, newName) in files
 		)
-	p["/usr/share/dbus-1/services"] = ["org.freedesktop.Telepathy.ConnectionManagers.theonering.service.in"]
+	p["/usr/share/dbus-1/services"] = ["org.freedesktop.Telepathy.ConnectionManager.theonering.service.in"]
 	p["/usr/share/telepathy/managers"] = ["theonering.manager"]
 	p["/usr/share/icons/hicolor/26x26/hildon"] = ["26x26-theonering.png|theonering.png"]
 	p["/usr/share/icons/hicolor/64x64/hildon"] = ["64x64-theonering.png|theonering.png"]
