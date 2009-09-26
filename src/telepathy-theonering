@@ -31,7 +31,7 @@ import telepathy.utils as telepathy_utils
 import util.linux as linux_utils
 import util.go_utils as gobject_utils
 import constants
-from butterfly import ButterflyConnectionManager
+import connection_manager
 
 
 IDLE_TIMEOUT = 5000
@@ -60,7 +60,7 @@ def run_theonering():
 	signal.signal(signal.SIGTERM, quit)
 
 	try:
-		manager = ButterflyConnectionManager(shutdown_func=shutdown_callback)
+		manager = connection_manager.TheOneRingConnectionManager(shutdown_func=shutdown_callback)
 	except dbus.exceptions.NameExistsException:
 		logging.warning('Failed to acquire bus name, connection manager already running?')
 		sys.exit(1)

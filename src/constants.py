@@ -1,9 +1,9 @@
 import os
 
-__pretty_app_name__ = "DialCentral"
-__app_name__ = "dialcentral"
-__version__ = "1.0.6"
-__build__ = 10
+__pretty_app_name__ = "Telepathy-TheOneRing"
+__app_name__ = "telepathy-theonering"
+__version__ = "0.1.0"
+__build__ = 0
 __app_magic__ = 0xdeadbeef
-_data_path_ = os.path.join(os.path.expanduser("~"), ".dialcentral")
+_data_path_ = os.path.join(os.path.expanduser("~"), ".telepathy-theonering")
 _user_settings_ = "%s/settings.ini" % _data_path_
