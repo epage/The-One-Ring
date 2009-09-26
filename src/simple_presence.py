@@ -13,7 +13,7 @@ class TheOneRingPresence(object):
 	}
 
 
-class ButterflySimplePresence(telepathy.server.ConnectionInterfaceSimplePresence):
+class TheOneRingSimplePresence(telepathy.server.ConnectionInterfaceSimplePresence):
 
 	def __init__(self):
 		telepathy.server.ConnectionInterfaceSimplePresence.__init__(self)

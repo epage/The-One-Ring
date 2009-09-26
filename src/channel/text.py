@@ -6,7 +6,7 @@ import telepathy
 import handle
 
 
-class ButterflyTextChannel(
+class TheOneRingChannelText(
 		telepathy.server.ChannelTypeText,
 		telepathy.server.ChannelInterfaceGroup,
 		telepathy.server.ChannelInterfaceChatState

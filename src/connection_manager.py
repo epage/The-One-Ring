@@ -3,52 +3,51 @@ import logging
 import gobject
 import telepathy
 
+import constants
 import connection
 
 
 class TheOneRingConnectionManager(telepathy.server.ConnectionManager):
 
 	def __init__(self, shutdown_func=None):
-		telepathy.server.ConnectionManager.__init__(self, 'theonering')
+		telepathy.server.ConnectionManager.__init__(self, constants._telepathy_implementation_name_)
 
-		self._protos['gvoice'] = connection.TheOneRingConnection
+		self._protos[constants._telepathy_protocol_name_] = connection.TheOneRingConnection
 		self._on_shutdown = shutdown_func
 		logging.info("Connection manager created")
 
 	def GetParameters(self, proto):
 		"""
-		org.freedesktop.telepathy.ConnectionManager
-
 		@returns the mandatory and optional parameters for creating a connection
 		"""
 		if proto not in self._protos:
 			raise telepathy.NotImplemented('unknown protocol %s' % proto)
 
 		result = []
-		connection_class = self._protos[proto]
-		mandatory_parameters = connection_class._mandatory_parameters
-		optional_parameters = connection_class._optional_parameters
-		default_parameters = connection_class._parameter_defaults
+		ConnectionClass = self._protos[proto]
+		mandatoryParameters = ConnectionClass.MANDATORY_PARAMETERS
+		optionalParameters = ConnectionClass.OPTIONAL_PARAMETERS
+		defaultParameters = ConnectionClass.PARAMETER_DEFAULTS
 
-		for parameter_name, parameter_type in mandatory_parameters.iteritems():
+		for parameterName, parameterType in mandatoryParameters.iteritems():
 			param = (
-				parameter_name,
+				parameterName,
 				telepathy.CONN_MGR_PARAM_FLAG_REQUIRED,
-				parameter_type,
+				parameterType,
 				'',
 			)
 			result.append(param)
 
-		for parameter_name, parameter_type in optional_parameters.iteritems():
-			if parameter_name in default_parameters:
+		for parameterName, parameterType in optionalParameters.iteritems():
+			if parameterName in defaultParameters:
 				param = (
-					parameter_name,
+					parameterName,
 					telepathy.CONN_MGR_PARAM_FLAG_HAS_DEFAULT,
-					parameter_name,
-					default_parameters[parameter_name],
+					parameterName,
+					defaultParameters[parameterName],
 				)
 			else:
-				param = (parameter_name, 0, parameter_name, '')
+				param = (parameterName, 0, parameterName, '')
 			result.append(param)
 
 		return result

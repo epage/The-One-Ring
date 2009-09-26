@@ -45,13 +45,13 @@ def run_theonering():
 		manager.quit()
 		mainloop.quit()
 
+	def timeout_cb():
+		if len(manager._connections) == 0:
+			logging.info('No connection received - quitting')
+			quit()
+		return False
 
-	if 'BUTTERFLY_PERSIST' not in os.environ:
-		def timeout_cb():
-			if len(manager._connections) == 0:
-				logging.info('No connection received - quitting')
-				quit()
-			return False
+	if 'THEONERING_PERSIST' not in os.environ:
 		gobject.timeout_add(IDLE_TIMEOUT, timeout_cb)
 		shutdown_callback = quit
 	else:
@@ -75,6 +75,6 @@ def run_theonering():
 
 
 if __name__ == '__main__':
-	telepathy_utils.debug_divert_messages(os.getenv('BUTTERFLY_LOGFILE'))
+	telepathy_utils.debug_divert_messages(os.getenv('THEONERING_LOGFILE'))
 	logging.basicConfig(level=logging.DEBUG)
 	run_theonering()

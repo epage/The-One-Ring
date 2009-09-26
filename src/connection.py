@@ -11,9 +11,13 @@ import channel_manager
 
 class TheOneRingConnection(telepathy.server.Connection):
 
-	_mandatory_parameters = {
+	MANDATORY_PARAMETERS = {
 		'account' : 's',
 		'password' : 's'
+	}
+	OPTIONAL_PARAMETERS = {
+	}
+	PARAMETER_DEFAULTS = {
 	}
 
 	def __init__(self, manager, parameters):
@@ -21,7 +25,12 @@ class TheOneRingConnection(telepathy.server.Connection):
 			self.check_parameters(parameters)
 			account = unicode(parameters['account'])
 
-			telepathy.server.Connection.__init__(self, 'gvoice', account, 'theonering')
+			telepathy.server.Connection.__init__(
+				self,
+				constants._telepathy_protocol_name_,
+				account,
+				constants._telepathy_implementation_name_
+			)
 
 			self._manager = weakref.proxy(manager)
 			self._credentials = (
@@ -36,8 +45,6 @@ class TheOneRingConnection(telepathy.server.Connection):
 			self.set_self_handle(handle.create_handle(self, 'self'))
 
 			self.__disconnect_reason = telepathy.CONNECTION_STATUS_REASON_NONE_SPECIFIED
-			self._initial_presence = None
-			self._initial_personal_message = None
 
 			logging.info("Connection to the account %s created" % account)
 		except Exception, e:
@@ -66,7 +73,10 @@ class TheOneRingConnection(telepathy.server.Connection):
 		"""
 		logging.info("Connecting")
 		self.__disconnect_reason = telepathy.CONNECTION_STATUS_REASON_NONE_SPECIFIED
-		self._backend.login(*self._credentials)
+		try:
+			self._backend.login(*self._credentials)
+		except RuntimeError:
+			self.__disconnect_reason = telepathy.CONNECTION_STATUS_REASON_AUTHENTICATION_FAILED
 
 	def Disconnect(self):
 		"""
