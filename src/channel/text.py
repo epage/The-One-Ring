@@ -3,13 +3,9 @@ import weakref
 
 import telepathy
 
-import handle
-
 
 class TheOneRingChannelText(
 		telepathy.server.ChannelTypeText,
-		telepathy.server.ChannelInterfaceGroup,
-		telepathy.server.ChannelInterfaceChatState
 	):
 
 	def __init__(self, connection, conversation):
@@ -23,12 +19,6 @@ class TheOneRingChannelText(
 
 		self.GroupFlagsChanged(telepathy.CHANNEL_GROUP_FLAG_CAN_ADD, 0)
 		self.__add_initial_participants()
-
-	def SetChatState(self, state):
-		if state == telepathy.CHANNEL_CHAT_STATE_COMPOSING:
-			self._conversation.send_typing_notification()
-		h = handle.create_handle(self._conn_ref(), 'connection')
-		self.ChatStateChanged(h, state)
 
 	def Send(self, messageType, text):
 		if messageType == telepathy.CHANNEL_TEXT_MESSAGE_TYPE_NORMAL:
