@@ -70,20 +70,26 @@ class TheOneRingConnection(telepathy.server.Connection, simple_presence.SimplePr
 		"""
 		For org.freedesktop.telepathy.Connection
 		"""
+		self.StatusChanged(
+			telepathy.CONNECTION_STATUS_CONNECTING,
+			telepathy.CONNECTION_STATUS_REASON_REQUESTED
+		)
 		try:
-			self.StatusChanged(
-				telepathy.CONNECTION_STATUS_CONNECTING,
-				telepathy.CONNECTION_STATUS_REASON_REQUESTED
-			)
 			self._backend.login(*self._credentials)
+		except gv_backend.NetworkError:
 			self.StatusChanged(
-				telepathy.CONNECTION_STATUS_CONNECTED,
-				telepathy.CONNECTION_STATUS_REASON_REQUESTED
+				telepathy.CONNECTION_STATUS_DISCONNECTED,
+				telepathy.CONNECTION_STATUS_REASON_NETWORK_ERROR
 			)
 		except Exception:
 			self.StatusChanged(
 				telepathy.CONNECTION_STATUS_DISCONNECTED,
 				telepathy.CONNECTION_STATUS_REASON_AUTHENTICATION_FAILED
+			)
+		else:
+			self.StatusChanged(
+				telepathy.CONNECTION_STATUS_CONNECTED,
+				telepathy.CONNECTION_STATUS_REASON_REQUESTED
 			)
 
 	def Disconnect(self):
@@ -95,6 +101,10 @@ class TheOneRingConnection(telepathy.server.Connection, simple_presence.SimplePr
 			logging.info("Disconnected")
 		except Exception:
 			logging.exception("Disconnecting Failed")
+		self.StatusChanged(
+			telepathy.CONNECTION_STATUS_DISCONNECTED,
+			telepathy.CONNECTION_STATUS_REASON_REQUESTED
+		)
 
 	def RequestChannel(self, type, handleType, handleId, suppressHandler):
 		"""

@@ -97,6 +97,10 @@ def itergroup(iterator, count, padValue = None):
 	return itertools.izip(*nIterators)
 
 
+class NetworkError(RuntimeError):
+	pass
+
+
 class GVDialer(object):
 	"""
 	This class encapsulates all of the knowledge necessary to interact with the GoogleVoice servers
@@ -163,7 +167,7 @@ class GVDialer(object):
 			loginSuccessOrFailurePage = self._browser.download(self._loginURL, loginPostData)
 		except urllib2.URLError, e:
 			logging.exception(str(e))
-			raise RuntimeError("%s is not accesible" % self._loginURL)
+			raise NetworkError("%s is not accesible" % self._loginURL)
 
 		return self.is_authed()
 
@@ -194,7 +198,7 @@ class GVDialer(object):
 			callSuccessPage = self._browser.download(self._clicktocallURL, clickToCallData, None, otherData)
 		except urllib2.URLError, e:
 			logging.exception(str(e))
-			raise RuntimeError("%s is not accesible" % self._clicktocallURL)
+			raise NetworkError("%s is not accesible" % self._clicktocallURL)
 
 		if self._gvDialingStrRe.search(callSuccessPage) is None:
 			raise RuntimeError("Google Voice returned an error")
@@ -219,7 +223,7 @@ class GVDialer(object):
 			smsSuccessPage = self._browser.download(self._sendSmsURL, smsData, None, otherData)
 		except urllib2.URLError, e:
 			logging.exception(str(e))
-			raise RuntimeError("%s is not accesible" % self._sendSmsURL)
+			raise NetworkError("%s is not accesible" % self._sendSmsURL)
 
 		return True
 
@@ -340,7 +344,7 @@ class GVDialer(object):
 					contactsPage = self._browser.download(contactsPageUrl)
 				except urllib2.URLError, e:
 					logging.exception(str(e))
-					raise RuntimeError("%s is not accesible" % contactsPageUrl)
+					raise NetworkError("%s is not accesible" % contactsPageUrl)
 				for contact_match in self._contactsRe.finditer(contactsPage):
 					contactId = contact_match.group(1)
 					contactName = saxutils.unescape(contact_match.group(2))
@@ -367,7 +371,7 @@ class GVDialer(object):
 			detailPage = self._browser.download(self._contactDetailURL + '/' + contactId)
 		except urllib2.URLError, e:
 			logging.exception(str(e))
-			raise RuntimeError("%s is not accesible" % self._contactDetailURL)
+			raise NetworkError("%s is not accesible" % self._contactDetailURL)
 
 		for detail_match in self._contactDetailPhoneRe.finditer(detailPage):
 			phoneNumber = detail_match.group(1)
@@ -382,7 +386,7 @@ class GVDialer(object):
 			voicemailPage = self._browser.download(self._voicemailURL)
 		except urllib2.URLError, e:
 			logging.exception(str(e))
-			raise RuntimeError("%s is not accesible" % self._voicemailURL)
+			raise NetworkError("%s is not accesible" % self._voicemailURL)
 		voicemailHtml = self._grab_html(voicemailPage)
 		parsedVoicemail = self._parse_voicemail(voicemailHtml)
 		decoratedVoicemails = self._decorate_voicemail(parsedVoicemail)
@@ -391,7 +395,7 @@ class GVDialer(object):
 			smsPage = self._browser.download(self._smsURL)
 		except urllib2.URLError, e:
 			logging.exception(str(e))
-			raise RuntimeError("%s is not accesible" % self._smsURL)
+			raise NetworkError("%s is not accesible" % self._smsURL)
 		smsHtml = self._grab_html(smsPage)
 		parsedSms = self._parse_sms(smsHtml)
 		decoratedSms = self._decorate_sms(parsedSms)
@@ -469,7 +473,7 @@ class GVDialer(object):
 				flatXml = self._browser.download(url)
 			except urllib2.URLError, e:
 				logging.exception(str(e))
-				raise RuntimeError("%s is not accesible" % url)
+				raise NetworkError("%s is not accesible" % url)
 
 			allRecentHtml = self._grab_html(flatXml)
 			allRecentData = self._parse_voicemail(allRecentHtml)
