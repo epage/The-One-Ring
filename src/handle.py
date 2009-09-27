@@ -49,7 +49,7 @@ class TheOneRingHandle(telepathy.server.Handle):
 	name = property(telepathy.server.Handle.get_name)
 
 
-class SelfHandle(TheOneRingHandle):
+class ConnectionHandle(TheOneRingHandle):
 
 	instance = None
 
@@ -109,7 +109,7 @@ class GroupHandle(TheOneRingHandle):
 
 
 _HANDLE_TYPE_MAPPING = {
-	'self': SelfHandle,
+	'connection': ConnectionHandle,
 	'contact': ContactHandle,
 	'list': ListHandle,
 	'group': GroupHandle,

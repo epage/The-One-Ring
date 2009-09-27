@@ -1,10 +1,17 @@
 import telepathy
 
 
-class TheOneRingLocation(telepathy.server.ConnectionInterfaceLocation):
+class LocationMixin(telepathy.server.ConnectionInterfaceLocation):
 
 	def __init__(self):
 		telepathy.server.ConnectionInterfaceLocation.__init__(self)
+
+	@property
+	def gvoice_backend(self):
+		"""
+		@abstract
+		"""
+		raise NotImplementedError()
 
 	def GetLocations(self, contacts):
 		"""

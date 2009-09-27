@@ -27,7 +27,7 @@ class TheOneRingChannelText(
 	def SetChatState(self, state):
 		if state == telepathy.CHANNEL_CHAT_STATE_COMPOSING:
 			self._conversation.send_typing_notification()
-		h = handle.create_handle(self._conn_ref(), 'self')
+		h = handle.create_handle(self._conn_ref(), 'connection')
 		self.ChatStateChanged(h, state)
 
 	def Send(self, messageType, text):

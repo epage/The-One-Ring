@@ -18,6 +18,8 @@ class TheOneRingConnectionManager(telepathy.server.ConnectionManager):
 
 	def GetParameters(self, proto):
 		"""
+		For org.freedesktop.telepathy.ConnectionManager
+
 		@returns the mandatory and optional parameters for creating a connection
 		"""
 		if proto not in self._protos:
@@ -53,6 +55,9 @@ class TheOneRingConnectionManager(telepathy.server.ConnectionManager):
 		return result
 
 	def disconnected(self, conn):
+		"""
+		Overrides telepathy.server.ConnectionManager
+		"""
 		result = telepathy.server.ConnectionManager.disconnected(self, conn)
 		gobject.timeout_add(5000, self.shutdown)
 

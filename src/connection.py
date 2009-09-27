@@ -7,9 +7,10 @@ import constants
 import gv_backend
 import handle
 import channel_manager
+import simple_presence
 
 
-class TheOneRingConnection(telepathy.server.Connection):
+class TheOneRingConnection(telepathy.server.Connection, simple_presence.SimplePresenceMixin):
 
 	MANDATORY_PARAMETERS = {
 		'account' : 's',
@@ -42,9 +43,7 @@ class TheOneRingConnection(telepathy.server.Connection):
 			cookieFilePath = "%s/cookies.txt" % constants._data_path_
 			self._backend = gv_backend.GVDialer(cookieFilePath)
 
-			self.set_self_handle(handle.create_handle(self, 'self'))
-
-			self.__disconnect_reason = telepathy.CONNECTION_STATUS_REASON_NONE_SPECIFIED
+			self.set_self_handle(handle.create_handle(self, 'connection'))
 
 			logging.info("Connection to the account %s created" % account)
 		except Exception, e:
@@ -69,26 +68,36 @@ class TheOneRingConnection(telepathy.server.Connection):
 
 	def Connect(self):
 		"""
-		org.freedesktop.telepathy.Connection
+		For org.freedesktop.telepathy.Connection
 		"""
-		logging.info("Connecting")
-		self.__disconnect_reason = telepathy.CONNECTION_STATUS_REASON_NONE_SPECIFIED
 		try:
 			self._backend.login(*self._credentials)
-		except RuntimeError:
-			self.__disconnect_reason = telepathy.CONNECTION_STATUS_REASON_AUTHENTICATION_FAILED
+			self.StatusChanged(
+				telepathy.CONNECTION_STATUS_CONNECTED,
+				telepathy.CONNECTION_STATUS_REASON_REQUESTED
+			)
+			logging.info("Connected")
+		except Exception:
+			self.StatusChanged(
+				telepathy.CONNECTION_STATUS_DISCONNECTED,
+				telepathy.CONNECTION_STATUS_REASON_AUTHENTICATION_FAILED
+			)
+			logging.exception("Connecting Failed")
 
 	def Disconnect(self):
 		"""
-		org.freedesktop.telepathy.Connection
+		For org.freedesktop.telepathy.Connection
 		"""
-		logging.info("Disconnecting")
-		self.__disconnect_reason = telepathy.CONNECTION_STATUS_REASON_REQUESTED
-		self._backend.logout()
+		try:
+			self._backend.logout()
+			logging.info("Disconnected")
+		except Exception:
+			logging.exception("Disconnecting Failed")
 
 	def RequestChannel(self, type, handleType, handleId, suppressHandler):
 		"""
-		org.freedesktop.telepathy.Connection
+		For org.freedesktop.telepathy.Connection
+
 		@param type DBus interface name for base channel type
 		@param handleId represents a contact, list, etc according to handleType
 
@@ -114,7 +123,7 @@ class TheOneRingConnection(telepathy.server.Connection):
 
 	def RequestHandles(self, handleType, names, sender):
 		"""
-		org.freedesktop.telepathy.Connection
+		For org.freedesktop.telepathy.Connection
 		"""
 		self.check_connected()
 		self.check_handleType(handleType)

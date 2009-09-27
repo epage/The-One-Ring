@@ -13,7 +13,7 @@ class TheOneRingPresence(object):
 	}
 
 
-class TheOneRingSimplePresence(telepathy.server.ConnectionInterfaceSimplePresence):
+class SimplePresenceMixin(telepathy.server.ConnectionInterfaceSimplePresence):
 
 	def __init__(self):
 		telepathy.server.ConnectionInterfaceSimplePresence.__init__(self)
@@ -21,6 +21,13 @@ class TheOneRingSimplePresence(telepathy.server.ConnectionInterfaceSimplePresenc
 		dbus_interface = 'org.freedesktop.Telepathy.Connection.Interface.SimplePresence'
 
 		self._implement_property_get(dbus_interface, {'Statuses' : self._get_statuses})
+
+	@property
+	def gvoice_backend(self):
+		"""
+		@abstract
+		"""
+		raise NotImplementedError()
 
 	def GetPresences(self, contacts):
 		"""
@@ -44,9 +51,9 @@ class TheOneRingSimplePresence(telepathy.server.ConnectionInterfaceSimplePresenc
 			raise telepathy.errors.InvalidArgument
 
 		if status == TheOneRingPresence.ONLINE:
-			self._conn.mark_dnd(True)
+			self.gvoice_backend.mark_dnd(True)
 		elif status == TheOneRingPresence.BUSY:
-			self._conn.mark_dnd(False)
+			self.gvoice_backend.mark_dnd(False)
 		else:
 			raise telepathy.errors.InvalidArgument
 		logging.info("Setting Presence to '%s'" % status)
