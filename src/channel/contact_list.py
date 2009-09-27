@@ -8,9 +8,9 @@ import handle
 
 def create_contact_list_channel(connection, h):
 	if h.get_name() == 'subscribe':
-		channel_class = TheOneRingSubscribeListChannel
+		channel_class = SubscribeListChannel
 	elif h.get_name() == 'publish':
-		channel_class = TheOneRingPublishListChannel
+		channel_class = PublishListChannel
 	elif h.get_name() == 'hide':
 		logging.warn("Unsuported type %s" % h.get_name())
 	elif h.get_name() == 'allow':
@@ -22,7 +22,7 @@ def create_contact_list_channel(connection, h):
 	return channel_class(connection, h)
 
 
-class TheOneRingListChannel(
+class AbstractListChannel(
 		telepathy.server.ChannelTypeContactList,
 		telepathy.server.ChannelInterfaceGroup,
 	):
@@ -38,7 +38,7 @@ class TheOneRingListChannel(
 		return []
 
 
-class TheOneRingSubscribeListChannel(TheOneRingListChannel):
+class SubscribeListChannel(AbstractListChannel):
 	"""
 	Subscribe List channel.
 
@@ -48,7 +48,7 @@ class TheOneRingSubscribeListChannel(TheOneRingListChannel):
 	"""
 
 	def __init__(self, connection, h):
-		TheOneRingListChannel.__init__(self, connection, h)
+		AbstractListChannel.__init__(self, connection, h)
 		self.GroupFlagsChanged(
 			telepathy.CHANNEL_GROUP_FLAG_CAN_ADD |
 			telepathy.CHANNEL_GROUP_FLAG_CAN_REMOVE,
@@ -78,10 +78,10 @@ class TheOneRingSubscribeListChannel(TheOneRingListChannel):
 			addressBook.delete_contact(contact)
 
 
-class TheOneRingPublishListChannel(TheOneRingListChannel):
+class PublishListChannel(AbstractListChannel):
 
 	def __init__(self, connection, h):
-		TheOneRingListChannel.__init__(self, connection, h)
+		AbstractListChannel.__init__(self, connection, h)
 		self.GroupFlagsChanged(0, 0)
 
 	def AddMembers(self, contacts, message):
@@ -111,12 +111,12 @@ class TheOneRingPublishListChannel(TheOneRingListChannel):
 		return result
 
 
-class TheOneRingGroupChannel(TheOneRingListChannel):
+class GroupChannel(AbstractListChannel):
 
 	def __init__(self, connection, h):
 		self.__pending_add = []
 		self.__pending_remove = []
-		TheOneRingListChannel.__init__(self, connection, h)
+		AbstractListChannel.__init__(self, connection, h)
 		self.GroupFlagsChanged(
 			telepathy.CHANNEL_GROUP_FLAG_CAN_ADD | telepathy.CHANNEL_GROUP_FLAG_CAN_REMOVE,
 			0,

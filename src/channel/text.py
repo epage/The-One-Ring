@@ -4,18 +4,17 @@ import weakref
 import telepathy
 
 
-class TheOneRingChannelText(
-		telepathy.server.ChannelTypeText,
-	):
+class TextChannel(telepathy.server.ChannelTypeText):
+	"""
+	Look into implementing ChannelInterfaceMessages for rich text formatting
+	"""
 
 	def __init__(self, connection, conversation):
 		self._recv_id = 0
 		self._conversation = conversation
-		self._conn_ref = weakref.ref(connection)
+		self._connRef = weakref.ref(connection)
 
 		telepathy.server.ChannelTypeText.__init__(self, connection, None)
-		telepathy.server.ChannelInterfaceGroup.__init__(self)
-		telepathy.server.ChannelInterfaceChatState.__init__(self)
 
 		self.GroupFlagsChanged(telepathy.CHANNEL_GROUP_FLAG_CAN_ADD, 0)
 		self.__add_initial_participants()

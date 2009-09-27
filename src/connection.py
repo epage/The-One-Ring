@@ -71,18 +71,20 @@ class TheOneRingConnection(telepathy.server.Connection, simple_presence.SimplePr
 		For org.freedesktop.telepathy.Connection
 		"""
 		try:
+			self.StatusChanged(
+				telepathy.CONNECTION_STATUS_CONNECTING,
+				telepathy.CONNECTION_STATUS_REASON_REQUESTED
+			)
 			self._backend.login(*self._credentials)
 			self.StatusChanged(
 				telepathy.CONNECTION_STATUS_CONNECTED,
 				telepathy.CONNECTION_STATUS_REASON_REQUESTED
 			)
-			logging.info("Connected")
 		except Exception:
 			self.StatusChanged(
 				telepathy.CONNECTION_STATUS_DISCONNECTED,
 				telepathy.CONNECTION_STATUS_REASON_AUTHENTICATION_FAILED
 			)
-			logging.exception("Connecting Failed")
 
 	def Disconnect(self):
 		"""
