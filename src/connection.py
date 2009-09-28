@@ -10,6 +10,9 @@ import channel_manager
 import simple_presence
 
 
+_moduleLogger = logging.getLogger("connection")
+
+
 class TheOneRingConnection(telepathy.server.Connection, simple_presence.SimplePresenceMixin):
 
 	MANDATORY_PARAMETERS = {
@@ -45,9 +48,9 @@ class TheOneRingConnection(telepathy.server.Connection, simple_presence.SimplePr
 
 			self.set_self_handle(handle.create_handle(self, 'connection'))
 
-			logging.info("Connection to the account %s created" % account)
+			_moduleLogger.info("Connection to the account %s created" % account)
 		except Exception, e:
-			logging.exception("Failed to create Connection")
+			_moduleLogger.exception("Failed to create Connection")
 			raise
 
 	@property
@@ -98,9 +101,9 @@ class TheOneRingConnection(telepathy.server.Connection, simple_presence.SimplePr
 		"""
 		try:
 			self._backend.logout()
-			logging.info("Disconnected")
+			_moduleLogger.info("Disconnected")
 		except Exception:
-			logging.exception("Disconnecting Failed")
+			_moduleLogger.exception("Disconnecting Failed")
 		self.StatusChanged(
 			telepathy.CONNECTION_STATUS_DISCONNECTED,
 			telepathy.CONNECTION_STATUS_REASON_REQUESTED

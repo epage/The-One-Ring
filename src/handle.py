@@ -4,6 +4,9 @@ import weakref
 import telepathy
 
 
+_moduleLogger = logging.getLogger("handle")
+
+
 class MetaMemoize(type):
 	"""
 	Allows a class to cache off instances for reuse
@@ -13,7 +16,7 @@ class MetaMemoize(type):
 		obj, newlyCreated = cls.__new__(cls, connection, *args)
 		if newlyCreated:
 			obj.__init__(connection, connection.get_handle_id(), *args)
-			logging.info("New Handle %r" % obj)
+			_moduleLogger.info("New Handle %r" % obj)
 		return obj
 
 

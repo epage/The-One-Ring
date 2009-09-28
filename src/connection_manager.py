@@ -7,6 +7,9 @@ import constants
 import connection
 
 
+_moduleLogger = logging.getLogger("connection_manager")
+
+
 class TheOneRingConnectionManager(telepathy.server.ConnectionManager):
 
 	def __init__(self, shutdown_func=None):
@@ -14,7 +17,7 @@ class TheOneRingConnectionManager(telepathy.server.ConnectionManager):
 
 		self._protos[constants._telepathy_protocol_name_] = connection.TheOneRingConnection
 		self._on_shutdown = shutdown_func
-		logging.info("Connection manager created")
+		_moduleLogger.info("Connection manager created")
 
 	def GetParameters(self, proto):
 		"""
@@ -67,7 +70,7 @@ class TheOneRingConnectionManager(telepathy.server.ConnectionManager):
 		"""
 		for connection in self._connections:
 			connection.Disconnect()
-		logging.info("Connection manager quitting")
+		_moduleLogger.info("Connection manager quitting")
 
 	def _shutdown(self):
 		if (

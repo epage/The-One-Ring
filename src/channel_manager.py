@@ -6,6 +6,9 @@ import telepathy
 import channel
 
 
+_moduleLogger = logging.getLogger("channel_manager")
+
+
 class ChannelManager(object):
 
 	def __init__(self, connection):
@@ -31,7 +34,7 @@ class ChannelManager(object):
 			elif handle.get_type() == telepathy.HANDLE_TYPE_CONTACT:
 				chan = channel.contact_list.creat_contact_list_channel(self._connRef(), handle)
 			else:
-				logging.warn("Unknown channel type %r" % handle.get_type())
+				_moduleLogger.warn("Unknown channel type %r" % handle.get_type())
 			self._listChannels[handle] = chan
 			self._connRef().add_channel(chan, handle, suppress_handler)
 		return chan
@@ -40,7 +43,7 @@ class ChannelManager(object):
 		if handle in self._textChannels:
 			chan = self._textChannels[handle]
 		else:
-			logging.debug("Requesting new text channel")
+			_moduleLogger.debug("Requesting new text channel")
 			contact = handle.contact
 
 			if conversation is None:
@@ -55,7 +58,7 @@ class ChannelManager(object):
 		if handle in self._callChannels:
 			chan = self._callChannels[handle]
 		else:
-			logging.debug("Requesting new call channel")
+			_moduleLogger.debug("Requesting new call channel")
 			contact = handle.contact
 
 			if conversation is None:

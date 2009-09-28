@@ -3,6 +3,9 @@ import logging
 import telepathy
 
 
+_moduleLogger = logging.getLogger("simple_presence")
+
+
 class TheOneRingPresence(object):
 	ONLINE = 'available'
 	BUSY = 'dnd'
@@ -56,7 +59,7 @@ class SimplePresenceMixin(telepathy.server.ConnectionInterfaceSimplePresence):
 			self.gvoice_backend.mark_dnd(False)
 		else:
 			raise telepathy.errors.InvalidArgument
-		logging.info("Setting Presence to '%s'" % status)
+		_moduleLogger.info("Setting Presence to '%s'" % status)
 
 
 	def _get_statuses(self):

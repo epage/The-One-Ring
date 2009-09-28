@@ -12,6 +12,9 @@ import threading
 import Queue
 
 
+_moduleLogger = logging.getLogger("gtk_toolbox")
+
+
 @contextlib.contextmanager
 def flock(path, timeout=-1):
 	WAIT_FOREVER = -1
@@ -137,7 +140,7 @@ def comap(function, target):
 			mappedItem = function(*item)
 			target.send(mappedItem)
 		except Exception, e:
-			logging.exception("Forwarding exception!")
+			_moduleLogger.exception("Forwarding exception!")
 			target.throw(e.__class__, str(e))
 
 
