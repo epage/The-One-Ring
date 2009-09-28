@@ -6,17 +6,20 @@ import telepathy
 import handle
 
 
+_moduleLogger = logging.getLogger("channel.contact_list")
+
+
 def create_contact_list_channel(connection, h):
 	if h.get_name() == 'subscribe':
 		channel_class = SubscribeListChannel
 	elif h.get_name() == 'publish':
 		channel_class = PublishListChannel
 	elif h.get_name() == 'hide':
-		logging.warn("Unsuported type %s" % h.get_name())
+		_moduleLogger.warn("Unsuported type %s" % h.get_name())
 	elif h.get_name() == 'allow':
-		logging.warn("Unsuported type %s" % h.get_name())
+		_moduleLogger.warn("Unsuported type %s" % h.get_name())
 	elif h.get_name() == 'deny':
-		logging.warn("Unsuported type %s" % h.get_name())
+		_moduleLogger.warn("Unsuported type %s" % h.get_name())
 	else:
 		raise TypeError("Unknown list type : " + h.get_name())
 	return channel_class(connection, h)
@@ -127,7 +130,7 @@ class GroupChannel(AbstractListChannel):
 		if self._handle.group is None:
 			for contactHandleId in contacts:
 				contactHandle = self._conn.handle(telepathy.HANDLE_TYPE_CONTACT, contactHandleId)
-				logging.info("Adding contact %r to pending group %r" % (contactHandle, self._handle))
+				_moduleLogger.info("Adding contact %r to pending group %r" % (contactHandle, self._handle))
 				if contactHandleId in self.__pending_remove:
 					self.__pending_remove.remove(contactHandleId)
 				else:
@@ -136,7 +139,7 @@ class GroupChannel(AbstractListChannel):
 		else:
 			for contactHandleId in contacts:
 				contactHandle = self._conn.handle(telepathy.HANDLE_TYPE_CONTACT, contactHandleId)
-				logging.info("Adding contact %r to group %r" % (contactHandle, self._handle))
+				_moduleLogger.info("Adding contact %r to group %r" % (contactHandle, self._handle))
 				contact = contactHandle.contact
 				group = self._handle.group
 				if contact is not None:
@@ -149,7 +152,7 @@ class GroupChannel(AbstractListChannel):
 		if self._handle.group is None:
 			for contactHandleId in contacts:
 				contactHandle = self._conn.handle(telepathy.HANDLE_TYPE_CONTACT, contactHandleId)
-				logging.info("Adding contact %r to pending group %r" % (contactHandle, self._handle))
+				_moduleLogger.info("Adding contact %r to pending group %r" % (contactHandle, self._handle))
 				if contactHandleId in self.__pending_add:
 					self.__pending_add.remove(contactHandleId)
 				else:
@@ -158,7 +161,7 @@ class GroupChannel(AbstractListChannel):
 		else:
 			for contactHandleId in contacts:
 				contactHandle = self._conn.handle(telepathy.HANDLE_TYPE_CONTACT, contactHandleId)
-				logging.info("Removing contact %r from pending group %r" % (contactHandle, self._handle))
+				_moduleLogger.info("Removing contact %r from pending group %r" % (contactHandle, self._handle))
 				contact = contactHandle.contact
 				group = self._handle.group
 				if contact is not None:
@@ -167,7 +170,7 @@ class GroupChannel(AbstractListChannel):
 					contactHandle.pending_groups.discard(group)
 
 	def Close(self):
-		logging.debug("Deleting group %s" % self._handle.name)
+		_moduleLogger.debug("Deleting group %s" % self._handle.name)
 		addressBook = self._conn.gvoice_client
 		group = self._handle.group
 		addressBook.delete_group(group)

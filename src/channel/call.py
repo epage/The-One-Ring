@@ -4,6 +4,9 @@ import logging
 import telepathy
 
 
+_moduleLogger = logging.getLogger("channel.call")
+
+
 class CallChannel(
 		telepathy.server.ChannelTypeStreamedMedia,
 		telepathy.server.ChannelInterfaceCallState,
@@ -39,7 +42,7 @@ class CallChannel(
 
 		@note Since streams are short lived, not bothering to implement this
 		"""
-		logging.info("A request was made to change the stream direction")
+		_moduleLogger.info("A request was made to change the stream direction")
 
 	def RequestStreams(self, contact, streamType):
 		"""
