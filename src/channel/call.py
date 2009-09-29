@@ -12,9 +12,8 @@ class CallChannel(
 		telepathy.server.ChannelInterfaceCallState,
 	):
 
-	def __init__(self, connection, conversation):
+	def __init__(self, connection):
 		self._recv_id = 0
-		self._conversation = conversation
 		self._connRef = weakref.ref(connection)
 
 		telepathy.server.ChannelTypeText.__init__(self, connection, None)

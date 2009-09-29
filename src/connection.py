@@ -17,7 +17,8 @@ class TheOneRingConnection(telepathy.server.Connection, simple_presence.SimplePr
 
 	MANDATORY_PARAMETERS = {
 		'account' : 's',
-		'password' : 's'
+		'password' : 's',
+		'forward' : 's',
 	}
 	OPTIONAL_PARAMETERS = {
 	}
@@ -41,6 +42,7 @@ class TheOneRingConnection(telepathy.server.Connection, simple_presence.SimplePr
 				parameters['account'].encode('utf-8'),
 				parameters['password'].encode('utf-8'),
 			)
+			self._callbackNumber = parameters['forward'].encode('utf-8')
 			self._channelManager = channel_manager.ChannelManager(self)
 
 			cookieFilePath = "%s/cookies.txt" % constants._data_path_
@@ -79,6 +81,7 @@ class TheOneRingConnection(telepathy.server.Connection, simple_presence.SimplePr
 		)
 		try:
 			self._backend.login(*self._credentials)
+			self._backend.set_callback_number(self._callbackNumber)
 		except gv_backend.NetworkError:
 			self.StatusChanged(
 				telepathy.CONNECTION_STATUS_DISCONNECTED,
@@ -129,7 +132,10 @@ class TheOneRingConnection(telepathy.server.Connection, simple_presence.SimplePr
 		elif type == telepathy.CHANNEL_TYPE_TEXT:
 			if handleType != telepathy.HANDLE_TYPE_CONTACT:
 				raise telepathy.NotImplemented("Only Contacts are allowed")
-			contact = handle.contact
+			channel = channelManager.channel_for_text(handle, None, suppressHandler)
+		elif type == telepathy.CHANNEL_TYPE_STREAMED_MEDIA:
+			if handleType != telepathy.HANDLE_TYPE_CONTACT:
+				raise telepathy.NotImplemented("Only Contacts are allowed")
 			channel = channelManager.channel_for_text(handle, None, suppressHandler)
 		else:
 			raise telepathy.NotImplemented("unknown channel type %s" % type)
@@ -141,7 +147,7 @@ class TheOneRingConnection(telepathy.server.Connection, simple_presence.SimplePr
 		For org.freedesktop.telepathy.Connection
 		"""
 		self.check_connected()
-		self.check_handleType(handleType)
+		self.check_handle_type(handleType)
 
 		handles = []
 		for name in names:
@@ -159,16 +165,18 @@ class TheOneRingConnection(telepathy.server.Connection, simple_presence.SimplePr
 		return handles
 
 	def _create_contact_handle(self, name):
-		requestedContactId, requestedContactName = handle.field_split(name)
+		requestedContactId = name
 
 		contacts = self._backend.get_contacts()
 		contactsFound = [
 			(contactId, contactName) for (contactId, contactName) in contacts
-			if contactName == name
+			if contactId == requestedContactId
 		]
 
 		if 0 < len(contactsFound):
 			contactId, contactName = contactsFound[0]
-			h = handle.create_handle(self, 'contact', contactId, contactName)
+			if len(contactsFound) != 1:
+				_moduleLogger.error("Contact ID was not unique: %s for %s" % (contactId, contactName))
 		else:
-			h = handle.create_handle(self, 'contact', requestedContactId, requestedContactName)
+			contactId, contactName = requestedContactId, ""
+		h = handle.create_handle(self, 'contact', contactId, contactName)

@@ -64,34 +64,26 @@ class ConnectionHandle(TheOneRingHandle):
 		self.profile = connection.username
 
 
-def field_join(fields):
-	"""
-	>>> field_join("1", "First Name")
-	'1#First Name'
-	"""
-	return "#".join(fields)
-
-
-def field_split(fields):
-	"""
-	>>> field_split('1#First Name')
-	['1', 'First Name']
-	"""
-	return fields.split("#")
-
-
 class ContactHandle(TheOneRingHandle):
 
 	def __init__(self, connection, id, contactId, contactAccount):
 		handleType = telepathy.HANDLE_TYPE_CONTACT
-		handleName = field_join(contactId, contactAccount)
+		handleName = contactId
 		TheOneRingHandle.__init__(self, connection, id, handleType, handleName)
 
-		self.account = contactAccount
+		self._account = contactAccount
 		self._id = contactId
 
 	@property
-	def contact(self):
+	def contactID(self):
+		return self._id
+
+	@property
+	def contactName(self):
+		return self._account
+
+	@property
+	def contactDetails(self):
 		return self._conn.gvoice_client.get_contact_details(self._id)
 
 

@@ -35,9 +35,12 @@ class TheOneRingConnectionManager(telepathy.server.ConnectionManager):
 		defaultParameters = ConnectionClass.PARAMETER_DEFAULTS
 
 		for parameterName, parameterType in mandatoryParameters.iteritems():
+			flags = telepathy.CONN_MGR_PARAM_FLAG_REQUIRED
+			if parameterName == "password":
+				flags |= telepathy.CONN_MGR_PARAM_FLAG_SECRET
 			param = (
 				parameterName,
-				telepathy.CONN_MGR_PARAM_FLAG_REQUIRED,
+				flags,
 				parameterType,
 				'',
 			)
@@ -45,14 +48,19 @@ class TheOneRingConnectionManager(telepathy.server.ConnectionManager):
 
 		for parameterName, parameterType in optionalParameters.iteritems():
 			if parameterName in defaultParameters:
-				param = (
-					parameterName,
-					telepathy.CONN_MGR_PARAM_FLAG_HAS_DEFAULT,
-					parameterName,
-					defaultParameters[parameterName],
-				)
+				flags = telepathy.CONN_MGR_PARAM_FLAG_HAS_DEFAULT
+				if parameterName == "password":
+					flags |= telepathy.CONN_MGR_PARAM_FLAG_SECRET
+				default = defaultParameters[parameterName]
 			else:
-				param = (parameterName, 0, parameterName, '')
+				flags = 0
+				default = ""
+			param = (
+				parameterName,
+				flags,
+				parameterName,
+				default,
+			)
 			result.append(param)
 
 		return result

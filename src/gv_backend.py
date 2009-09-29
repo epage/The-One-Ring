@@ -241,35 +241,6 @@ class GVDialer(object):
 		"""
 		return self._accountNum
 
-	def set_sane_callback(self):
-		"""
-		Try to set a sane default callback number on these preferences
-		1) 1747 numbers ( Gizmo )
-		2) anything with gizmo in the name
-		3) anything with computer in the name
-		4) the first value
-		"""
-		numbers = self.get_callback_numbers()
-
-		for number, description in numbers.iteritems():
-			if re.compile(r"""1747""").match(number) is not None:
-				self.set_callback_number(number)
-				return
-
-		for number, description in numbers.iteritems():
-			if re.compile(r"""gizmo""", re.I).search(description) is not None:
-				self.set_callback_number(number)
-				return
-
-		for number, description in numbers.iteritems():
-			if re.compile(r"""computer""", re.I).search(description) is not None:
-				self.set_callback_number(number)
-				return
-
-		for number, description in numbers.iteritems():
-			self.set_callback_number(number)
-			return
-
 	def get_callback_numbers(self):
 		"""
 		@returns a dictionary mapping call back numbers to descriptions
@@ -306,23 +277,6 @@ class GVDialer(object):
 		sortedRecent.sort(reverse = True)
 		for exactDate, name, number, relativeDate, action in sortedRecent:
 			yield name, number, relativeDate, action
-
-	def get_addressbooks(self):
-		"""
-		@returns Iterable of (Address Book Factory, Book Id, Book Name)
-		"""
-		yield self, "", ""
-
-	def open_addressbook(self, bookId):
-		return self
-
-	@staticmethod
-	def contact_source_short_name(contactId):
-		return "GV"
-
-	@staticmethod
-	def factory_name():
-		return "Google Voice"
 
 	_contactsRe = re.compile(r"""<a href="/voice/m/contact/(\d+)">(.*?)</a>""", re.S)
 	_contactsNextRe = re.compile(r""".*<a href="/voice/m/contacts(\?p=\d+)">Next.*?</a>""", re.S)
@@ -398,10 +352,7 @@ class GVDialer(object):
 		decoratedSms = self._decorate_sms(parsedSms)
 
 		allMessages = itertools.chain(decoratedVoicemails, decoratedSms)
-		sortedMessages = list(allMessages)
-		sortedMessages.sort(reverse=True)
-		for exactDate, header, number, relativeDate, message in sortedMessages:
-			yield header, number, relativeDate, message
+		return allMessages
 
 	def _grab_json(self, flatXml):
 		xmlTree = ElementTree.fromstring(flatXml)
@@ -493,6 +444,7 @@ class GVDialer(object):
 	_voicemailNumberRegex = re.compile(r"""<input type="hidden" class="gc-text gc-quickcall-ac" value="(.*?)"/>""", re.MULTILINE)
 	_prettyVoicemailNumberRegex = re.compile(r"""<span class="gc-message-type">(.*?)</span>""", re.MULTILINE)
 	_voicemailLocationRegex = re.compile(r"""<span class="gc-message-location">.*?<a.*?>(.*?)</a></span>""", re.MULTILINE)
+	_messagesContactID = re.compile(r"""<a class=".*?gc-message-name-link.*?">.*?</a>\s*?<span .*?>(.*?)</span>""", re.MULTILINE)
 	#_voicemailMessageRegex = re.compile(r"""<span id="\d+-\d+" class="gc-word-(.*?)">(.*?)</span>""", re.MULTILINE)
 	#_voicemailMessageRegex = re.compile(r"""<a .*? class="gc-message-mni">(.*?)</a>""", re.MULTILINE)
 	_voicemailMessageRegex = re.compile(r"""(<span id="\d+-\d+" class="gc-word-(.*?)">(.*?)</span>|<a .*? class="gc-message-mni">(.*?)</a>)""", re.MULTILINE)
@@ -522,6 +474,8 @@ class GVDialer(object):
 			number = numberGroup.group(1).strip() if numberGroup else ""
 			prettyNumberGroup = self._prettyVoicemailNumberRegex.search(messageHtml)
 			prettyNumber = prettyNumberGroup.group(1).strip() if prettyNumberGroup else ""
+			contactIdGroup = self._messagesContactID.search(messageHtml)
+			contactId = contactIdGroup.group(1).strip() if contactIdGroup else number
 
 			messageGroups = self._voicemailMessageRegex.finditer(messageHtml)
 			messageParts = (
@@ -531,6 +485,7 @@ class GVDialer(object):
 
 			yield {
 				"id": messageId.strip(),
+				"contactId": contactId,
 				"name": name,
 				"time": exactTime,
 				"relTime": relativeTime,
@@ -540,29 +495,23 @@ class GVDialer(object):
 				"messageParts": messageParts,
 			}
 
-	def _decorate_voicemail(self, parsedVoicemail):
+	def _decorate_voicemail(self, parsedVoicemails):
 		messagePartFormat = {
 			"med1": "<i>%s</i>",
 			"med2": "%s",
 			"high": "<b>%s</b>",
 		}
-		for voicemailData in parsedVoicemail:
-			exactTime = voicemailData["time"]
-			if voicemailData["name"]:
-				header = voicemailData["name"]
-			elif voicemailData["prettyNumber"]:
-				header = voicemailData["prettyNumber"]
-			elif voicemailData["location"]:
-				header = voicemailData["location"]
-			else:
-				header = "Unknown"
+		for voicemailData in parsedVoicemails:
 			message = " ".join((
 				messagePartFormat[quality] % part
 				for (quality, part) in voicemailData["messageParts"]
 			)).strip()
 			if not message:
 				message = "No Transcription"
-			yield exactTime, header, voicemailData["number"], voicemailData["relTime"], (message, )
+			whoFrom = voicemailData["name"]
+			when = voicemailData["time"]
+			voicemailData["messageParts"] = ((whoFrom, message, when), )
+			yield voicemailData
 
 	_smsFromRegex = re.compile(r"""<span class="gc-message-sms-from">(.*?)</span>""", re.MULTILINE | re.DOTALL)
 	_smsTextRegex = re.compile(r"""<span class="gc-message-sms-time">(.*?)</span>""", re.MULTILINE | re.DOTALL)
@@ -583,6 +532,8 @@ class GVDialer(object):
 			number = numberGroup.group(1).strip() if numberGroup else ""
 			prettyNumberGroup = self._prettyVoicemailNumberRegex.search(messageHtml)
 			prettyNumber = prettyNumberGroup.group(1).strip() if prettyNumberGroup else ""
+			contactIdGroup = self._messagesContactID.search(messageHtml)
+			contactId = contactIdGroup.group(1).strip() if contactIdGroup else number
 
 			fromGroups = self._smsFromRegex.finditer(messageHtml)
 			fromParts = (group.group(1).strip() for group in fromGroups)
@@ -595,32 +546,84 @@ class GVDialer(object):
 
 			yield {
 				"id": messageId.strip(),
+				"contactId": contactId,
 				"name": name,
 				"time": exactTime,
 				"relTime": relativeTime,
 				"prettyNumber": prettyNumber,
 				"number": number,
+				"location": "",
 				"messageParts": messageParts,
 			}
 
-	def _decorate_sms(self, parsedSms):
-		for messageData in parsedSms:
-			exactTime = messageData["time"]
-			if messageData["name"]:
-				header = messageData["name"]
-			elif messageData["prettyNumber"]:
-				header = messageData["prettyNumber"]
-			else:
-				header = "Unknown"
-			number = messageData["number"]
-			relativeTime = messageData["relTime"]
-			messages = [
-				"<b>%s</b>: %s" % (messagePart[0], messagePart[-1])
-				for messagePart in messageData["messageParts"]
-			]
-			if not messages:
-				messages = ("No Transcription", )
-			yield exactTime, header, number, relativeTime, messages
+	def _decorate_sms(self, parsedTexts):
+		return parsedTexts
+
+
+def set_sane_callback(backend):
+	"""
+	Try to set a sane default callback number on these preferences
+	1) 1747 numbers ( Gizmo )
+	2) anything with gizmo in the name
+	3) anything with computer in the name
+	4) the first value
+	"""
+	numbers = backend.get_callback_numbers()
+
+	priorityOrderedCriteria = [
+		("1747", None),
+		(None, "gizmo"),
+		(None, "computer"),
+		(None, "sip"),
+		(None, None),
+	]
+
+	for numberCriteria, descriptionCriteria in priorityOrderedCriteria:
+		for number, description in numbers.iteritems():
+			if numberCriteria is not None and re.compile(numberCriteria).match(number) is None:
+				continue
+			if descriptionCriteria is not None and re.compile(descriptionCriteria).match(description) is None:
+				continue
+			backend.set_callback_number(number)
+			return
+
+
+def sort_messages(allMessages):
+	sortableAllMessages = [
+		(message["time"], message)
+		for message in allMessages
+	]
+	sortableAllMessages.sort(reverse=True)
+	return (
+		message
+		for (exactTime, message) in sortableAllMessages
+	)
+
+
+def decorate_message(messageData):
+	exactTime = messageData["time"]
+	if messageData["name"]:
+		header = messageData["name"]
+	elif messageData["prettyNumber"]:
+		header = messageData["prettyNumber"]
+	else:
+		header = "Unknown"
+	number = messageData["number"]
+	relativeTime = messageData["relTime"]
+
+	messageParts = list(messageData["messageParts"])
+	if len(messageParts) == 0:
+		messages = ("No Transcription", )
+	elif len(messageParts) == 1:
+		messages = (messageParts[0][1], )
+	else:
+		messages = [
+			"<b>%s</b>: %s" % (messagePart[0], messagePart[-1])
+			for messagePart in messageParts
+		]
+
+	decoratedResults = header, number, relativeTime, messages
+	return decoratedResults
 
 
 def test_backend(username, password):
@@ -640,7 +643,15 @@ def test_backend(username, password):
 	# for contact in backend.get_contacts():
 	#	print contact
 	#	pprint.pprint(list(backend.get_contact_details(contact[0])))
-	for message in backend.get_messages():
-	  pprint.pprint(message)
+	#for message in backend.get_messages():
+	#  pprint.pprint(message)
+	for message in sort_messages(backend.get_messages()):
+	  pprint.pprint(decorate_message(message))
 
 	return backend
+
+
+if __name__ == "__main__":
+	import sys
+	logging.basicConfig(level=logging.DEBUG)
+	test_backend(sys.argv[1], sys.argv[2])

@@ -39,32 +39,26 @@ class ChannelManager(object):
 			self._connRef().add_channel(chan, handle, suppress_handler)
 		return chan
 
-	def channel_for_text(self, handle, conversation=None, suppress_handler=False):
+	def channel_for_text(self, handle, suppress_handler=False):
 		if handle in self._textChannels:
 			chan = self._textChannels[handle]
 		else:
 			_moduleLogger.debug("Requesting new text channel")
 			contact = handle.contact
 
-			if conversation is None:
-				client = self._connRef().msn_client
-				conversation = None
-			chan = channel.text.TextChannel(self._connRef(), conversation)
+			chan = channel.text.TextChannel(self._connRef())
 			self._textChannels[handle] = chan
 			self._connRef().add_channel(chan, handle, suppress_handler)
 		return chan
 
-	def channel_forcall(self, handle, conversation=None, suppress_handler=False):
+	def channel_for_call(self, handle, suppress_handler=False):
 		if handle in self._callChannels:
 			chan = self._callChannels[handle]
 		else:
 			_moduleLogger.debug("Requesting new call channel")
 			contact = handle.contact
 
-			if conversation is None:
-				client = self._connRef().msn_client
-				conversation = None
-			chan = channel.call.CallChannel(self._connRef(), conversation)
+			chan = channel.call.CallChannel(self._connRef())
 			self._callChannels[handle] = chan
 			self._connRef().add_channel(chan, handle, suppress_handler)
 		return chan
