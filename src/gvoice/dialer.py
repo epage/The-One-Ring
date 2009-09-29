@@ -46,7 +46,7 @@ except ImportError:
 	simplejson = None
 
 
-_moduleLogger = logging.getLogger("gv_backend")
+_moduleLogger = logging.getLogger("gvoice.dialer")
 _TRUE_REGEX = re.compile("true")
 _FALSE_REGEX = re.compile("false")
 

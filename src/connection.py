@@ -4,7 +4,7 @@ import logging
 import telepathy
 
 import constants
-import gv_backend
+import gvoice
 import handle
 import channel_manager
 import simple_presence
@@ -46,7 +46,7 @@ class TheOneRingConnection(telepathy.server.Connection, simple_presence.SimplePr
 			self._channelManager = channel_manager.ChannelManager(self)
 
 			cookieFilePath = "%s/cookies.txt" % constants._data_path_
-			self._backend = gv_backend.GVDialer(cookieFilePath)
+			self._backend = gvoice.dialer.GVDialer(cookieFilePath)
 
 			self.set_self_handle(handle.create_handle(self, 'connection'))
 
@@ -82,7 +82,7 @@ class TheOneRingConnection(telepathy.server.Connection, simple_presence.SimplePr
 		try:
 			self._backend.login(*self._credentials)
 			self._backend.set_callback_number(self._callbackNumber)
-		except gv_backend.NetworkError:
+		except gvoice.dialer.NetworkError:
 			self.StatusChanged(
 				telepathy.CONNECTION_STATUS_DISCONNECTED,
 				telepathy.CONNECTION_STATUS_REASON_NETWORK_ERROR

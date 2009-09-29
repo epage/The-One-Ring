@@ -32,7 +32,7 @@ import logging
 import socket
 
 
-_moduleLogger = logging.getLogger("browser_emu")
+_moduleLogger = logging.getLogger("gvoice.browser_emu")
 socket.setdefaulttimeout(10)
 
 
