@@ -132,7 +132,8 @@ class GVDialer(object):
 			return True
 
 		try:
-			self._grab_account_info()
+			page = self._browser.download(self._forwardURL)
+			self._grab_account_info(page)
 		except Exception, e:
 			_moduleLogger.exception(str(e))
 			return False
@@ -148,9 +149,6 @@ class GVDialer(object):
 		Attempt to login to GoogleVoice
 		@returns Whether login was successful or not
 		"""
-		if self.is_authed():
-			return True
-
 		loginPostData = urllib.urlencode({
 			'Email' : username,
 			'Passwd' : password,
@@ -158,6 +156,7 @@ class GVDialer(object):
 			"ltmpl": "mobile",
 			"btmpl": "mobile",
 			"PersistentCookie": "yes",
+			"continue": self._forwardURL,
 		})
 
 		try:
@@ -166,7 +165,15 @@ class GVDialer(object):
 			_moduleLogger.exception(str(e))
 			raise RuntimeError("%s is not accesible" % self._loginURL)
 
-		return self.is_authed()
+		try:
+			self._grab_account_info(loginSuccessOrFailurePage)
+		except Exception, e:
+			_moduleLogger.exception(str(e))
+			return False
+
+		self._browser.cookies.save()
+		self._lastAuthed = time.time()
+		return True
 
 	def logout(self):
 		self._lastAuthed = 0.0
@@ -372,9 +379,7 @@ class GVDialer(object):
 	_callbackRe = re.compile(r"""\s+(.*?):\s*(.*?)<br\s*/>\s*$""", re.M)
 	_forwardURL = "https://www.google.com/voice/mobile/phones"
 
-	def _grab_account_info(self):
-		page = self._browser.download(self._forwardURL)
-
+	def _grab_account_info(self, page):
 		tokenGroup = self._tokenRe.search(page)
 		if tokenGroup is None:
 			raise RuntimeError("Could not extract authentication token from GoogleVoice")
@@ -475,7 +480,7 @@ class GVDialer(object):
 			prettyNumberGroup = self._prettyVoicemailNumberRegex.search(messageHtml)
 			prettyNumber = prettyNumberGroup.group(1).strip() if prettyNumberGroup else ""
 			contactIdGroup = self._messagesContactID.search(messageHtml)
-			contactId = contactIdGroup.group(1).strip() if contactIdGroup else number
+			contactId = contactIdGroup.group(1).strip() if contactIdGroup else ""
 
 			messageGroups = self._voicemailMessageRegex.finditer(messageHtml)
 			messageParts = (
@@ -533,7 +538,7 @@ class GVDialer(object):
 			prettyNumberGroup = self._prettyVoicemailNumberRegex.search(messageHtml)
 			prettyNumber = prettyNumberGroup.group(1).strip() if prettyNumberGroup else ""
 			contactIdGroup = self._messagesContactID.search(messageHtml)
-			contactId = contactIdGroup.group(1).strip() if contactIdGroup else number
+			contactId = contactIdGroup.group(1).strip() if contactIdGroup else ""
 
 			fromGroups = self._smsFromRegex.finditer(messageHtml)
 			fromParts = (group.group(1).strip() for group in fromGroups)
@@ -632,10 +637,10 @@ def test_backend(username, password):
 	print "Login?: ", backend.login(username, password)
 	print "Authenticated: ", backend.is_authed()
 	# print "Token: ", backend._token
-	print "Account: ", backend.get_account_number()
-	print "Callback: ", backend.get_callback_number()
+	#print "Account: ", backend.get_account_number()
+	#print "Callback: ", backend.get_callback_number()
 	# print "All Callback: ",
-	import pprint
+	#import pprint
 	# pprint.pprint(backend.get_callback_numbers())
 	# print "Recent: ",
 	# pprint.pprint(list(backend.get_recent()))
@@ -645,8 +650,8 @@ def test_backend(username, password):
 	#	pprint.pprint(list(backend.get_contact_details(contact[0])))
 	#for message in backend.get_messages():
 	#  pprint.pprint(message)
-	for message in sort_messages(backend.get_messages()):
-	  pprint.pprint(decorate_message(message))
+	#for message in sort_messages(backend.get_messages()):
+	#  pprint.pprint(decorate_message(message))
 
 	return backend
 
