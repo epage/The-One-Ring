@@ -156,6 +156,19 @@ def comap(function, target):
 			target.throw(e.__class__, e.message)
 
 
+def func_sink(function):
+	return comap(function, null_sink())
+
+
+def expand_positional(function):
+
+	@functools.wraps(function)
+	def expander(item):
+		return function(*item)
+
+	return expander
+
+
 @autostart
 def append_sink(l):
 	"""

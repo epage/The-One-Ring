@@ -6,7 +6,6 @@ import sys
 import cPickle
 
 import functools
-import itertools
 import contextlib
 import inspect
 
