@@ -47,6 +47,7 @@ class TheOneRingConnection(telepathy.server.Connection, simple_presence.SimplePr
 
 			cookieFilePath = "%s/cookies.txt" % constants._data_path_
 			self._backend = gvoice.dialer.GVDialer(cookieFilePath)
+			self._addressbook = gvoice.addressbook.Addressbook(self._backend)
 
 			self.set_self_handle(handle.create_handle(self, 'connection'))
 
@@ -62,6 +63,10 @@ class TheOneRingConnection(telepathy.server.Connection, simple_presence.SimplePr
 	@property
 	def gvoice_backend(self):
 		return self._backend
+
+	@property
+	def addressbook(self):
+		return self._addressbook
 
 	@property
 	def username(self):
@@ -155,9 +160,8 @@ class TheOneRingConnection(telepathy.server.Connection, simple_presence.SimplePr
 			if handleType == telepathy.HANDLE_TYPE_CONTACT:
 				h = self._create_contact_handle(name)
 			elif handleType == telepathy.HANDLE_TYPE_LIST:
+				# Support only server side (immutable) lists
 				h = handle.create_handle(self, 'list', name)
-			elif handleType == telepathy.HANDLE_TYPE_GROUP:
-				h = handle.create_handle(self, 'group', name)
 			else:
 				raise telepathy.NotAvailable('Handle type unsupported %d' % handleType)
 			handles.append(h.id)
@@ -167,16 +171,16 @@ class TheOneRingConnection(telepathy.server.Connection, simple_presence.SimplePr
 	def _create_contact_handle(self, name):
 		requestedContactId = name
 
-		contacts = self._backend.get_contacts()
+		contacts = self._addressbook.get_contacts()
 		contactsFound = [
-			(contactId, contactName) for (contactId, contactName) in contacts
+			contactId for contactId in contacts
 			if contactId == requestedContactId
 		]
 
 		if 0 < len(contactsFound):
-			contactId, contactName = contactsFound[0]
+			contactId = contactsFound[0]
 			if len(contactsFound) != 1:
-				_moduleLogger.error("Contact ID was not unique: %s for %s" % (contactId, contactName))
+				_moduleLogger.error("Contact ID was not unique: %s for %s" % (contactId, ))
 		else:
-			contactId, contactName = requestedContactId, ""
-		h = handle.create_handle(self, 'contact', contactId, contactName)
+			contactId = requestedContactId
+		h = handle.create_handle(self, 'contact', contactId)

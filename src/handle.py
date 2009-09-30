@@ -66,12 +66,11 @@ class ConnectionHandle(TheOneRingHandle):
 
 class ContactHandle(TheOneRingHandle):
 
-	def __init__(self, connection, id, contactId, contactAccount):
+	def __init__(self, connection, id, contactId):
 		handleType = telepathy.HANDLE_TYPE_CONTACT
 		handleName = contactId
 		TheOneRingHandle.__init__(self, connection, id, handleType, handleName)
 
-		self._account = contactAccount
 		self._id = contactId
 
 	@property
@@ -79,12 +78,8 @@ class ContactHandle(TheOneRingHandle):
 		return self._id
 
 	@property
-	def contactName(self):
-		return self._account
-
-	@property
 	def contactDetails(self):
-		return self._conn.gvoice_client.get_contact_details(self._id)
+		return self._conn.addressbook.get_contact_details(self._id)
 
 
 class ListHandle(TheOneRingHandle):
@@ -95,19 +90,10 @@ class ListHandle(TheOneRingHandle):
 		TheOneRingHandle.__init__(self, connection, id, handleType, handleName)
 
 
-class GroupHandle(TheOneRingHandle):
-
-	def __init__(self, connection, id, groupName):
-		handleType = telepathy.HANDLE_TYPE_GROUP
-		handleName = groupName
-		TheOneRingHandle.__init__(self, connection, id, handleType, handleName)
-
-
 _HANDLE_TYPE_MAPPING = {
 	'connection': ConnectionHandle,
 	'contact': ContactHandle,
 	'list': ListHandle,
-	'group': GroupHandle,
 }
 
 
