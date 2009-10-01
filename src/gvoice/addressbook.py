@@ -20,7 +20,9 @@ class Addressbook(object):
 
 		self.updateSignalHandler = coroutines.CoTee()
 
-	def update(self):
+	def update(self, force=False):
+		if not force and self._contacts:
+			return
 		oldContacts = self._contacts
 		oldContactIds = set(self.get_contacts())
 

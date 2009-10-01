@@ -26,7 +26,7 @@ class SimplePresenceMixin(telepathy.server.ConnectionInterfaceSimplePresence):
 		self._implement_property_get(dbus_interface, {'Statuses' : self._get_statuses})
 
 	@property
-	def gvoice_backend(self):
+	def session(self):
 		"""
 		@abstract
 		"""

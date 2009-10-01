@@ -7,7 +7,7 @@ class LocationMixin(telepathy.server.ConnectionInterfaceLocation):
 		telepathy.server.ConnectionInterfaceLocation.__init__(self)
 
 	@property
-	def gvoice_backend(self):
+	def session(self):
 		"""
 		@abstract
 		"""

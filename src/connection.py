@@ -46,8 +46,7 @@ class TheOneRingConnection(telepathy.server.Connection, simple_presence.SimplePr
 			self._channelManager = channel_manager.ChannelManager(self)
 
 			cookieFilePath = "%s/cookies.txt" % constants._data_path_
-			self._backend = gvoice.dialer.GVDialer(cookieFilePath)
-			self._addressbook = gvoice.addressbook.Addressbook(self._backend)
+			self._session = gvoice.session.Session(cookieFilePath)
 
 			self.set_self_handle(handle.create_handle(self, 'connection'))
 
@@ -61,12 +60,8 @@ class TheOneRingConnection(telepathy.server.Connection, simple_presence.SimplePr
 		return self._manager
 
 	@property
-	def gvoice_backend(self):
-		return self._backend
-
-	@property
-	def addressbook(self):
-		return self._addressbook
+	def session(self):
+		return self._session
 
 	@property
 	def username(self):
@@ -85,9 +80,9 @@ class TheOneRingConnection(telepathy.server.Connection, simple_presence.SimplePr
 			telepathy.CONNECTION_STATUS_REASON_REQUESTED
 		)
 		try:
-			self._backend.login(*self._credentials)
-			self._backend.set_callback_number(self._callbackNumber)
-		except gvoice.dialer.NetworkError:
+			self.session.login(*self._credentials)
+			self.session.backend.set_callback_number(self._callbackNumber)
+		except gvoice.backend.NetworkError:
 			self.StatusChanged(
 				telepathy.CONNECTION_STATUS_DISCONNECTED,
 				telepathy.CONNECTION_STATUS_REASON_NETWORK_ERROR
@@ -108,7 +103,7 @@ class TheOneRingConnection(telepathy.server.Connection, simple_presence.SimplePr
 		For org.freedesktop.telepathy.Connection
 		"""
 		try:
-			self._backend.logout()
+			self.session.logout()
 			_moduleLogger.info("Disconnected")
 		except Exception:
 			_moduleLogger.exception("Disconnecting Failed")
@@ -171,7 +166,7 @@ class TheOneRingConnection(telepathy.server.Connection, simple_presence.SimplePr
 	def _create_contact_handle(self, name):
 		requestedContactId = name
 
-		contacts = self._addressbook.get_contacts()
+		contacts = self.session.addressbook.get_contacts()
 		contactsFound = [
 			contactId for contactId in contacts
 			if contactId == requestedContactId
