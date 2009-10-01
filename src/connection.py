@@ -7,13 +7,12 @@ import constants
 import gvoice
 import handle
 import channel_manager
-import simple_presence
 
 
 _moduleLogger = logging.getLogger("connection")
 
 
-class TheOneRingConnection(telepathy.server.Connection, simple_presence.SimplePresenceMixin):
+class TheOneRingConnection(telepathy.server.Connection):
 
 	MANDATORY_PARAMETERS = {
 		'account' : 's',
