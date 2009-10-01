@@ -22,7 +22,7 @@ class AbstractListChannel(
 		telepathy.server.ChannelInterfaceGroup.__init__(self)
 
 		self._conn_ref = weakref.ref(connection)
-		self._addessbook = connection.addressbook
+		self._session = connection.session
 
 
 class AllContactsListChannel(AbstractListChannel):
@@ -32,7 +32,7 @@ class AllContactsListChannel(AbstractListChannel):
 
 	def __init__(self, connection, h):
 		AbstractListChannel.__init__(self, connection, h)
-		self._addressbook.updateSignalHandle.register_sink(
+		self._session.addressbook.updateSignalHandle.register_sink(
 			self._on_contacts_refreshed
 		)
 
