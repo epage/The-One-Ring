@@ -35,19 +35,28 @@ class AllContactsListChannel(AbstractListChannel):
 		self._session.addressbook.updateSignalHandle.register_sink(
 			self._on_contacts_refreshed
 		)
+		self.GroupFlagsChanged(0, 0)
 
 	@coroutines.func_sink
 	@coroutines.expand_positional
 	@gobject_utils.async
 	def _on_contacts_refreshed(self, addressbook, added, removed, changed):
+		"""
+		@todo This currently filters out people not yet added to the contact
+			list.  Something needs to be done about those
+		@todo This currently does not handle people with multiple phone
+			numbers, yay that'll be annoying to resolve
+		"""
 		connection = self._conn_ref()
 		handlesAdded = [
 			handle.create_handle(connection, "contact", contactId)
 			for contactId in added
+			if contactId
 		]
 		handlesRemoved = [
 			handle.create_handle(connection, "contact", contactId)
 			for contactId in removed
+			if contactId
 		]
 		message = ""
 		actor = 0
@@ -75,11 +84,11 @@ def create_contact_list_channel(connection, h):
 		_moduleLogger.warn("Unsuported type %s" % h.get_name())
 	elif h.get_name() == 'allow':
 		# A group of contacts who may send you messages
-		# @todo This would be cool to support
+		# @todo Allow-List would be cool to support
 		_moduleLogger.warn("Unsuported type %s" % h.get_name())
 	elif h.get_name() == 'deny':
 		# A group of contacts who may not send you messages
-		# @todo This would be cool to support
+		# @todo Deny-List would be cool to support
 		_moduleLogger.warn("Unsuported type %s" % h.get_name())
 	elif h.get_name() == 'stored':
 		# On protocols where the user's contacts are stored, this contact list
