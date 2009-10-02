@@ -143,13 +143,23 @@ class GVoiceBackend(object):
 		self._lastAuthed = time.time()
 		return True
 
+	_tokenURL = "http://www.google.com/voice/m"
 	_loginURL = "https://www.google.com/accounts/ServiceLoginAuth"
+	_galxRe = re.compile(r"""<input.*?name="GALX".*?value="(.*?)".*?/>""", re.MULTILINE | re.DOTALL)
 
 	def login(self, username, password):
 		"""
 		Attempt to login to GoogleVoice
 		@returns Whether login was successful or not
 		"""
+		try:
+			tokenPage = self._browser.download(self._tokenURL)
+		except urllib2.URLError, e:
+			_moduleLogger.exception("Translating error: %s" % str(e))
+			raise NetworkError("%s is not accesible" % self._loginURL)
+		galxTokens = self._galxRe.search(tokenPage)
+		galxToken = galxTokens.group(1)
+
 		loginPostData = urllib.urlencode({
 			'Email' : username,
 			'Passwd' : password,
@@ -157,6 +167,7 @@ class GVoiceBackend(object):
 			"ltmpl": "mobile",
 			"btmpl": "mobile",
 			"PersistentCookie": "yes",
+			"GALX": galxToken,
 			"continue": self._forwardURL,
 		})
 
