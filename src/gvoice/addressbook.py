@@ -39,7 +39,7 @@ class Addressbook(object):
 		)
 
 		message = self, self._addedContacts, self._removedContacts, self._changedContacts
-		self.updateSignalHandler.send(message)
+		self.updateSignalHandler.stage.send(message)
 
 	def get_contacts(self):
 		return self._contacts.iterkeys()

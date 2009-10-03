@@ -32,7 +32,7 @@ class AllContactsListChannel(AbstractListChannel):
 
 	def __init__(self, connection, h):
 		AbstractListChannel.__init__(self, connection, h)
-		self._session.addressbook.updateSignalHandle.register_sink(
+		self._session.addressbook.updateSignalHandler.register_sink(
 			self._on_contacts_refreshed
 		)
 		self.GroupFlagsChanged(0, 0)
