@@ -14,20 +14,22 @@ _moduleLogger = logging.getLogger("connection")
 
 class TheOneRingConnection(telepathy.server.Connection):
 
-	MANDATORY_PARAMETERS = {
-		'account' : 's',
+	# Overriding a base class variable
+	_mandatory_parameters = {
+		'username' : 's',
 		'password' : 's',
 		'forward' : 's',
 	}
-	OPTIONAL_PARAMETERS = {
+	# Overriding a base class variable
+	_optional_parameters = {
 	}
-	PARAMETER_DEFAULTS = {
+	_parameter_defaults = {
 	}
 
 	def __init__(self, manager, parameters):
 		try:
 			self.check_parameters(parameters)
-			account = unicode(parameters['account'])
+			account = unicode(parameters['username'])
 
 			telepathy.server.Connection.__init__(
 				self,
@@ -38,7 +40,7 @@ class TheOneRingConnection(telepathy.server.Connection):
 
 			self._manager = weakref.proxy(manager)
 			self._credentials = (
-				parameters['account'].encode('utf-8'),
+				parameters['username'].encode('utf-8'),
 				parameters['password'].encode('utf-8'),
 			)
 			self._callbackNumber = parameters['forward'].encode('utf-8')
@@ -64,7 +66,7 @@ class TheOneRingConnection(telepathy.server.Connection):
 
 	@property
 	def username(self):
-		self._credentials[0]
+		return self._credentials[0]
 
 	def handle(self, handleType, handleId):
 		self.check_handle(handleType, handleId)
@@ -74,6 +76,7 @@ class TheOneRingConnection(telepathy.server.Connection):
 		"""
 		For org.freedesktop.telepathy.Connection
 		"""
+		_moduleLogger.info("Connecting...")
 		self.StatusChanged(
 			telepathy.CONNECTION_STATUS_CONNECTING,
 			telepathy.CONNECTION_STATUS_REASON_REQUESTED
@@ -81,17 +84,20 @@ class TheOneRingConnection(telepathy.server.Connection):
 		try:
 			self.session.login(*self._credentials)
 			self.session.backend.set_callback_number(self._callbackNumber)
-		except gvoice.backend.NetworkError:
+		except gvoice.backend.NetworkError, e:
+			_moduleLogger.exception("Connection Failed")
 			self.StatusChanged(
 				telepathy.CONNECTION_STATUS_DISCONNECTED,
 				telepathy.CONNECTION_STATUS_REASON_NETWORK_ERROR
 			)
-		except Exception:
+		except Exception, e:
+			_moduleLogger.exception("Connection Failed")
 			self.StatusChanged(
 				telepathy.CONNECTION_STATUS_DISCONNECTED,
 				telepathy.CONNECTION_STATUS_REASON_AUTHENTICATION_FAILED
 			)
 		else:
+			_moduleLogger.info("Connected")
 			self.StatusChanged(
 				telepathy.CONNECTION_STATUS_CONNECTED,
 				telepathy.CONNECTION_STATUS_REASON_REQUESTED
@@ -100,7 +106,9 @@ class TheOneRingConnection(telepathy.server.Connection):
 	def Disconnect(self):
 		"""
 		For org.freedesktop.telepathy.Connection
+		@bug Not properly logging out.  Cookie files need to be per connection and removed
 		"""
+		_moduleLogger.info("Disconnecting")
 		try:
 			self.session.logout()
 			_moduleLogger.info("Disconnected")
@@ -127,18 +135,18 @@ class TheOneRingConnection(telepathy.server.Connection):
 		handle = self.handle(handleType, handleId)
 
 		if type == telepathy.CHANNEL_TYPE_CONTACT_LIST:
+			_moduleLogger.info("RequestChannel ContactList")
 			channel = channelManager.channel_for_list(handle, suppressHandler)
 		elif type == telepathy.CHANNEL_TYPE_TEXT:
-			if handleType != telepathy.HANDLE_TYPE_CONTACT:
-				raise telepathy.NotImplemented("Only Contacts are allowed")
+			_moduleLogger.info("RequestChannel Text")
 			channel = channelManager.channel_for_text(handle, None, suppressHandler)
 		elif type == telepathy.CHANNEL_TYPE_STREAMED_MEDIA:
-			if handleType != telepathy.HANDLE_TYPE_CONTACT:
-				raise telepathy.NotImplemented("Only Contacts are allowed")
+			_moduleLogger.info("RequestChannel Media")
 			channel = channelManager.channel_for_text(handle, None, suppressHandler)
 		else:
 			raise telepathy.NotImplemented("unknown channel type %s" % type)
 
+		_moduleLogger.info("RequestChannel Object Path: %s" % channel._object_path)
 		return channel._object_path
 
 	def RequestHandles(self, handleType, names, sender):
@@ -152,14 +160,16 @@ class TheOneRingConnection(telepathy.server.Connection):
 		for name in names:
 			name = name.encode('utf-8')
 			if handleType == telepathy.HANDLE_TYPE_CONTACT:
+				_moduleLogger.info("RequestHandles Contact: %s" % name)
 				h = self._create_contact_handle(name)
 			elif handleType == telepathy.HANDLE_TYPE_LIST:
 				# Support only server side (immutable) lists
+				_moduleLogger.info("RequestHandles List: %s" % name)
 				h = handle.create_handle(self, 'list', name)
 			else:
 				raise telepathy.NotAvailable('Handle type unsupported %d' % handleType)
 			handles.append(h.id)
-			self.add_client_handle(handle, sender)
+			self.add_client_handle(h, sender)
 		return handles
 
 	def _create_contact_handle(self, name):
