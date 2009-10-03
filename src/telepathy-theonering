@@ -37,8 +37,14 @@ import connection_manager
 IDLE_TIMEOUT = 5000
 
 
-def run_theonering():
+def run_theonering(persist):
 	linux_utils.set_process_name(constants.__app_name__)
+
+	try:
+		os.makedirs(constants._data_path_)
+	except OSError, e:
+		if e.errno != 17:
+			raise
 
 	@gobject_utils.async
 	def quit():
@@ -51,11 +57,11 @@ def run_theonering():
 			quit()
 		return False
 
-	if 'THEONERING_PERSIST' not in os.environ:
+	if persist:
+		shutdown_callback = None
+	else:
 		gobject.timeout_add(IDLE_TIMEOUT, timeout_cb)
 		shutdown_callback = quit
-	else:
-		shutdown_callback = None
 
 	signal.signal(signal.SIGTERM, quit)
 
@@ -77,4 +83,7 @@ def run_theonering():
 if __name__ == '__main__':
 	telepathy_utils.debug_divert_messages(os.getenv('THEONERING_LOGFILE'))
 	logging.basicConfig(level=logging.DEBUG)
-	run_theonering()
+
+	persist = 'THEONERING_PERSIST' in os.environ
+	persist = True
+	run_theonering(persist)
