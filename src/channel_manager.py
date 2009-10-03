@@ -26,38 +26,41 @@ class ChannelManager(object):
 			chan.Close()
 
 	def channel_for_list(self, handle, suppress_handler=False):
-		if handle in self._listChannels:
+		try:
 			chan = self._listChannels[handle]
-		else:
-			if handle.get_type() == telepathy.HANDLE_TYPE_GROUP:
-				chan = channel.contact_list.GroupChannel(self._connRef(), handle)
-			elif handle.get_type() == telepathy.HANDLE_TYPE_CONTACT:
-				chan = channel.contact_list.creat_contact_list_channel(self._connRef(), handle)
-			else:
-				_moduleLogger.warn("Unknown channel type %r" % handle.get_type())
+		except KeyError, e:
+			if handle.get_type() != telepathy.HANDLE_TYPE_LIST:
+				raise RuntimeError("Unsupported channel type %r" % handle.get_type())
+			_moduleLogger.debug("Requesting new contact list channel")
+
+			chan = channel.contact_list.create_contact_list_channel(self._connRef(), handle)
 			self._listChannels[handle] = chan
 			self._connRef().add_channel(chan, handle, suppress_handler)
 		return chan
 
 	def channel_for_text(self, handle, suppress_handler=False):
-		if handle in self._textChannels:
+		try:
 			chan = self._textChannels[handle]
-		else:
+		except KeyError, e:
+			if handle.get_type() != telepathy.HANDLE_TYPE_CONTACT:
+				raise telepathy.NotImplemented("Only Contacts are allowed")
 			_moduleLogger.debug("Requesting new text channel")
-			contact = handle.contact
 
+			contact = handle.contact
 			chan = channel.text.TextChannel(self._connRef())
 			self._textChannels[handle] = chan
 			self._connRef().add_channel(chan, handle, suppress_handler)
 		return chan
 
 	def channel_for_call(self, handle, suppress_handler=False):
-		if handle in self._callChannels:
+		try:
 			chan = self._callChannels[handle]
-		else:
+		except KeyError, e:
+			if handle.get_type() != telepathy.HANDLE_TYPE_CONTACT:
+				raise telepathy.NotImplemented("Only Contacts are allowed")
 			_moduleLogger.debug("Requesting new call channel")
-			contact = handle.contact
 
+			contact = handle.contact
 			chan = channel.call.CallChannel(self._connRef())
 			self._callChannels[handle] = chan
 			self._connRef().add_channel(chan, handle, suppress_handler)
