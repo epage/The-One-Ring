@@ -35,6 +35,10 @@ class AllContactsListChannel(AbstractListChannel):
 		)
 		self.GroupFlagsChanged(0, 0)
 
+		addressbook = connection.session.addressbook
+		contacts = addressbook.get_contacts()
+		self._process_refresh(addressbook, contacts, [])
+
 	@coroutines.func_sink
 	@coroutines.expand_positional
 	@gobject_utils.async
@@ -45,6 +49,9 @@ class AllContactsListChannel(AbstractListChannel):
 		@todo This currently does not handle people with multiple phone
 			numbers, yay that'll be annoying to resolve
 		"""
+		self._process_refresh(addressbook, added, removed)
+
+	def _process_refresh(self, addressbook, added, removed):
 		connection = self._conn
 		handlesAdded = [
 			handle.create_handle(connection, "contact", contactId)
