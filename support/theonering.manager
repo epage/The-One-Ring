@@ -4,6 +4,6 @@ BusName = org.freedesktop.Telepathy.ConnectionManager.theonering
 ObjectPath = /org/freedesktop/Telepathy/ConnectionManager/theonering
 
 [Protocol GoogleVoice]
-param-account = s required
+param-username = s required
 param-password = s required secret
 param-forward = s required
