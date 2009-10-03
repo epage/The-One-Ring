@@ -7,36 +7,10 @@ import telepathy
 _moduleLogger = logging.getLogger("handle")
 
 
-class MetaMemoize(type):
-	"""
-	Allows a class to cache off instances for reuse
-	"""
-
-	def __call__(cls, connection, *args):
-		obj, newlyCreated = cls.__new__(cls, connection, *args)
-		if newlyCreated:
-			obj.__init__(connection, connection.get_handle_id(), *args)
-			_moduleLogger.info("New Handle %r" % obj)
-		return obj
-
-
 class TheOneRingHandle(telepathy.server.Handle):
 	"""
 	Instances are memoized
 	"""
-
-	__metaclass__ = MetaMemoize
-
-	_instances = weakref.WeakValueDictionary()
-
-	def __new__(cls, connection, *args):
-		key = cls, connection.username, args
-		if key in cls._instances.keys():
-			return cls._instances[key], False
-		else:
-			instance = object.__new__(cls, connection, *args)
-			cls._instances[key] = instance # TRICKY: instances is a weakdict
-			return instance, True
 
 	def __init__(self, connection, id, handleType, name):
 		telepathy.server.Handle.__init__(self, id, handleType, name)
@@ -53,8 +27,6 @@ class TheOneRingHandle(telepathy.server.Handle):
 
 
 class ConnectionHandle(TheOneRingHandle):
-
-	instance = None
 
 	def __init__(self, connection, id):
 		handleType = telepathy.HANDLE_TYPE_CONTACT
@@ -97,7 +69,26 @@ _HANDLE_TYPE_MAPPING = {
 }
 
 
-def create_handle(connection, type, *args):
-	handle = _HANDLE_TYPE_MAPPING[type](connection, *args)
-	connection._handles[handle.get_type(), handle.get_id()] = handle
-	return handle
+def create_handle_factory():
+
+	cache = weakref.WeakValueDictionary()
+
+	def create_handle(connection, type, *args):
+		Handle = _HANDLE_TYPE_MAPPING[type]
+		key = Handle, connection.username, args
+		try:
+			handle = cache[key]
+			isNewHandle = False
+		except KeyError:
+			handle = Handle(connection, connection.get_handle_id(), *args)
+			cache[key] = handle
+			isNewHandle = True
+		connection._handles[handle.get_type(), handle.get_id()] = handle
+		handleStatus = "Is New!" if isNewHandle else "From Cache"
+		_moduleLogger.info("Created Handle: %r (%s)" % (handle, handleStatus))
+		return handle
+
+	return create_handle
+
+
+create_handle = create_handle_factory()
