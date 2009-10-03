@@ -1,7 +1,12 @@
 import time
-import weakref
+import logger
 
 import telepathy
+
+import handle
+
+
+_moduleLogger = logger.getLogger("channel.text")
 
 
 class TextChannel(telepathy.server.ChannelTypeText):
@@ -10,22 +15,37 @@ class TextChannel(telepathy.server.ChannelTypeText):
 	"""
 
 	def __init__(self, connection):
-		self._recv_id = 0
-		self._connRef = weakref.ref(connection)
+		h = None
+		telepathy.server.ChannelTypeText.__init__(self, connection, h)
+		self._nextRecievedId = 0
 
-		telepathy.server.ChannelTypeText.__init__(self, connection, None)
-
-		self.GroupFlagsChanged(telepathy.CHANNEL_GROUP_FLAG_CAN_ADD, 0)
-		self.__add_initial_participants()
+		handles = []
+		# @todo Populate participants
+		self.MembersChanged('', handles, [], [], [],
+				0, telepathy.CHANNEL_GROUP_CHANGE_REASON_NONE)
 
 	def Send(self, messageType, text):
-		if messageType == telepathy.CHANNEL_TEXT_MESSAGE_TYPE_NORMAL:
-			pass
-		else:
+		if messageType != telepathy.CHANNEL_TEXT_MESSAGE_TYPE_NORMAL:
 			raise telepathy.NotImplemented("Unhandled message type")
+		# @todo implement sending message
 		self.Sent(int(time.time()), messageType, text)
 
 	def Close(self):
-		self._conversation.leave()
 		telepathy.server.ChannelTypeText.Close(self)
 		self.remove_from_connection()
+
+	def _on_message_received(self, sender, message):
+		"""
+		@todo Attatch this to receiving a message
+		"""
+		currentReceivedId = self._nextRecievedId
+
+		timestamp = int(time.time())
+		h = handle.create_handle(self._conn, "contact", sender.account)
+		type = telepathy.CHANNEL_TEXT_MESSAGE_TYPE_NORMAL
+		message = message.content
+
+		_moduleLogger.info("Received message from User %r" % h)
+		self.Received(id, timestamp, h, type, 0, message)
+
+		self._nextRecievedId += 1

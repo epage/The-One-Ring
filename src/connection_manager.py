@@ -15,6 +15,7 @@ class TheOneRingConnectionManager(telepathy.server.ConnectionManager):
 	def __init__(self, shutdown_func=None):
 		telepathy.server.ConnectionManager.__init__(self, constants._telepathy_implementation_name_)
 
+		# self._protos is from super
 		self._protos[constants._telepathy_protocol_name_] = connection.TheOneRingConnection
 		self._on_shutdown = shutdown_func
 		_moduleLogger.info("Connection manager created")

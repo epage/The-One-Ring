@@ -43,11 +43,11 @@ class ContactHandle(TheOneRingHandle):
 		handleName = contactId
 		TheOneRingHandle.__init__(self, connection, id, handleType, handleName)
 
-		self._id = contactId
+		self._contactId = contactId
 
 	@property
 	def contactID(self):
-		return self._id
+		return self._contactId
 
 	@property
 	def contactDetails(self):
@@ -80,6 +80,7 @@ def create_handle_factory():
 			handle = cache[key]
 			isNewHandle = False
 		except KeyError:
+			# The misnamed get_handle_id requests a new handle id
 			handle = Handle(connection, connection.get_handle_id(), *args)
 			cache[key] = handle
 			isNewHandle = True

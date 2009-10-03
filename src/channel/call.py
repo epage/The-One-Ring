@@ -1,4 +1,3 @@
-import weakref
 import logging
 
 import telepathy
@@ -13,15 +12,10 @@ class CallChannel(
 	):
 
 	def __init__(self, connection):
-		self._recv_id = 0
-		self._connRef = weakref.ref(connection)
-
-		telepathy.server.ChannelTypeText.__init__(self, connection, None)
+		h = None
+		telepathy.server.ChannelTypeStreamedMedia.__init__(self, connection, h)
 		telepathy.server.ChannelInterfaceGroup.__init__(self)
 		telepathy.server.ChannelInterfaceChatState.__init__(self)
-
-		self.GroupFlagsChanged(telepathy.CHANNEL_GROUP_FLAG_CAN_ADD, 0)
-		self.__add_initial_participants()
 
 	def ListStreams(self):
 		"""

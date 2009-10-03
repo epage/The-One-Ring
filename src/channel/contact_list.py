@@ -1,4 +1,3 @@
-import weakref
 import logging
 
 import telepathy
@@ -21,7 +20,6 @@ class AbstractListChannel(
 		telepathy.server.ChannelTypeContactList.__init__(self, connection, h)
 		telepathy.server.ChannelInterfaceGroup.__init__(self)
 
-		self._conn_ref = weakref.ref(connection)
 		self._session = connection.session
 
 
@@ -47,7 +45,7 @@ class AllContactsListChannel(AbstractListChannel):
 		@todo This currently does not handle people with multiple phone
 			numbers, yay that'll be annoying to resolve
 		"""
-		connection = self._conn_ref()
+		connection = self._conn
 		handlesAdded = [
 			handle.create_handle(connection, "contact", contactId)
 			for contactId in added

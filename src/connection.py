@@ -129,6 +129,7 @@ class TheOneRingConnection(telepathy.server.Connection):
 		@returns DBus object path for the channel created or retrieved
 		"""
 		self.check_connected()
+		self.check_handle(handleType, handleId)
 
 		channel = None
 		channelManager = self._channelManager
@@ -152,6 +153,7 @@ class TheOneRingConnection(telepathy.server.Connection):
 	def RequestHandles(self, handleType, names, sender):
 		"""
 		For org.freedesktop.telepathy.Connection
+		Overiding telepathy.server.Connecton to allow custom handles
 		"""
 		self.check_connected()
 		self.check_handle_type(handleType)
