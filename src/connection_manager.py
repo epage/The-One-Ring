@@ -30,9 +30,9 @@ class TheOneRingConnectionManager(telepathy.server.ConnectionManager):
 
 		result = []
 		ConnectionClass = self._protos[proto]
-		mandatoryParameters = ConnectionClass.MANDATORY_PARAMETERS
-		optionalParameters = ConnectionClass.OPTIONAL_PARAMETERS
-		defaultParameters = ConnectionClass.PARAMETER_DEFAULTS
+		mandatoryParameters = ConnectionClass._mandatory_parameters
+		optionalParameters = ConnectionClass._optional_parameters
+		defaultParameters = ConnectionClass._parameter_defaults
 
 		for parameterName, parameterType in mandatoryParameters.iteritems():
 			flags = telepathy.CONN_MGR_PARAM_FLAG_REQUIRED
