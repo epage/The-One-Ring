@@ -1,12 +1,12 @@
 import time
-import logger
+import logging
 
 import telepathy
 
 import handle
 
 
-_moduleLogger = logger.getLogger("channel.text")
+_moduleLogger = logging.getLogger("channel.text")
 
 
 class TextChannel(telepathy.server.ChannelTypeText):
