@@ -54,14 +54,16 @@ class AllContactsListChannel(AbstractListChannel):
 	def _process_refresh(self, addressbook, added, removed):
 		connection = self._conn
 		handlesAdded = [
-			handle.create_handle(connection, "contact", contactId)
+			handle.create_handle(connection, "contact", contactId, phoneNumber)
 			for contactId in added
 			if contactId
+			for (phoneType, phoneNumber) in addressbook.get_contact_details(contactId)
 		]
 		handlesRemoved = [
-			handle.create_handle(connection, "contact", contactId)
+			handle.create_handle(connection, "contact", contactId, phoneNumber)
 			for contactId in removed
 			if contactId
+			for (phoneType, phoneNumber) in addressbook.get_contact_details(contactId)
 		]
 		message = ""
 		actor = 0

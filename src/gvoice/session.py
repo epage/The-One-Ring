@@ -4,6 +4,7 @@ import logging
 
 import backend
 import addressbook
+import conversations
 
 
 _moduleLogger = logging.getLogger("gvoice.session")
@@ -17,6 +18,7 @@ class Session(object):
 		self._password = None
 		self._backend = None
 		self._addressbook = None
+		self._conversations = None
 
 	def login(self, username, password):
 		self._username = username
@@ -30,6 +32,7 @@ class Session(object):
 		self._password = None
 		self._backend = None
 		self._addressbook = None
+		self._conversations = None
 
 	def is_logged_in(self):
 		if self._backend is None:
@@ -63,5 +66,14 @@ class Session(object):
 		if self._addressbook is None:
 			_moduleLogger.info("Initializing addressbook")
 			self._addressbook = addressbook.Addressbook(self.backend)
-			self._addressbook.update()
 		return self._addressbook
+
+	@property
+	def conversations(self):
+		"""
+		Delay initialized addressbook
+		"""
+		if self._conversations is None:
+			_moduleLogger.info("Initializing conversations")
+			self._conversations = conversations.Conversationst(self.backend)
+		return self._conversations

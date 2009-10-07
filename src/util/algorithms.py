@@ -488,3 +488,90 @@ def functional_if(combiner, preds, item):
 
 	bool_results = function_map(preds, item)
 	return combiner(pass_bool, bool_results)
+
+
+def pushback_itr(itr):
+	"""
+	>>> list(pushback_itr(xrange(5)))
+	[0, 1, 2, 3, 4]
+	>>>
+	>>> first = True
+	>>> itr = pushback_itr(xrange(5))
+	>>> for i in itr:
+	... 	print i
+	... 	if first and i == 2:
+	... 		first = False
+	... 		print itr.send(i)
+	0
+	1
+	2
+	None
+	2
+	3
+	4
+	>>>
+	>>> first = True
+	>>> itr = pushback_itr(xrange(5))
+	>>> for i in itr:
+	... 	print i
+	... 	if first and i == 2:
+	... 		first = False
+	... 		print itr.send(i)
+	... 		print itr.send(i)
+	0
+	1
+	2
+	None
+	None
+	2
+	2
+	3
+	4
+	>>>
+	>>> itr = pushback_itr(xrange(5))
+	>>> print itr.next()
+	0
+	>>> print itr.next()
+	1
+	>>> print itr.send(10)
+	None
+	>>> print itr.next()
+	10
+	>>> print itr.next()
+	2
+	>>> print itr.send(20)
+	None
+	>>> print itr.send(30)
+	None
+	>>> print itr.send(40)
+	None
+	>>> print itr.next()
+	40
+	>>> print itr.next()
+	30
+	>>> print itr.send(50)
+	None
+	>>> print itr.next()
+	50
+	>>> print itr.next()
+	20
+	>>> print itr.next()
+	3
+	>>> print itr.next()
+	4
+	"""
+	for item in itr:
+		maybePushedBack = yield item
+		queue = []
+		while queue or maybePushedBack is not None:
+			if maybePushedBack is not None:
+				queue.append(maybePushedBack)
+				maybePushedBack = yield None
+			else:
+				item = queue.pop()
+				maybePushedBack = yield item
+
+
+if __name__ == "__main__":
+	import doctest
+	print doctest.testmod()

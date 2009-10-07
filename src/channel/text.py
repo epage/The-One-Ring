@@ -14,8 +14,7 @@ class TextChannel(telepathy.server.ChannelTypeText):
 	Look into implementing ChannelInterfaceMessages for rich text formatting
 	"""
 
-	def __init__(self, connection):
-		h = None
+	def __init__(self, connection, h):
 		telepathy.server.ChannelTypeText.__init__(self, connection, h)
 		self._nextRecievedId = 0
 
@@ -34,14 +33,14 @@ class TextChannel(telepathy.server.ChannelTypeText):
 		telepathy.server.ChannelTypeText.Close(self)
 		self.remove_from_connection()
 
-	def _on_message_received(self, sender, message):
+	def _on_message_received(self, contactId, contactNumber, message):
 		"""
 		@todo Attatch this to receiving a message
 		"""
 		currentReceivedId = self._nextRecievedId
 
 		timestamp = int(time.time())
-		h = handle.create_handle(self._conn, "contact", sender.account)
+		h = handle.create_handle(self._conn, "contact", contactId, contactNumber)
 		type = telepathy.CHANNEL_TEXT_MESSAGE_TYPE_NORMAL
 		message = message.content
 

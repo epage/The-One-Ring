@@ -30,7 +30,7 @@ class ChannelManager(object):
 			chan = self._listChannels[handle]
 		except KeyError, e:
 			if handle.get_type() != telepathy.HANDLE_TYPE_LIST:
-				raise RuntimeError("Unsupported channel type %r" % handle.get_type())
+				raise telepathy.NotImplemented("Only server lists are allowed")
 			_moduleLogger.debug("Requesting new contact list channel")
 
 			chan = channel.contact_list.create_contact_list_channel(self._connRef(), handle)
@@ -46,8 +46,7 @@ class ChannelManager(object):
 				raise telepathy.NotImplemented("Only Contacts are allowed")
 			_moduleLogger.debug("Requesting new text channel")
 
-			contact = handle.contact
-			chan = channel.text.TextChannel(self._connRef())
+			chan = channel.text.TextChannel(self._connRef(), None)
 			self._textChannels[handle] = chan
 			self._connRef().add_channel(chan, handle, suppress_handler)
 		return chan
@@ -56,11 +55,10 @@ class ChannelManager(object):
 		try:
 			chan = self._callChannels[handle]
 		except KeyError, e:
-			if handle.get_type() != telepathy.HANDLE_TYPE_CONTACT:
-				raise telepathy.NotImplemented("Only Contacts are allowed")
+			if handle.get_type() != telepathy.HANDLE_TYPE_NONE:
+				raise telepathy.NotImplemented("Using deprecated means to create a call")
 			_moduleLogger.debug("Requesting new call channel")
 
-			contact = handle.contact
 			chan = channel.call.CallChannel(self._connRef())
 			self._callChannels[handle] = chan
 			self._connRef().add_channel(chan, handle, suppress_handler)

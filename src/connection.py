@@ -174,19 +174,21 @@ class TheOneRingConnection(telepathy.server.Connection):
 			self.add_client_handle(h, sender)
 		return handles
 
-	def _create_contact_handle(self, name):
-		requestedContactId = name
+	def _create_contact_handle(self, requestedHandleName):
+		"""
+		@todo Determine if nay of this is really needed
+		"""
+		requestedContactId, requestedContactName = handle.ContactHandle.from_handle_name(
+			requestedHandleName
+		)
+		h = handle.create_handle(self, 'contact', requestedContactId, requestedHandleName)
+		return h
 
-		contacts = self.session.addressbook.get_contacts()
-		contactsFound = [
-			contactId for contactId in contacts
-			if contactId == requestedContactId
-		]
+	def _on_invite_text(self, contactId):
+		"""
+		@todo Make this work
+		"""
+		h = self._create_contact_handle(contactId)
 
-		if 0 < len(contactsFound):
-			contactId = contactsFound[0]
-			if len(contactsFound) != 1:
-				_moduleLogger.error("Contact ID was not unique: %s for %s" % (contactId, ))
-		else:
-			contactId = requestedContactId
-		h = handle.create_handle(self, 'contact', contactId)
+		channelManager = self._channelManager
+		channel = channelManager.channel_for_text(handle)

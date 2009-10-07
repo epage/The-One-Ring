@@ -36,14 +36,40 @@ class ConnectionHandle(TheOneRingHandle):
 		self.profile = connection.username
 
 
+def strip_number(prettynumber):
+	"""
+	function to take a phone number and strip out all non-numeric
+	characters
+
+	>>> strip_number("+012-(345)-678-90")
+	'01234567890'
+	"""
+	import re
+	uglynumber = re.sub('\D', '', prettynumber)
+	return uglynumber
+
+
 class ContactHandle(TheOneRingHandle):
 
-	def __init__(self, connection, id, contactId):
+	def __init__(self, connection, id, contactId, phoneNumber):
 		handleType = telepathy.HANDLE_TYPE_CONTACT
-		handleName = contactId
+		handleName = self.to_handle_name(contactId, phoneNumber)
 		TheOneRingHandle.__init__(self, connection, id, handleType, handleName)
 
 		self._contactId = contactId
+		self._phoneNumber = phoneNumber
+
+	@staticmethod
+	def from_handle_name(handleName):
+		parts = handleName.split("#")
+		assert len(parts) == 2
+		contactId, contactNumber = parts[0:2]
+		return contactId, contactNumber
+
+	@staticmethod
+	def to_handle_name(contactId, contactNumber):
+		handleName = "#".join((contactId, strip_number(contactNumber)))
+		return handleName
 
 	@property
 	def contactID(self):

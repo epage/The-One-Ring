@@ -1,15 +1,17 @@
 from __future__ import with_statement
 
-import os
-import warnings
 import cookielib
+import logging
 
 import test_utils
 
 import sys
 sys.path.append("../src")
 
-import gv_backend
+import gvoice
+
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 def generate_mock(cookiesSucceed, username, password):
@@ -34,9 +36,9 @@ def generate_mock(cookiesSucceed, username, password):
 def test_not_logged_in():
 	correctUsername, correctPassword = "", ""
 	MockBrowserModule = generate_mock(False, correctUsername, correctPassword)
-	gv_backend.browser_emu, RealBrowser = MockBrowserModule, gv_backend.browser_emu
+	gvoice.backend.browser_emu, RealBrowser = MockBrowserModule, gvoice.backend.browser_emu
 	try:
-		backend = gv_backend.GVDialer()
+		backend = gvoice.backend.GVoiceBackend()
 		assert not backend.is_authed()
 		assert not backend.login("bad_name", "bad_password")
 		backend.logout()
@@ -45,11 +47,11 @@ def test_not_logged_in():
 		with test_utils.expected(RuntimeError):
 			backend.send_sms("5551234567", "Hello World")
 		assert backend.get_account_number() == "", "%s" % backend.get_account_number()
-		backend.set_sane_callback()
+		gvoice.backend.set_sane_callback(backend)
 		assert backend.get_callback_number() == ""
 		with test_utils.expected(Exception):
 			recent = list(backend.get_recent())
 		with test_utils.expected(Exception):
 			messages = list(backend.get_messages())
 	finally:
-		gv_backend.browser_emu = RealBrowser
+		gvoice.backend.browser_emu = RealBrowser

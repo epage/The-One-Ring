@@ -1,10 +1,12 @@
 import telepathy
 
 
-class LocationMixin(telepathy.server.ConnectionInterfaceLocation):
+#class LocationMixin(telepathy.server.ConnectionInterfaceLocation):
+class LocationMixin(object):
 
 	def __init__(self):
-		telepathy.server.ConnectionInterfaceLocation.__init__(self)
+		#telepathy.server.ConnectionInterfaceLocation.__init__(self)
+		pass
 
 	@property
 	def session(self):

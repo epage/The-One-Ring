@@ -158,7 +158,11 @@ class GVoiceBackend(object):
 			_moduleLogger.exception("Translating error: %s" % str(e))
 			raise NetworkError("%s is not accesible" % self._loginURL)
 		galxTokens = self._galxRe.search(tokenPage)
-		galxToken = galxTokens.group(1)
+		if galxTokens is not None:
+			galxToken = galxTokens.group(1)
+		else:
+			galxToken = ""
+			_moduleLogger.debug("Could not grab GALX token")
 
 		loginPostData = urllib.urlencode({
 			'Email' : username,
@@ -410,6 +414,8 @@ class GVoiceBackend(object):
 			callbackNumber = match.group(2)
 			callbackName = match.group(1)
 			self._callbackNumbers[callbackNumber] = callbackName
+		if len(self._callbackNumbers) == 0:
+			_moduleLogger.debug("Could not extract callback numbers from GoogleVoice (the troublesome page follows):\n%s" % page)
 
 	def _send_validation(self, number):
 		if not self.is_valid_syntax(number):

@@ -19,6 +19,7 @@ class Addressbook(object):
 		self._changedContacts = set()
 
 		self.updateSignalHandler = coroutines.CoTee()
+		self.update()
 
 	def update(self, force=False):
 		if not force and self._contacts:
@@ -38,8 +39,9 @@ class Addressbook(object):
 			if self._has_contact_changed(contactId, oldContacts)
 		)
 
-		message = self, self._addedContacts, self._removedContacts, self._changedContacts
-		self.updateSignalHandler.stage.send(message)
+		if self._addedContacts or self._removedContacts or self._changedContacts:
+			message = self, self._addedContacts, self._removedContacts, self._changedContacts
+			self.updateSignalHandler.stage.send(message)
 
 	def get_contacts(self):
 		return self._contacts.iterkeys()
@@ -56,12 +58,12 @@ class Addressbook(object):
 			return
 		contacts = self._backend.get_contacts()
 		for contactId, contactName in contacts:
-			self._contacts[contactId] = (contactName, {})
+			self._contacts[contactId] = (contactName, [])
 
 	def _populate_contact_details(self, contactId):
 		if self._get_contact_details(contactId):
 			return
-		self._get_contact_details(contactId).update(
+		self._get_contact_details(contactId).extend(
 			self._backend.get_contact_details(contactId)
 		)
 
@@ -74,7 +76,7 @@ class Addressbook(object):
 		oldContactDetails = oldContact[1]
 		if oldContactName != self.get_contact_name(contactId):
 			return True
-		if not oldContactDetails[1]:
+		if not oldContactDetails:
 			return False
 		# if its already in the old cache, purposefully add it into the new cache
 		return oldContactDetails != self.get_contact_details(contactId)
