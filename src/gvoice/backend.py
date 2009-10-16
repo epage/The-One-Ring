@@ -595,6 +595,7 @@ def decorate_recent(recentCallData):
 	"""
 	@returns (personsName, phoneNumber, date, action)
 	"""
+	contactId = recentCallData["contactId"]
 	if recentCallData["name"]:
 		header = recentCallData["name"]
 	elif recentCallData["prettyNumber"]:
@@ -607,10 +608,11 @@ def decorate_recent(recentCallData):
 	number = recentCallData["number"]
 	relTime = recentCallData["relTime"]
 	action = recentCallData["action"]
-	return header, number, relTime, action
+	return contactId, header, number, relTime, action
 
 
 def decorate_message(messageData):
+	contactId = messageData["contactId"]
 	exactTime = messageData["time"]
 	if messageData["name"]:
 		header = messageData["name"]
@@ -632,7 +634,7 @@ def decorate_message(messageData):
 			for messagePart in messageParts
 		]
 
-	decoratedResults = header, number, relativeTime, messages
+	decoratedResults = contactId, header, number, relativeTime, messages
 	return decoratedResults
 
 

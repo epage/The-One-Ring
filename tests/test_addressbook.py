@@ -71,6 +71,12 @@ def test_one_contact_no_details():
 	book.updateSignalHandler.register_sink(callback)
 	assert len(callbackData) == 0, "%r" % callbackData
 
+	contacts = list(book.get_contacts())
+	assert len(contacts) == 1
+	id = contacts[0]
+	name = book.get_contact_name(id)
+	assert name == backend.contactsData[id]["name"]
+
 	book.update()
 	assert len(callbackData) == 0, "%r" % callbackData
 
@@ -100,6 +106,12 @@ def test_one_contact_with_details():
 	book = gvoice.addressbook.Addressbook(backend)
 	book.updateSignalHandler.register_sink(callback)
 	assert len(callbackData) == 0, "%r" % callbackData
+
+	contacts = list(book.get_contacts())
+	assert len(contacts) == 1
+	id = contacts[0]
+	name = book.get_contact_name(id)
+	assert name == backend.contactsData[id]["name"]
 
 	book.update()
 	assert len(callbackData) == 0, "%r" % callbackData
