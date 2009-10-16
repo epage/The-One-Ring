@@ -101,10 +101,11 @@ class Conversation(object):
 			if messageWithTimestamp not in messageParts:
 				messageParts.append(messageWithTimestamp)
 				messageAppended = True
+		messageParts.sort()
 
 		return messageAppended
 
 	@staticmethod
 	def _append_time(message, exactWhen):
 		whoFrom, message, when = message
-		return whoFrom, message, when, exactWhen
+		return exactWhen, whoFrom, message, when
