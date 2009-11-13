@@ -39,6 +39,7 @@ test: $(OBJ)
 
 package: $(OBJ)
 	rm -Rf $(BUILD_PATH)
+
 	mkdir -p $(BUILD_PATH)/generic
 	cp $(SOURCE_PATH)/constants.py  $(BUILD_PATH)/generic
 	$(foreach file, $(DATA), cp $(file) $(BUILD_PATH)/generic/$(subst /,-,$(file)) ; )
@@ -49,6 +50,7 @@ package: $(OBJ)
 	cp support/builddeb.py $(BUILD_PATH)/generic
 	cp support/py2deb.py $(BUILD_PATH)/generic
 	cp support/fake_py2deb.py $(BUILD_PATH)/generic
+
 	mkdir -p $(BUILD_PATH)/chinook
 	cp -R $(BUILD_PATH)/generic/* $(BUILD_PATH)/chinook
 	cd $(BUILD_PATH)/chinook ; python builddeb.py chinook

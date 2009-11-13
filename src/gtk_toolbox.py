@@ -219,3 +219,19 @@ def safecall(f, errorDisplay=None, default=None, exception=Exception):
 				errorDisplay.push_exception(e)
 			return default
 	return _safecall
+
+
+def log_exception(logger):
+
+	def log_exception_decorator(func):
+
+		@functools.wraps(func)
+		def wrapper(*args, **kwds):
+			try:
+				return func(*args, **kwds)
+			except Exception:
+				logger.exception(func.__name__)
+
+		return wrapper
+
+	return log_exception_decorator

@@ -501,8 +501,10 @@ class Py2deb(object):
             mail = author+"@"+socket.gethostname()
 
         self.name = name
+        self.prettyName = ""
         self.description = description
         self.upgradeDescription = ""
+        self.bugTracker = ""
         self.license = license
         self.depends = depends
         self.recommends = ""
@@ -753,8 +755,16 @@ FILES :
                 "Description: %(description)s",
             ]
 
+            if self.prettyName:
+                prettyName = "XSBC-Maemo-Display-Name: %s" % self.prettyName.strip()
+                specificParagraphFields.append("\n  ".join(prettyName.split("\n")))
+
+            if self.bugTracker:
+                bugTracker = "XSBC-Bugtracker: %s" % self.bugTracker.strip()
+                specificParagraphFields.append("\n  ".join(bugTracker.split("\n")))
+
             if self.upgradeDescription:
-                upgradeDescription = "XB-Maemo-Upgrade-Description: %s" % self.upgradeDescription.strip()
+                upgradeDescription = "XSBC-Maemo-Upgrade-Description: %s" % self.upgradeDescription.strip()
                 specificParagraphFields.append("\n  ".join(upgradeDescription.split("\n")))
 
             if self.icon:
@@ -769,7 +779,7 @@ FILES :
                     if i % 60 == 0:
                         uueIconLines.append("")
                     uueIconLines[-1] += c
-                uueIconLines[0:0] = ("XB-Maemo-Icon-26:", )
+                uueIconLines[0:0] = ("XSBC-Maemo-Icon-26:", )
                 specificParagraphFields.append("\n  ".join(uueIconLines))
 
             generalParagraph = "\n".join(generalParagraphFields)
