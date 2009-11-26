@@ -34,6 +34,13 @@ class SimplePresenceMixin(telepathy.server.ConnectionInterfaceSimplePresence):
 		"""
 		raise NotImplementedError()
 
+	@property
+	def handle(self):
+		"""
+		@abstract
+		"""
+		raise NotImplementedError("Abstract property called")
+
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def GetPresences(self, contacts):
 		"""
@@ -55,14 +62,15 @@ class SimplePresenceMixin(telepathy.server.ConnectionInterfaceSimplePresence):
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def SetPresence(self, status, message):
 		if message:
-			raise telepathy.errors.InvalidArgument
+			raise telepathy.errors.InvalidArgument("Messages aren't supported")
 
 		if status == TheOneRingPresence.ONLINE:
 			self.gvoice_backend.mark_dnd(True)
 		elif status == TheOneRingPresence.BUSY:
+			raise telepathy.errors.NotAvailable("DnD support not yet added to TheOneRing")
 			self.gvoice_backend.mark_dnd(False)
 		else:
-			raise telepathy.errors.InvalidArgument
+			raise telepathy.errors.InvalidArgument("Unsupported status: %r" % status)
 		_moduleLogger.info("Setting Presence to '%s'" % status)
 
 
