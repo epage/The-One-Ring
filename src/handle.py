@@ -61,9 +61,15 @@ class ContactHandle(TheOneRingHandle):
 
 	@staticmethod
 	def from_handle_name(handleName):
-		parts = handleName.split("#")
-		assert len(parts) == 2
-		contactId, contactNumber = parts[0:2]
+		parts = handleName.split("#", 1)
+		if len(parts) == 2:
+			contactId, contactNumber = parts[0:2]
+		elif len(parts) == 1:
+			contactId, contactNumber = "", handleName
+		else:
+			raise RuntimeError("Invalid handle: %s" % handleName)
+
+		contactNumber = strip_number(contactNumber)
 		return contactId, contactNumber
 
 	@staticmethod
@@ -74,6 +80,10 @@ class ContactHandle(TheOneRingHandle):
 	@property
 	def contactID(self):
 		return self._contactId
+
+	@property
+	def phoneNumber(self):
+		return self._phoneNumber
 
 	@property
 	def contactDetails(self):

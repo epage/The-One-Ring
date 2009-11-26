@@ -4,6 +4,7 @@ import gobject
 import telepathy
 
 import constants
+import gtk_toolbox
 import connection
 
 
@@ -20,6 +21,7 @@ class TheOneRingConnectionManager(telepathy.server.ConnectionManager):
 		self._on_shutdown = shutdown_func
 		_moduleLogger.info("Connection manager created")
 
+	@gtk_toolbox.log_exception(_moduleLogger)
 	def GetParameters(self, proto):
 		"""
 		For org.freedesktop.telepathy.ConnectionManager

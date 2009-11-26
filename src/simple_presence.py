@@ -2,6 +2,8 @@ import logging
 
 import telepathy
 
+import gtk_toolbox
+
 
 _moduleLogger = logging.getLogger("simple_presence")
 
@@ -32,6 +34,7 @@ class SimplePresenceMixin(telepathy.server.ConnectionInterfaceSimplePresence):
 		"""
 		raise NotImplementedError()
 
+	@gtk_toolbox.log_exception(_moduleLogger)
 	def GetPresences(self, contacts):
 		"""
 		@todo Figure out how to know when its self and get whether busy or not
@@ -49,6 +52,7 @@ class SimplePresenceMixin(telepathy.server.ConnectionInterfaceSimplePresence):
 			presences[handle] = (presenceType, presence, personalMessage)
 		return presences
 
+	@gtk_toolbox.log_exception(_moduleLogger)
 	def SetPresence(self, status, message):
 		if message:
 			raise telepathy.errors.InvalidArgument

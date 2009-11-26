@@ -4,6 +4,7 @@ import logging
 import telepathy
 
 import constants
+import gtk_toolbox
 import gvoice
 import handle
 import channel_manager
@@ -72,6 +73,7 @@ class TheOneRingConnection(telepathy.server.Connection):
 		self.check_handle(handleType, handleId)
 		return self._handles[handleType, handleId]
 
+	@gtk_toolbox.log_exception(_moduleLogger)
 	def Connect(self):
 		"""
 		For org.freedesktop.telepathy.Connection
@@ -103,6 +105,7 @@ class TheOneRingConnection(telepathy.server.Connection):
 				telepathy.CONNECTION_STATUS_REASON_REQUESTED
 			)
 
+	@gtk_toolbox.log_exception(_moduleLogger)
 	def Disconnect(self):
 		"""
 		For org.freedesktop.telepathy.Connection
@@ -119,6 +122,7 @@ class TheOneRingConnection(telepathy.server.Connection):
 			telepathy.CONNECTION_STATUS_REASON_REQUESTED
 		)
 
+	@gtk_toolbox.log_exception(_moduleLogger)
 	def RequestChannel(self, type, handleType, handleId, suppressHandler):
 		"""
 		For org.freedesktop.telepathy.Connection
@@ -140,16 +144,17 @@ class TheOneRingConnection(telepathy.server.Connection):
 			channel = channelManager.channel_for_list(handle, suppressHandler)
 		elif type == telepathy.CHANNEL_TYPE_TEXT:
 			_moduleLogger.info("RequestChannel Text")
-			channel = channelManager.channel_for_text(handle, None, suppressHandler)
+			channel = channelManager.channel_for_text(handle, suppressHandler)
 		elif type == telepathy.CHANNEL_TYPE_STREAMED_MEDIA:
 			_moduleLogger.info("RequestChannel Media")
-			channel = channelManager.channel_for_text(handle, None, suppressHandler)
+			channel = channelManager.channel_for_call(handle, suppressHandler)
 		else:
 			raise telepathy.NotImplemented("unknown channel type %s" % type)
 
 		_moduleLogger.info("RequestChannel Object Path: %s" % channel._object_path)
 		return channel._object_path
 
+	@gtk_toolbox.log_exception(_moduleLogger)
 	def RequestHandles(self, handleType, names, sender):
 		"""
 		For org.freedesktop.telepathy.Connection
@@ -178,10 +183,10 @@ class TheOneRingConnection(telepathy.server.Connection):
 		"""
 		@todo Determine if nay of this is really needed
 		"""
-		requestedContactId, requestedContactName = handle.ContactHandle.from_handle_name(
+		requestedContactId, requestedContactNumber = handle.ContactHandle.from_handle_name(
 			requestedHandleName
 		)
-		h = handle.create_handle(self, 'contact', requestedContactId, requestedHandleName)
+		h = handle.create_handle(self, 'contact', requestedContactId, requestedContactNumber)
 		return h
 
 	def _on_invite_text(self, contactId):

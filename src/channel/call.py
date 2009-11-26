@@ -2,6 +2,9 @@ import logging
 
 import telepathy
 
+import gtk_toolbox
+import handle
+
 
 _moduleLogger = logging.getLogger("channel.call")
 
@@ -16,18 +19,21 @@ class CallChannel(
 		telepathy.server.ChannelInterfaceGroup.__init__(self)
 		telepathy.server.ChannelInterfaceChatState.__init__(self)
 
+	@gtk_toolbox.log_exception(_moduleLogger)
 	def ListStreams(self):
 		"""
 		For org.freedesktop.Telepathy.Channel.Type.StreamedMedia
 		"""
 		return ()
 
+	@gtk_toolbox.log_exception(_moduleLogger)
 	def RemoveStreams(self, streams):
 		"""
 		For org.freedesktop.Telepathy.Channel.Type.StreamedMedia
 		"""
 		raise telepathy.NotImplemented("Cannot remove a stream")
 
+	@gtk_toolbox.log_exception(_moduleLogger)
 	def RequestStreamDirection(self, stream, streamDirection):
 		"""
 		For org.freedesktop.Telepathy.Channel.Type.StreamedMedia
@@ -37,6 +43,7 @@ class CallChannel(
 		_moduleLogger.info("A request was made to change the stream direction")
 		raise telepathy.NotImplemented("Cannot change directions")
 
+	@gtk_toolbox.log_exception(_moduleLogger)
 	def RequestStreams(self, contact, streamTypes):
 		"""
 		For org.freedesktop.Telepathy.Channel.Type.StreamedMedia
@@ -47,12 +54,9 @@ class CallChannel(
 			if streamType != telepathy.constants.MEDIA_STREAM_TYPE_AUDIO:
 				raise telepathy.NotImplemented("Audio is the only stream type supported")
 
-		contactId = contact.name
+		contactId, contactNumber = handle.ContactHandle.from_handle_name(contact.name)
 
-		addressbook = self._conn.session.addressbook
-		phones = addressbook.get_contact_details(contactId)
-		firstNumber = phones.next()
-		self._conn.session.backend.dial(firstNumber)
+		self._conn.session.backend.dial(contactNumber)
 
 		streamId = 0
 		streamState = telepathy.constants.MEDIA_STREAM_STATE_DISCONNECTED
@@ -60,6 +64,7 @@ class CallChannel(
 		pendingSendFlags = telepathy.constants.MEDIA_STREAM_PENDING_REMOTE_SEND
 		return [(streamId, contact, streamTypes[0], streamState, streamDirection, pendingSendFlags)]
 
+	@gtk_toolbox.log_exception(_moduleLogger)
 	def GetCallStates(self):
 		"""
 		For org.freedesktop.Telepathy.Channel.Interface.CallState

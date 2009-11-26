@@ -3,6 +3,7 @@ import logging
 
 import telepathy
 
+import gtk_toolbox
 import handle
 
 
@@ -18,17 +19,21 @@ class TextChannel(telepathy.server.ChannelTypeText):
 		telepathy.server.ChannelTypeText.__init__(self, connection, h)
 		self._nextRecievedId = 0
 
-		handles = []
-		# @todo Populate participants
-		self.MembersChanged('', handles, [], [], [],
-				0, telepathy.CHANNEL_GROUP_CHANGE_REASON_NONE)
+		self._otherHandle = h
+		handles = [h]
+		#self.MembersChanged('', handles, [], [], [],
+		#		0, telepathy.CHANNEL_GROUP_CHANGE_REASON_NONE)
 
+	@gtk_toolbox.log_exception(_moduleLogger)
 	def Send(self, messageType, text):
 		if messageType != telepathy.CHANNEL_TEXT_MESSAGE_TYPE_NORMAL:
-			raise telepathy.NotImplemented("Unhandled message type")
-		# @todo implement sending message
+			raise telepathy.NotImplemented("Unhandled message type: %r" % messageType)
+
+		self._conn.session.backend.send_sms(self._otherHandle.phoneNumber, text)
+
 		self.Sent(int(time.time()), messageType, text)
 
+	@gtk_toolbox.log_exception(_moduleLogger)
 	def Close(self):
 		telepathy.server.ChannelTypeText.Close(self)
 		self.remove_from_connection()

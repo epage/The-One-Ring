@@ -46,7 +46,7 @@ class ChannelManager(object):
 				raise telepathy.NotImplemented("Only Contacts are allowed")
 			_moduleLogger.debug("Requesting new text channel")
 
-			chan = channel.text.TextChannel(self._connRef(), None)
+			chan = channel.text.TextChannel(self._connRef(), handle)
 			self._textChannels[handle] = chan
 			self._connRef().add_channel(chan, handle, suppress_handler)
 		return chan
@@ -59,7 +59,7 @@ class ChannelManager(object):
 				raise telepathy.NotImplemented("Using deprecated means to create a call")
 			_moduleLogger.debug("Requesting new call channel")
 
-			chan = channel.call.CallChannel(self._connRef())
+			chan = channel.call.CallChannel(self._connRef(), handle)
 			self._callChannels[handle] = chan
 			self._connRef().add_channel(chan, handle, suppress_handler)
 		return chan

@@ -231,6 +231,7 @@ def log_exception(logger):
 				return func(*args, **kwds)
 			except Exception:
 				logger.exception(func.__name__)
+				raise
 
 		return wrapper
 
