@@ -8,6 +8,7 @@ import gtk_toolbox
 import gvoice
 import handle
 import aliasing
+import simple_presence
 import channel_manager
 
 
@@ -16,7 +17,8 @@ _moduleLogger = logging.getLogger("connection")
 
 class TheOneRingConnection(
 	telepathy.server.Connection,
-	aliasing.AliasingMixin
+	aliasing.AliasingMixin,
+	simple_presence.SimplePresenceMixin,
 ):
 
 	# Overriding a base class variable
@@ -44,6 +46,7 @@ class TheOneRingConnection(
 				constants._telepathy_implementation_name_
 			)
 			aliasing.AliasingMixin.__init__(self)
+			simple_presence.SimplePresenceMixin.__init__(self)
 
 			self._manager = weakref.proxy(manager)
 			self._credentials = (
@@ -155,7 +158,7 @@ class TheOneRingConnection(
 			_moduleLogger.info("RequestChannel Media")
 			channel = channelManager.channel_for_call(handle, suppressHandler)
 		else:
-			raise telepathy.NotImplemented("unknown channel type %s" % type)
+			raise telepathy.errors.NotImplemented("unknown channel type %s" % type)
 
 		_moduleLogger.info("RequestChannel Object Path: %s" % channel._object_path)
 		return channel._object_path
@@ -180,7 +183,7 @@ class TheOneRingConnection(
 				_moduleLogger.info("RequestHandles List: %s" % name)
 				h = handle.create_handle(self, 'list', name)
 			else:
-				raise telepathy.NotAvailable('Handle type unsupported %d' % handleType)
+				raise telepathy.errors.NotAvailable('Handle type unsupported %d' % handleType)
 			handles.append(h.id)
 			self.add_client_handle(h, sender)
 		return handles
