@@ -7,13 +7,17 @@ import constants
 import gtk_toolbox
 import gvoice
 import handle
+import aliasing
 import channel_manager
 
 
 _moduleLogger = logging.getLogger("connection")
 
 
-class TheOneRingConnection(telepathy.server.Connection):
+class TheOneRingConnection(
+	telepathy.server.Connection,
+	aliasing.AliasingMixin
+):
 
 	# Overriding a base class variable
 	_mandatory_parameters = {
@@ -32,12 +36,14 @@ class TheOneRingConnection(telepathy.server.Connection):
 			self.check_parameters(parameters)
 			account = unicode(parameters['username'])
 
+			# Connection init must come first
 			telepathy.server.Connection.__init__(
 				self,
 				constants._telepathy_protocol_name_,
 				account,
 				constants._telepathy_implementation_name_
 			)
+			aliasing.AliasingMixin.__init__(self)
 
 			self._manager = weakref.proxy(manager)
 			self._credentials = (
