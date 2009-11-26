@@ -31,7 +31,7 @@ class CallChannel(
 		"""
 		For org.freedesktop.Telepathy.Channel.Type.StreamedMedia
 		"""
-		raise telepathy.NotImplemented("Cannot remove a stream")
+		raise telepathy.errors.NotImplemented("Cannot remove a stream")
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def RequestStreamDirection(self, stream, streamDirection):
@@ -41,7 +41,7 @@ class CallChannel(
 		@note Since streams are short lived, not bothering to implement this
 		"""
 		_moduleLogger.info("A request was made to change the stream direction")
-		raise telepathy.NotImplemented("Cannot change directions")
+		raise telepathy.errors.NotImplemented("Cannot change directions")
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def RequestStreams(self, contact, streamTypes):
@@ -52,7 +52,7 @@ class CallChannel(
 		"""
 		for streamType in streamTypes:
 			if streamType != telepathy.constants.MEDIA_STREAM_TYPE_AUDIO:
-				raise telepathy.NotImplemented("Audio is the only stream type supported")
+				raise telepathy.errors.NotImplemented("Audio is the only stream type supported")
 
 		contactId, contactNumber = handle.ContactHandle.from_handle_name(contact.name)
 

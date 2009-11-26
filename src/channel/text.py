@@ -24,7 +24,7 @@ class TextChannel(telepathy.server.ChannelTypeText):
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def Send(self, messageType, text):
 		if messageType != telepathy.CHANNEL_TEXT_MESSAGE_TYPE_NORMAL:
-			raise telepathy.NotImplemented("Unhandled message type: %r" % messageType)
+			raise telepathy.errors.NotImplemented("Unhandled message type: %r" % messageType)
 
 		self._conn.session.backend.send_sms(self._otherHandle.phoneNumber, text)
 

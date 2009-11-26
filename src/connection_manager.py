@@ -29,7 +29,7 @@ class TheOneRingConnectionManager(telepathy.server.ConnectionManager):
 		@returns the mandatory and optional parameters for creating a connection
 		"""
 		if proto not in self._protos:
-			raise telepathy.NotImplemented('unknown protocol %s' % proto)
+			raise telepathy.errors.NotImplemented('unknown protocol %s' % proto)
 
 		result = []
 		ConnectionClass = self._protos[proto]

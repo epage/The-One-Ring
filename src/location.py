@@ -27,14 +27,14 @@ class LocationMixin(object):
 		"""
 		@returns {Contact: {Location Type: Location}}
 		"""
-		raise telepathy.NotImplemented("Yet")
+		raise telepathy.errors.NotImplemented("Yet")
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def RequestLocation(self, contact):
 		"""
 		@returns {Location Type: Location}
 		"""
-		raise telepathy.NotImplemented("Yet")
+		raise telepathy.errors.NotImplemented("Yet")
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def SetLocation(self, location):
