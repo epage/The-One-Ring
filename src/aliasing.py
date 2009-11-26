@@ -99,8 +99,26 @@ class AliasingMixin(telepathy.server.ConnectionInterfaceAliasing):
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def SetAliases(self, aliases):
-		# @todo Look into setting callback number through this mechanism
-		raise telepathy.PermissionDenied("No user customizable aliases")
+		_moduleLogger.debug("Called SetAliases")
+
+		# first validate that no other handle types are included
+		userHandleAndAlias = None
+		for handleId, alias in aliases.iteritems():
+			h = self.handle(telepathy.HANDLE_TYPE_CONTACT, handleId)
+			if not isinstance(h, handle.ConnectionHandle):
+				raise telepathy.PermissionDenied("No user customizable aliases")
+			userHandleAndAlias = h, alias
+		if userHandleAndAlias is None:
+			_moduleLogger.debug("No user handle")
+			return
+
+		# Update callback
+		uglyNumber = handle.strip_number(userHandleAndAlias[1])
+		self.session.backend.set_callback_number(uglyNumber)
+
+		# Inform of change
+		changedAliases = (userHandleAndAlias, )
+		self.AliasesChanged(changedAliases)
 
 	def _get_alias(self, handleId):
 		h = self.handle(telepathy.HANDLE_TYPE_CONTACT, handleId)
