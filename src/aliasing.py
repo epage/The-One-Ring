@@ -106,7 +106,7 @@ class AliasingMixin(telepathy.server.ConnectionInterfaceAliasing):
 		for handleId, alias in aliases.iteritems():
 			h = self.handle(telepathy.HANDLE_TYPE_CONTACT, handleId)
 			if not isinstance(h, handle.ConnectionHandle):
-				raise telepathy.PermissionDenied("No user customizable aliases")
+				raise telepathy.errors.PermissionDenied("No user customizable aliases")
 			userHandleAndAlias = h, alias
 		if userHandleAndAlias is None:
 			_moduleLogger.debug("No user handle")
@@ -127,5 +127,9 @@ class AliasingMixin(telepathy.server.ConnectionInterfaceAliasing):
 			userAlias = make_pretty(callbackNumber)
 			return userAlias
 		else:
-			contactAlias = self.session.addressbook.get_contact_name(h.contactID)
+			contactId = h.contactID
+			if contactId:
+				contactAlias = self.session.addressbook.get_contact_name(contactId)
+			else:
+				contactAlias = make_pretty(h.phoneNumber)
 			return contactAlias
