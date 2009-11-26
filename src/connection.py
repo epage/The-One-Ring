@@ -22,6 +22,8 @@ class TheOneRingConnection(
 ):
 
 	# Overriding a base class variable
+	# @todo remove forward as one of the settings but instead use the alias
+	# with set sane defaults and saving it to an ini file
 	_mandatory_parameters = {
 		'username' : 's',
 		'password' : 's',
