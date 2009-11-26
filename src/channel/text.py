@@ -20,9 +20,6 @@ class TextChannel(telepathy.server.ChannelTypeText):
 		self._nextRecievedId = 0
 
 		self._otherHandle = h
-		handles = [h]
-		#self.MembersChanged('', handles, [], [], [],
-		#		0, telepathy.CHANNEL_GROUP_CHANGE_REASON_NONE)
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def Send(self, messageType, text):
