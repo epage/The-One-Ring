@@ -4,6 +4,7 @@ import telepathy
 
 import util.go_utils as gobject_utils
 import util.coroutines as coroutines
+import gtk_toolbox
 import handle
 
 
@@ -38,6 +39,14 @@ class AllContactsListChannel(AbstractListChannel):
 		addressbook = connection.session.addressbook
 		contacts = addressbook.get_contacts()
 		self._process_refresh(addressbook, contacts, [])
+
+	@gtk_toolbox.log_exception(_moduleLogger)
+	def Close(self):
+		telepathy.server.ChannelTypeContactList.Close(self)
+		self.remove_from_connection()
+		self._session.addressbook.updateSignalHandler.unregister_sink(
+			self._on_contacts_refreshed
+		)
 
 	@coroutines.func_sink
 	@coroutines.expand_positional

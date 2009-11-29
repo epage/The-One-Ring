@@ -4,6 +4,8 @@ import logging
 import telepathy
 
 import constants
+import util.go_utils as gobject_utils
+import util.coroutines as coroutines
 import gtk_toolbox
 import gvoice
 import handle
@@ -196,11 +198,15 @@ class TheOneRingConnection(
 		h = handle.create_handle(self, 'contact', requestedContactId, requestedContactNumber)
 		return h
 
-	def _on_invite_text(self, contactId):
-		"""
-		@todo Get externally initiated conversations working
-		"""
-		h = self._create_contact_handle(contactId)
-
+	@coroutines.func_sink
+	@coroutines.expand_positional
+	@gobject_utils.async
+	def _on_conversations_updated(self, conversationIds):
+		# @todo get conversations update running
+		# @todo test conversatiuons
 		channelManager = self._channelManager
-		channel = channelManager.channel_for_text(handle)
+		for contactId, phoneNumber in conversationIds:
+			h = self._create_contact_handle(contactId, phoneNumber)
+			# if its new, __init__ will take care of things
+			# if its old, its own update will take care of it
+			channel = channelManager.channel_for_text(handle)

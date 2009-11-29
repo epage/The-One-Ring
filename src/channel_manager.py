@@ -19,7 +19,7 @@ class ChannelManager(object):
 
 	def close(self):
 		for chan in self._listChannels.values():
-			chan.remove_from_connection()# so that dbus lets it die.
+			chan.Close()
 		for chan in self._textChannels.values():
 			chan.Close()
 		for chan in self._callChannels.values():

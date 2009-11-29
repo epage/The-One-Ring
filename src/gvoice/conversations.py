@@ -58,6 +58,12 @@ class Conversations(object):
 	def get_conversation(self, key):
 		return self._conversations[key]
 
+	def clear_conversation(self, key):
+		del self._conversations[key]
+
+	def clear_all(self):
+		self._conversations.clear()
+
 
 class Conversation(object):
 
@@ -95,6 +101,7 @@ class Conversation(object):
 
 		messageAppended = False
 
+		# @todo Handle No Transcription voicemails
 		messageParts = self._data["messageParts"]
 		for message in moreData["messageParts"]:
 			messageWithTimestamp = self._append_time(message, moreData["time"])
