@@ -811,5 +811,5 @@ def grab_debug_info(username, password):
 if __name__ == "__main__":
 	import sys
 	logging.basicConfig(level=logging.DEBUG)
-	test_backend(sys.argv[1], sys.argv[2])
-	#grab_debug_info(sys.argv[1], sys.argv[2])
+	#test_backend(sys.argv[1], sys.argv[2])
+	grab_debug_info(sys.argv[1], sys.argv[2])
