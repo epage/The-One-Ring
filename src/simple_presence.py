@@ -3,6 +3,7 @@ import logging
 import telepathy
 
 import gtk_toolbox
+import handle
 
 
 _moduleLogger = logging.getLogger("simple_presence")
@@ -44,19 +45,22 @@ class SimplePresenceMixin(telepathy.server.ConnectionInterfaceSimplePresence):
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def GetPresences(self, contacts):
 		"""
-		@todo Copy Aliasing's approach to knowing if self and get whether busy or not
-
 		@return {ContactHandle: (Status, Presence Type, Message)}
 		"""
 		presences = {}
 		for handleId in contacts:
-			handle = self.handle(telepathy.HANDLE_TYPE_CONTACT, handleId)
+			h = self.handle(telepathy.HANDLE_TYPE_CONTACT, handleId)
+			if isinstance(h, handle.ConnectionHandle):
+				isDnd = self.session.backend.is_dnd()
+				presence = TheOneRingPresence.BUSY if isDnd else TheOneRingPresence.ONLINE
+				personalMessage = u""
+				presenceType = TheOneRingPresence.TO_PRESENCE_TYPE[presence]
+			else:
+				presence = TheOneRingPresence.ONLINE
+				personalMessage = u""
+				presenceType = TheOneRingPresence.TO_PRESENCE_TYPE[presence]
 
-			presence = TheOneRingPresence.BUSY
-			personalMessage = u""
-			presenceType = TheOneRingPresence.TO_PRESENCE_TYPE[presence]
-
-			presences[handle] = (presenceType, presence, personalMessage)
+			presences[h] = (presenceType, presence, personalMessage)
 		return presences
 
 	@gtk_toolbox.log_exception(_moduleLogger)
@@ -66,13 +70,9 @@ class SimplePresenceMixin(telepathy.server.ConnectionInterfaceSimplePresence):
 
 
 		if status == TheOneRingPresence.ONLINE:
-			# @todo Implement dnd
-			#self.gvoice_backend.mark_dnd(True)
-			pass
+			self.gvoice_backend.set_dnd(False)
 		elif status == TheOneRingPresence.BUSY:
-			# @todo Implement dnd
-			#self.gvoice_backend.mark_dnd(False)
-			raise telepathy.errors.NotAvailable("DnD support not yet added to TheOneRing")
+			self.gvoice_backend.set_dnd(True)
 		else:
 			raise telepathy.errors.InvalidArgument("Unsupported status: %r" % status)
 		_moduleLogger.info("Setting Presence to '%s'" % status)

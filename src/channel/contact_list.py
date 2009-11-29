@@ -43,12 +43,6 @@ class AllContactsListChannel(AbstractListChannel):
 	@coroutines.expand_positional
 	@gobject_utils.async
 	def _on_contacts_refreshed(self, addressbook, added, removed, changed):
-		"""
-		@todo This currently filters out people not yet added to the contact
-			list.  Something needs to be done about those
-		@todo This currently does not handle people with multiple phone
-			numbers, yay that'll be annoying to resolve
-		"""
 		self._process_refresh(addressbook, added, removed)
 
 	def _process_refresh(self, addressbook, added, removed):
@@ -56,13 +50,11 @@ class AllContactsListChannel(AbstractListChannel):
 		handlesAdded = [
 			handle.create_handle(connection, "contact", contactId, phoneNumber)
 			for contactId in added
-			if contactId
 			for (phoneType, phoneNumber) in addressbook.get_contact_details(contactId)
 		]
 		handlesRemoved = [
 			handle.create_handle(connection, "contact", contactId, phoneNumber)
 			for contactId in removed
-			if contactId
 			for (phoneType, phoneNumber) in addressbook.get_contact_details(contactId)
 		]
 		message = ""

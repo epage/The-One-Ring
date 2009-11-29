@@ -10,7 +10,6 @@ import handle
 _moduleLogger = logging.getLogger("channel.text")
 
 
-# @todo Get receiving of texts to work
 class TextChannel(telepathy.server.ChannelTypeText):
 	"""
 	Look into implementing ChannelInterfaceMessages for rich text formatting
@@ -38,7 +37,7 @@ class TextChannel(telepathy.server.ChannelTypeText):
 
 	def _on_message_received(self, contactId, contactNumber, message):
 		"""
-		@todo Attatch this to receiving a message
+		@todo Attatch this to receiving a message signal
 		"""
 		currentReceivedId = self._nextRecievedId
 

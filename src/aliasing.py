@@ -6,6 +6,12 @@ import gtk_toolbox
 import handle
 
 
+USER_ALIAS_ACCOUNT = "account"
+USER_ALIAS_CALLBACK = "callback"
+
+USER_ALIAS = USER_ALIAS_ACCOUNT
+
+
 _moduleLogger = logging.getLogger('aliasing')
 
 
@@ -100,6 +106,10 @@ class AliasingMixin(telepathy.server.ConnectionInterfaceAliasing):
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def SetAliases(self, aliases):
 		_moduleLogger.debug("Called SetAliases")
+		if USER_ALIAS == USER_ALIAS_ACCOUNT:
+			raise telepathy.errors.PermissionDenied("No user customizable aliases")
+		elif USER_ALIAS != USER_ALIAS_CALLBACK:
+			raise RuntimeError("Invalid alias type: %r" % USER_ALIAS)
 
 		# first validate that no other handle types are included
 		userHandleAndAlias = None
@@ -123,8 +133,13 @@ class AliasingMixin(telepathy.server.ConnectionInterfaceAliasing):
 	def _get_alias(self, handleId):
 		h = self.handle(telepathy.HANDLE_TYPE_CONTACT, handleId)
 		if isinstance(h, handle.ConnectionHandle):
-			callbackNumber = self.session.backend.get_callback_number()
-			userAlias = make_pretty(callbackNumber)
+			if USER_ALIAS == USER_ALIAS_CALLBACK:
+				aliasNumber = self.session.backend.get_callback_number()
+			elif USER_ALIAS == USER_ALIAS_ACCOUNT:
+				aliasNumber = self.session.backend.get_account_number()
+			else:
+				raise RuntimeError("Invalid alias type: %r" % USER_ALIAS)
+			userAlias = make_pretty(aliasNumber)
 			return userAlias
 		else:
 			contactId = h.contactID

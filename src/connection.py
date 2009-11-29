@@ -22,8 +22,7 @@ class TheOneRingConnection(
 ):
 
 	# Overriding a base class variable
-	# @todo remove forward as one of the settings but instead use the alias
-	# with set sane defaults and saving it to an ini file
+	# Should the forwarding number be handled by the alias or by an option?
 	_mandatory_parameters = {
 		'username' : 's',
 		'password' : 's',
@@ -191,9 +190,6 @@ class TheOneRingConnection(
 		return handles
 
 	def _create_contact_handle(self, requestedHandleName):
-		"""
-		@todo Determine if nay of this is really needed
-		"""
 		requestedContactId, requestedContactNumber = handle.ContactHandle.from_handle_name(
 			requestedHandleName
 		)
@@ -202,7 +198,7 @@ class TheOneRingConnection(
 
 	def _on_invite_text(self, contactId):
 		"""
-		@todo Make this work
+		@todo Get externally initiated conversations working
 		"""
 		h = self._create_contact_handle(contactId)
 

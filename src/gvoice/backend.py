@@ -136,6 +136,10 @@ class GVoiceBackend(object):
 		self._accountNumRe = re.compile(r"""<b class="ms\d">(.{14})</b></div>""")
 		self._callbackRe = re.compile(r"""\s+(.*?):\s*(.*?)<br\s*/>\s*$""", re.M)
 
+		self._isDndURL = "https://www.google.com/voice/m/donotdisturb"
+		self._isDndRe = re.compile(r"""<input.*?id="doNotDisturb".*?checked="(.*?)"\s*/>""")
+		self._setDndURL = "https://www.google.com/voice/m/savednd"
+
 		self._gvDialingStrRe = re.compile("This may take a few seconds", re.M)
 		self._clicktocallURL = "https://www.google.com/voice/m/sendcall"
 		self._sendSmsURL = "https://www.google.com/voice/m/sendsms"
@@ -247,6 +251,32 @@ class GVoiceBackend(object):
 		self._lastAuthed = 0.0
 		self._browser.cookies.clear()
 		self._browser.cookies.save()
+
+	def is_dnd(self):
+		try:
+			isDndPage = self._browser.download(self._isDndURL)
+		except urllib2.URLError, e:
+			_moduleLogger.exception("Translating error: %s" % str(e))
+			raise NetworkError("%s is not accesible" % self._isDndURL)
+
+		dndGroup = self._isDndRe.search(isDndPage)
+		if dndGroup is None:
+			return False
+		dndStatus = dndGroup.group(1)
+		isDnd = True if dndStatus.strip().lower() == "true" else False
+		return isDnd
+
+	def set_dnd(self, doNotDisturb):
+		dndPostData = urllib.urlencode({
+			"doNotDisturb": 1 if doNotDisturb else 0,
+			"_rnr_se": self._token,
+		})
+
+		try:
+			dndPage = self._browser.download(self._setDndURL, dndPostData)
+		except urllib2.URLError, e:
+			_moduleLogger.exception("Translating error: %s" % str(e))
+			raise NetworkError("%s is not accesible" % self._setDndURL)
 
 	def dial(self, number):
 		"""
@@ -668,6 +698,11 @@ def test_backend(username, password):
 	if not backend.is_authed():
 		print "Login?: ", backend.login(username, password)
 	print "Authenticated: ", backend.is_authed()
+	print "Is Dnd: ", backend.is_dnd()
+	#print "Setting Dnd", backend.set_dnd(True)
+	#print "Is Dnd: ", backend.is_dnd()
+	#print "Setting Dnd", backend.set_dnd(False)
+	#print "Is Dnd: ", backend.is_dnd()
 
 	#print "Token: ", backend._token
 	#print "Account: ", backend.get_account_number()
@@ -711,6 +746,7 @@ def grab_debug_info(username, password):
 		("forward", backend._forwardURL),
 		("token", backend._tokenURL),
 		("login", backend._loginURL),
+		("isdnd", backend._isDndURL),
 		("contacts", backend._contactsURL),
 
 		("voicemail", backend._voicemailURL),
@@ -775,5 +811,5 @@ def grab_debug_info(username, password):
 if __name__ == "__main__":
 	import sys
 	logging.basicConfig(level=logging.DEBUG)
-	#test_backend(sys.argv[1], sys.argv[2])
-	grab_debug_info(sys.argv[1], sys.argv[2])
+	test_backend(sys.argv[1], sys.argv[2])
+	#grab_debug_info(sys.argv[1], sys.argv[2])
