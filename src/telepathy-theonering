@@ -83,6 +83,10 @@ def run_theonering(persist):
 if __name__ == '__main__':
 	telepathy_utils.debug_divert_messages(os.getenv('THEONERING_LOGFILE'))
 	logging.basicConfig(level=logging.DEBUG)
+	logging.info("telepathy-theonering %s-%s" % (constants.__version__, constants.__build__))
+	logging.info("OS: %s" % (os.uname()[0], ))
+	logging.info("Kernel: %s (%s) for %s" % os.uname()[2:])
+	logging.info("Hostname: %s" % os.uname()[1])
 
 	persist = 'THEONERING_PERSIST' in os.environ
 	persist = True

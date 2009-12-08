@@ -74,6 +74,7 @@ class TextChannel(telepathy.server.ChannelTypeText):
 		self._report_conversation(conversation)
 
 	def _report_conversation(self, conversation):
+		# @bug Check if messages sent need to be filtered out
 		completeMessageHistory = conversation["messageParts"]
 		messages = self._filter_seen_messages(completeMessageHistory)
 		self._lastMessageTimestamp = messages[-1][0]

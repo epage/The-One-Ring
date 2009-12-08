@@ -37,8 +37,8 @@ class TheOneRingConnection(
 	}
 
 	def __init__(self, manager, parameters):
+		self.check_parameters(parameters)
 		try:
-			self.check_parameters(parameters)
 			account = unicode(parameters['username'])
 
 			# Connection init must come first

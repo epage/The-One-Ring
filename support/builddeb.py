@@ -100,7 +100,7 @@ def build_package(distribution):
 			"|".join((oldName, newName))
 			for (oldName, newName) in files
 		)
-	p["/usr/share/dbus-1/services"] = ["org.freedesktop.Telepathy.ConnectionManager.theonering.service.in"]
+	p["/usr/share/dbus-1/services"] = ["org.freedesktop.Telepathy.ConnectionManager.theonering.service"]
 	p["/usr/share/telepathy/managers"] = ["theonering.manager"]
 	p["/usr/share/icons/hicolor/26x26/hildon"] = ["26x26-theonering.png|theonering.png"]
 	p["/usr/share/icons/hicolor/64x64/hildon"] = ["64x64-theonering.png|theonering.png"]
