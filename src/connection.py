@@ -126,6 +126,7 @@ class TheOneRingConnection(
 		_moduleLogger.info("Disconnecting")
 		try:
 			self.session.logout()
+			self._channelManager.close()
 			_moduleLogger.info("Disconnected")
 		except Exception:
 			_moduleLogger.exception("Disconnecting Failed")
