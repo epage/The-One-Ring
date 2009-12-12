@@ -11,11 +11,13 @@ _moduleLogger = logging.getLogger("simple_presence")
 
 class TheOneRingPresence(object):
 	ONLINE = 'available'
+	IDLE = 'idle'
 	BUSY = 'dnd'
 
 	TO_PRESENCE_TYPE = {
 		ONLINE: telepathy.constants.CONNECTION_PRESENCE_TYPE_AVAILABLE,
-		BUSY: telepathy.constants.CONNECTION_PRESENCE_TYPE_BUSY,
+		IDLE: telepathy.constants.CONNECTION_PRESENCE_TYPE_AWAY,
+		BUSY: telepathy.constants.CONNECTION_PRESENCE_TYPE_HIDDEN,
 	}
 
 
@@ -52,7 +54,11 @@ class SimplePresenceMixin(telepathy.server.ConnectionInterfaceSimplePresence):
 			h = self.handle(telepathy.HANDLE_TYPE_CONTACT, handleId)
 			if isinstance(h, handle.ConnectionHandle):
 				isDnd = self.session.backend.is_dnd()
-				presence = TheOneRingPresence.BUSY if isDnd else TheOneRingPresence.ONLINE
+				if isDnd:
+					presence = TheOneRingPresence.BUSY
+				else:
+					# @todo switch this over to also supporting idle
+					presence = TheOneRingPresence.ONLINE
 				personalMessage = u""
 				presenceType = TheOneRingPresence.TO_PRESENCE_TYPE[presence]
 			else:
@@ -68,9 +74,11 @@ class SimplePresenceMixin(telepathy.server.ConnectionInterfaceSimplePresence):
 		if message:
 			raise telepathy.errors.InvalidArgument("Messages aren't supported")
 
-
 		if status == TheOneRingPresence.ONLINE:
 			self.gvoice_backend.set_dnd(False)
+		elif status == TheOneRingPresence.IDLE:
+			# @todo Add idle support
+			raise telepathy.errors.InvalidArgument("Not Supported Yet")
 		elif status == TheOneRingPresence.BUSY:
 			self.gvoice_backend.set_dnd(True)
 		else:
@@ -84,14 +92,7 @@ class SimplePresenceMixin(telepathy.server.ConnectionInterfaceSimplePresence):
 
 		@returns {Name: (Telepathy Type, May Set On Self, Can Have Message)}
 		"""
-		return {
-			TheOneRingPresence.ONLINE: (
-				telepathy.CONNECTION_PRESENCE_TYPE_AVAILABLE,
-				True, False
-			),
-			TheOneRingPresence.BUSY: (
-				telepathy.CONNECTION_PRESENCE_TYPE_AWAY,
-				True, False
-			),
-		}
-
+		return dict(
+			(localType, (telepathyType, True, False))
+			for (localType, telepathyType) in TheOneRingPresence.TO_PRESENCE_TYPE.iteritems()
+		)
