@@ -44,6 +44,12 @@ class Action(object):
 		pass
 
 
+class DummyAction(Action):
+
+	def queue_action(self):
+		gobject.idle_add(self._on_done)
+
+
 class QuitLoop(Action):
 
 	def __init__(self, loop):
@@ -68,9 +74,9 @@ class DisplayParams(Action):
 		)
 
 	def _on_done(self, params):
-		super(DisplayParams, self)._on_done()
+		print "Connection Parameters:"
 		for name, flags, signature, default in params:
-			print "%s (%s)" % (name, signature),
+			print "\t%s (%s)" % (name, signature),
 
 			if flags & telepathy.constants.CONN_MGR_PARAM_FLAG_REQUIRED:
 				print "required",
@@ -84,6 +90,7 @@ class DisplayParams(Action):
 				print "has-default(%s)" % default,
 
 			print ""
+		super(DisplayParams, self)._on_done()
 
 
 class Connect(Action):
@@ -133,8 +140,118 @@ class Connect(Action):
 		elif status == telepathy.constants.CONNECTION_STATUS_CONNECTED:
 			print "Connected"
 			self._on_done()
+		elif status == telepathy.constants.CONNECTION_STATUS_CONNECTING:
+			print "Connecting"
 		else:
 			print "Status: %r" % status
+
+
+class UserHandle(Action):
+
+	def __init__(self, connAction):
+		super(UserHandle, self).__init__()
+		self._connAction = connAction
+		self._handle = None
+
+	@property
+	def handle(self):
+		return self._handle
+
+	@property
+	def handles(self):
+		return [self._handle]
+
+	def queue_action(self):
+		self._connAction.conn[telepathy.server.CONNECTION].GetSelfHandle(
+			reply_handler = self._on_done,
+			error_handler = self._on_error,
+		)
+
+	def _on_done(self, handle):
+		self._handle = handle
+		super(UserHandle, self)._on_done()
+
+
+class RequestContactListHandle(Action):
+
+	def __init__(self, connAction):
+		super(RequestContactListHandle, self).__init__()
+		self._connAction = connAction
+		self._handle = None
+
+	@property
+	def handle(self):
+		return self._handle
+
+	@property
+	def handles(self):
+		return [self._handle]
+
+	def queue_action(self):
+		pass
+
+	def _on_done(self, handles):
+		self._handle = handles[0]
+		super(RequestContactListHandle, self)._on_done()
+
+
+class RequestContactListChannel(Action):
+
+	def __init__(self, connAction, handleAction):
+		super(RequestContactListChannel, self).__init__()
+		self._connAction = connAction
+		self._handleAction = handleAction
+		self._channel = None
+
+	@property
+	def channel(self):
+		return self._channel
+
+	def queue_action(self):
+		pass
+
+	def _on_done(self, channel):
+		self._channel = channel
+		super(RequestContactListChannel, self)._on_done()
+
+
+class ContactHandles(Action):
+
+	def __init__(self, connAction):
+		super(UserHandle, self).__init__()
+		self._connAction = connAction
+		self._handles = []
+
+	@property
+	def handles(self):
+		return self._handles
+
+	def queue_action(self):
+		pass
+
+	def _on_done(self, handle):
+		super(UserHandle, self)._on_done()
+
+
+class Aliases(Action):
+
+	def __init__(self, connAction, handleAction):
+		super(Aliases, self).__init__()
+		self._connAction = connAction
+		self._handleAction = handleAction
+
+	def queue_action(self):
+		self._connAction.conn[telepathy.server.CONNECTION_INTERFACE_ALIASING].RequestAliases(
+			self._handleAction.handles,
+			reply_handler = self._on_done,
+			error_handler = self._on_error,
+		)
+
+	def _on_done(self, aliases):
+		print "\tAliases:"
+		for alias in aliases:
+			print "\t\t", alias
+		super(Aliases, self)._on_done()
 
 
 class Disconnect(Action):
@@ -156,27 +273,39 @@ if __name__ == '__main__':
 	reg = get_registry()
 	cm = get_connection_manager(reg)
 
-	dummy = Action()
+	dummy = DummyAction()
+	firstAction = dummy
 	lastAction = dummy
 
-	dp = DisplayParams(cm)
-	lastAction.append_action(dp)
-	lastAction = dp
+	if True:
+		dp = DisplayParams(cm)
+		lastAction.append_action(dp)
+		lastAction = dp
 
-	username = sys.argv[1]
-	password = sys.argv[2]
-	forward = sys.argv[3]
-	con = Connect(cm, username, password, forward)
-	lastAction.append_action(con)
-	lastAction = con
+	if True:
+		username = sys.argv[1]
+		password = sys.argv[2]
+		forward = sys.argv[3]
+		con = Connect(cm, username, password, forward)
+		lastAction.append_action(con)
+		lastAction = con
 
-	dis = Disconnect(con)
-	lastAction.append_action(dis)
-	lastAction = dis
+		if True:
+			uh = UserHandle(con)
+			lastAction.append_action(uh)
+			lastAction = uh
+
+			ua = Aliases(con, uh)
+			lastAction.append_action(ua)
+			lastAction = ua
+
+		dis = Disconnect(con)
+		lastAction.append_action(dis)
+		lastAction = dis
 
 	quitter = QuitLoop(loop)
 	lastAction.append_action(quitter)
 	lastAction = quitter
 
-	dp.queue_action()
+	firstAction.queue_action()
 	loop.run()
