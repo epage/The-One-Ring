@@ -57,7 +57,7 @@ class CallChannel(
 
 		contactId, contactNumber = handle.ContactHandle.from_handle_name(contact.name)
 
-		self._conn.session.backend.dial(contactNumber)
+		self._conn.session.backend.call(contactNumber)
 
 		streamId = 0
 		streamState = telepathy.constants.MEDIA_STREAM_STATE_DISCONNECTED
