@@ -168,7 +168,8 @@ def py2changes(params):
     fileHandle = open('/tmp/py2deb2.tmp', 'w')
     fileHandle.write('#!/bin/sh\n')
     fileHandle.write("cd " +os.getcwd()+ "\n")
-    fileHandle.write("gpg --local-user %(mail)s --clearsign %(TEMP)s/%(name)s_%(version)s.changes\n" % params)
+    # TODO Renable signing
+    # fileHandle.write("gpg --local-user %(mail)s --clearsign %(TEMP)s/%(name)s_%(version)s.changes\n" % params)
     fileHandle.write("mv %(TEMP)s/%(name)s_%(version)s.changes.asc %(TEMP)s/%(name)s_%(version)s.changes\n" % params)
     fileHandle.write('\nexit')
     fileHandle.close()
@@ -191,7 +192,7 @@ def py2changes(params):
     shutil.move(l[0],tar)
     ret.append(tar)
 
-    l=glob("%(TEMP)s/%(name)s*.changes" % params)
+    l=glob("%(TEMP)s/%(name)s*_*_*.changes" % params)
     if len(l)!=1:
         raise Py2debException("don't find source package changes")
     tar = os.path.basename(l[0])
@@ -254,7 +255,8 @@ def py2dsc(TEMP, name, version, depends, author, mail, arch):
     try:
         fileHandle.write('#!/bin/sh\n')
         fileHandle.write("cd " + os.getcwd() + "\n")
-        fileHandle.write("gpg --local-user %(mail)s --clearsign %(TEMP)s/%(name)s_%(version)s.dsc\n" % locals())
+        # TODO Renable signing
+        # fileHandle.write("gpg --local-user %(mail)s --clearsign %(TEMP)s/%(name)s_%(version)s.dsc\n" % locals())
         fileHandle.write("mv %(TEMP)s/%(name)s_%(version)s.dsc.asc %(filename)s\n" % locals())
         fileHandle.write('\nexit')
         fileHandle.close()
