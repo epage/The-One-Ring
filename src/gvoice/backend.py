@@ -246,16 +246,20 @@ class GVoiceBackend(object):
 		subscriberNumber = None
 		phoneType = guess_phone_type(self._callbackNumber) # @todo Fix this hack
 
-		page = self._get_page_with_token(
-			self._callUrl,
-			{
+		callData = {
 				'outgoingNumber': outgoingNumber,
 				'forwardingNumber': self._callbackNumber,
 				'subscriberNumber': subscriberNumber or 'undefined',
-				'phoneType': phoneType,
-				'remember': '1'
-			},
+				'phoneType': str(phoneType),
+				'remember': '1',
+		}
+		_moduleLogger.info("%r" % callData)
+
+		page = self._get_page_with_token(
+			self._callUrl,
+			callData,
 		)
+		_moduleLogger.info(page)
 		self._parse_with_validation(page)
 		return True
 
@@ -607,9 +611,9 @@ class GVoiceBackend(object):
 		return page
 
 	def _parse_with_validation(self, page):
-		json, html = extract_payload(page)
+		json = parse_json(page)
 		validate_response(json)
-		return json, html
+		return json
 
 
 def itergroup(iterator, count, padValue = None):
@@ -692,9 +696,9 @@ def validate_response(response):
 
 def guess_phone_type(number):
 	if number.startswith("747") or number.startswith("1747"):
-		return GVDialer.PHONE_TYPE_GIZMO
+		return GVoiceBackend.PHONE_TYPE_GIZMO
 	else:
-		return GVDialer.PHONE_TYPE_MOBILE
+		return GVoiceBackend.PHONE_TYPE_MOBILE
 
 
 def set_sane_callback(backend):

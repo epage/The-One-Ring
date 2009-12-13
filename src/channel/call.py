@@ -45,7 +45,7 @@ class CallChannel(
 		raise telepathy.errors.NotImplemented("Cannot change directions")
 
 	@gtk_toolbox.log_exception(_moduleLogger)
-	def RequestStreams(self, contact, streamTypes):
+	def RequestStreams(self, contactId, streamTypes):
 		"""
 		For org.freedesktop.Telepathy.Channel.Type.StreamedMedia
 
@@ -55,7 +55,8 @@ class CallChannel(
 			if streamType != telepathy.constants.MEDIA_STREAM_TYPE_AUDIO:
 				raise telepathy.errors.NotImplemented("Audio is the only stream type supported")
 
-		print self._contactHandle, contact
+		contact = self._conn.handle(telepathy.constants.HANDLE_TYPE_CONTACT, contactId)
+		assert self._contactHandle == contact, "%r != %r" % (self._contactHandle, contact)
 		contactId, contactNumber = handle.ContactHandle.from_handle_name(contact.name)
 
 		self._conn.session.backend.call(contactNumber)
