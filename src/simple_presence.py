@@ -75,12 +75,12 @@ class SimplePresenceMixin(telepathy.server.ConnectionInterfaceSimplePresence):
 			raise telepathy.errors.InvalidArgument("Messages aren't supported")
 
 		if status == TheOneRingPresence.ONLINE:
-			self.gvoice_backend.set_dnd(False)
+			self.session.backend.set_dnd(False)
 		elif status == TheOneRingPresence.IDLE:
 			# @todo Add idle support
 			raise telepathy.errors.InvalidArgument("Not Supported Yet")
 		elif status == TheOneRingPresence.BUSY:
-			self.gvoice_backend.set_dnd(True)
+			self.session.backend.set_dnd(True)
 		else:
 			raise telepathy.errors.InvalidArgument("Unsupported status: %r" % status)
 		_moduleLogger.info("Setting Presence to '%s'" % status)
