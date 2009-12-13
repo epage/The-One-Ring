@@ -314,6 +314,26 @@ class SimplePresenceStatus(Action):
 		super(SimplePresenceStatus, self)._on_done()
 
 
+class SetSimplePresence(Action):
+
+	def __init__(self, connAction, status, message):
+		super(SetSimplePresence, self).__init__()
+		self._connAction = connAction
+		self._status = status
+		self._message = message
+
+	def queue_action(self):
+		self._connAction.conn[telepathy.server.CONNECTION_INTERFACE_SIMPLE_PRESENCE].SetPresence(
+			self._status,
+			self._message,
+			reply_handler = self._on_done,
+			error_handler = self._on_error,
+		)
+
+	def _on_done(self):
+		super(SetSimplePresence, self)._on_done()
+
+
 class Aliases(Action):
 
 	def __init__(self, connAction, handleAction):
@@ -412,6 +432,22 @@ if __name__ == '__main__':
 			lastAction.append_action(sps)
 			lastAction = sps
 
+			setdnd = SetSimplePresence(con, "dnd", "")
+			lastAction.append_action(setdnd)
+			lastAction = setdnd
+
+			sps = SimplePresenceStatus(con, uh)
+			lastAction.append_action(sps)
+			lastAction = sps
+
+			setdnd = SetSimplePresence(con, "available", "")
+			lastAction.append_action(setdnd)
+			lastAction = setdnd
+
+			sps = SimplePresenceStatus(con, uh)
+			lastAction.append_action(sps)
+			lastAction = sps
+
 		if True:
 			rclh = RequestHandle(con, telepathy.HANDLE_TYPE_LIST, ["subscribe"])
 			lastAction.append_action(rclh)
@@ -448,9 +484,10 @@ if __name__ == '__main__':
 			lastAction.append_action(rsmc)
 			lastAction = rsmc
 
-			call = Call(con, rsmc, rch)
-			lastAction.append_action(call)
-			lastAction = call
+			if False:
+				call = Call(con, rsmc, rch)
+				lastAction.append_action(call)
+				lastAction = call
 
 		dis = Disconnect(con)
 		lastAction.append_action(dis)
