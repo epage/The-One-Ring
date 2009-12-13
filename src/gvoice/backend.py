@@ -142,6 +142,12 @@ class GVoiceBackend(object):
 		self._smsTimeRegex = re.compile(r"""<span class="gc-message-sms-time">(.*?)</span>""", re.MULTILINE | re.DOTALL)
 		self._smsTextRegex = re.compile(r"""<span class="gc-message-sms-text">(.*?)</span>""", re.MULTILINE | re.DOTALL)
 
+	def is_quick_login_possible(self):
+		"""
+		@returns True then is_authed might be enough to login, else full login is required
+		"""
+		return self._loadedFromCookies or 0.0 < self._lastAuthed
+
 	def is_authed(self, force = False):
 		"""
 		Attempts to detect a current session
@@ -259,7 +265,6 @@ class GVoiceBackend(object):
 			self._callUrl,
 			callData,
 		)
-		_moduleLogger.info(page)
 		self._parse_with_validation(page)
 		return True
 
