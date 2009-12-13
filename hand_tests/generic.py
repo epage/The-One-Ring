@@ -101,7 +101,10 @@ class Connect(Action):
 	def __init__(self, cm, username, password, forward):
 		super(Connect, self).__init__()
 		self._cm = cm
+
 		self._conn = None
+		self._serviceName = None
+
 		self._username = username
 		self._password = password
 		self._forward = forward
@@ -109,6 +112,10 @@ class Connect(Action):
 	@property
 	def conn(self):
 		return self._conn
+
+	@property
+	def serviceName(self):
+		return self._serviceName
 
 	def queue_action(self):
 		self._cm[telepathy.server.CONNECTION_MANAGER].RequestConnection(
@@ -123,6 +130,7 @@ class Connect(Action):
 		)
 
 	def _on_connection_requested(self, busName, objectPath):
+		self._serviceName = busName
 		self._conn = telepathy.client.Connection(busName, objectPath)
 		self._conn[telepathy.server.CONNECTION].connect_to_signal(
 			'StatusChanged',
@@ -262,15 +270,16 @@ class RequestChannel(Action):
 		)
 
 	def _on_done(self, channelObjectPath):
-		self._channel = channelObjectPath
+		self._channel = telepathy.client.Channel(self._connAction.serviceName, channelObjectPath)
 		super(RequestChannel, self)._on_done()
 
 
 class ContactHandles(Action):
 
-	def __init__(self, connAction):
-		super(UserHandle, self).__init__()
+	def __init__(self, connAction, chanAction):
+		super(ContactHandles, self).__init__()
 		self._connAction = connAction
+		self._chanAction = chanAction
 		self._handles = []
 
 	@property
@@ -281,7 +290,7 @@ class ContactHandles(Action):
 		pass
 
 	def _on_done(self, handle):
-		super(UserHandle, self)._on_done()
+		super(ContactHandles, self)._on_done()
 
 
 class SimplePresenceStatus(Action):
@@ -324,6 +333,27 @@ class Aliases(Action):
 		for alias in aliases:
 			print "\t\t", alias
 		super(Aliases, self)._on_done()
+
+
+class Call(Action):
+
+	def __init__(self, connAction, chanAction, handleAction):
+		super(Call, self).__init__()
+		self._connAction = connAction
+		self._chanAction = chanAction
+		self._handleAction = handleAction
+
+	def queue_action(self):
+		self._chanAction.channel[telepathy.server.CHANNEL_TYPE_STREAMED_MEDIA].RequestStreams(
+			self._handleAction.handle,
+			[telepathy.constants.MEDIA_STREAM_TYPE_AUDIO],
+			reply_handler = self._on_done,
+			error_handler = self._on_error,
+		)
+
+	def _on_done(self, handle):
+		print "Call started"
+		super(Call, self)._on_done()
 
 
 class Disconnect(Action):
@@ -418,7 +448,9 @@ if __name__ == '__main__':
 			lastAction.append_action(rsmc)
 			lastAction = rsmc
 
-			# @todo call contact
+			call = Call(con, rsmc, rch)
+			lastAction.append_action(call)
+			lastAction = call
 
 		dis = Disconnect(con)
 		lastAction.append_action(dis)
