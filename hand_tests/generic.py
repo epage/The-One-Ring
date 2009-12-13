@@ -9,6 +9,9 @@ dbus.mainloop.glib.DBusGMainLoop(set_as_default = True)
 import telepathy
 
 
+DBUS_PROPERTIES = 'org.freedesktop.DBus.Properties'
+
+
 def get_registry():
 	reg = telepathy.client.ManagerRegistry()
 	reg.LoadManagers()
@@ -146,6 +149,38 @@ class Connect(Action):
 			print "Status: %r" % status
 
 
+class SimplePresenceOptions(Action):
+
+	def __init__(self, connAction):
+		super(SimplePresenceOptions, self).__init__()
+		self._connAction = connAction
+
+	def queue_action(self):
+		self._connAction.conn[DBUS_PROPERTIES].Get(
+			telepathy.server.CONNECTION_INTERFACE_SIMPLE_PRESENCE,
+			'Statuses',
+			reply_handler = self._on_done,
+			error_handler = self._on_error,
+		)
+
+	def _on_done(self, statuses):
+		print "\tAvailable Statuses"
+		for (key, value) in statuses.iteritems():
+			print "\t\t - %s" % key
+		super(SimplePresenceOptions, self)._on_done()
+
+
+class NullHandle(object):
+
+	@property
+	def handle(self):
+		return 0
+
+	@property
+	def handles(self):
+		return []
+
+
 class UserHandle(Action):
 
 	def __init__(self, connAction):
@@ -172,12 +207,14 @@ class UserHandle(Action):
 		super(UserHandle, self)._on_done()
 
 
-class RequestContactListHandle(Action):
+class RequestHandle(Action):
 
-	def __init__(self, connAction):
-		super(RequestContactListHandle, self).__init__()
+	def __init__(self, connAction, handleType, handleNames):
+		super(RequestHandle, self).__init__()
 		self._connAction = connAction
 		self._handle = None
+		self._handleType = handleType
+		self._handleNames = handleNames
 
 	@property
 	def handle(self):
@@ -188,31 +225,45 @@ class RequestContactListHandle(Action):
 		return [self._handle]
 
 	def queue_action(self):
-		pass
+		self._connAction.conn[telepathy.server.CONNECTION].RequestHandles(
+			self._handleType,
+			self._handleNames,
+			reply_handler = self._on_done,
+			error_handler = self._on_error,
+		)
 
 	def _on_done(self, handles):
 		self._handle = handles[0]
-		super(RequestContactListHandle, self)._on_done()
+		super(RequestHandle, self)._on_done()
 
 
-class RequestContactListChannel(Action):
+class RequestChannel(Action):
 
-	def __init__(self, connAction, handleAction):
-		super(RequestContactListChannel, self).__init__()
+	def __init__(self, connAction, handleAction, channelType, handleType):
+		super(RequestChannel, self).__init__()
 		self._connAction = connAction
 		self._handleAction = handleAction
 		self._channel = None
+		self._channelType = channelType
+		self._handleType = handleType
 
 	@property
 	def channel(self):
 		return self._channel
 
 	def queue_action(self):
-		pass
+		self._connAction.conn[telepathy.server.CONNECTION].RequestChannel(
+			self._channelType,
+			self._handleType,
+			self._handleAction.handle,
+			True,
+			reply_handler = self._on_done,
+			error_handler = self._on_error,
+		)
 
-	def _on_done(self, channel):
-		self._channel = channel
-		super(RequestContactListChannel, self)._on_done()
+	def _on_done(self, channelObjectPath):
+		self._channel = channelObjectPath
+		super(RequestChannel, self)._on_done()
 
 
 class ContactHandles(Action):
@@ -231,6 +282,27 @@ class ContactHandles(Action):
 
 	def _on_done(self, handle):
 		super(UserHandle, self)._on_done()
+
+
+class SimplePresenceStatus(Action):
+
+	def __init__(self, connAction, handleAction):
+		super(SimplePresenceStatus, self).__init__()
+		self._connAction = connAction
+		self._handleAction = handleAction
+
+	def queue_action(self):
+		self._connAction.conn[telepathy.server.CONNECTION_INTERFACE_SIMPLE_PRESENCE].GetPresences(
+			self._handleAction.handles,
+			reply_handler = self._on_done,
+			error_handler = self._on_error,
+		)
+
+	def _on_done(self, aliases):
+		print "\tPresences:"
+		for hid, (presenceType, presence, presenceMessage) in aliases.iteritems():
+			print "\t\t%s:" % hid, presenceType, presence, presenceMessage
+		super(SimplePresenceStatus, self)._on_done()
 
 
 class Aliases(Action):
@@ -273,6 +345,8 @@ if __name__ == '__main__':
 	reg = get_registry()
 	cm = get_connection_manager(reg)
 
+	nullHandle = NullHandle()
+
 	dummy = DummyAction()
 	firstAction = dummy
 	lastAction = dummy
@@ -291,6 +365,11 @@ if __name__ == '__main__':
 		lastAction = con
 
 		if True:
+			spo = SimplePresenceOptions(con)
+			lastAction.append_action(spo)
+			lastAction = spo
+
+		if True:
 			uh = UserHandle(con)
 			lastAction.append_action(uh)
 			lastAction = uh
@@ -298,6 +377,48 @@ if __name__ == '__main__':
 			ua = Aliases(con, uh)
 			lastAction.append_action(ua)
 			lastAction = ua
+
+			sps = SimplePresenceStatus(con, uh)
+			lastAction.append_action(sps)
+			lastAction = sps
+
+		if True:
+			rclh = RequestHandle(con, telepathy.HANDLE_TYPE_LIST, ["subscribe"])
+			lastAction.append_action(rclh)
+			lastAction = rclh
+
+			rclc = RequestChannel(
+				con,
+				rclh,
+				telepathy.CHANNEL_TYPE_CONTACT_LIST,
+				telepathy.HANDLE_TYPE_LIST,
+			)
+			lastAction.append_action(rclc)
+			lastAction = rclc
+
+			# @todo get aliases for contacts
+
+		if True:
+			rch = RequestHandle(con, telepathy.HANDLE_TYPE_CONTACT, ["18005558355"]) #(1-800-555-TELL)
+			lastAction.append_action(rch)
+			lastAction = rch
+
+			if True:
+				smHandle = rch
+				smHandleType = telepathy.HANDLE_TYPE_CONTACT
+			else:
+				smHandle = nullHandle
+				smHandleType = telepathy.HANDLE_TYPE_NONE
+			rsmc = RequestChannel(
+				con,
+				smHandle,
+				telepathy.CHANNEL_TYPE_STREAMED_MEDIA,
+				smHandleType,
+			)
+			lastAction.append_action(rsmc)
+			lastAction = rsmc
+
+			# @todo call contact
 
 		dis = Disconnect(con)
 		lastAction.append_action(dis)

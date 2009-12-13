@@ -55,8 +55,9 @@ class ChannelManager(object):
 		try:
 			chan = self._callChannels[handle]
 		except KeyError, e:
-			if handle.get_type() != telepathy.HANDLE_TYPE_NONE:
-				raise telepathy.errors.NotImplemented("Using deprecated means to create a call")
+			if handle.get_type() != telepathy.HANDLE_TYPE_CONTACT:
+				_moduleLogger.warning("Using deprecated means to create a call")
+				raise telepathy.errors.NotImplemented("Not implementing depcrecated means")
 			_moduleLogger.debug("Requesting new call channel")
 
 			chan = channel.call.CallChannel(self._connRef(), handle)

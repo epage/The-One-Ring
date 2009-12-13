@@ -15,10 +15,10 @@ class CallChannel(
 		telepathy.server.ChannelInterfaceCallState,
 	):
 
-	def __init__(self, connection):
+	def __init__(self, connection, contactHandle):
 		telepathy.server.ChannelTypeStreamedMedia.__init__(self, connection, None)
-		telepathy.server.ChannelInterfaceGroup.__init__(self)
-		telepathy.server.ChannelInterfaceChatState.__init__(self)
+		telepathy.server.ChannelInterfaceCallState.__init__(self)
+		self._contactHandle = contactHandle
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def ListStreams(self):
@@ -55,6 +55,7 @@ class CallChannel(
 			if streamType != telepathy.constants.MEDIA_STREAM_TYPE_AUDIO:
 				raise telepathy.errors.NotImplemented("Audio is the only stream type supported")
 
+		print self._contactHandle, contact
 		contactId, contactNumber = handle.ContactHandle.from_handle_name(contact.name)
 
 		self._conn.session.backend.call(contactNumber)

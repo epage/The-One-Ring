@@ -36,17 +36,20 @@ class Session(object):
 
 	def is_logged_in(self):
 		if self._backend is None:
+			_moduleLogger.info("No Backend")
 			return False
 		elif self._backend.is_authed():
 			return True
 		else:
 			try:
 				loggedIn = self._backend.login(self._username, self._password)
-			except RuntimeError:
+			except RuntimeError, e:
+				_moduleLogger.exception("Re-authenticating and erroring")
 				loggedIn = False
 			if loggedIn:
 				return True
 			else:
+				_moduleLogger.info("Login failed")
 				self.logout()
 				return False
 
