@@ -572,6 +572,13 @@ def pushback_itr(itr):
 				maybePushedBack = yield item
 
 
+def itr_available(queue, initiallyBlock = False):
+	if initiallyBlock:
+		yield queue.get()
+	while not queue.empty():
+		yield queue.get_nowait()
+
+
 if __name__ == "__main__":
 	import doctest
 	print doctest.testmod()
