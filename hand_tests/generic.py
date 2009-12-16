@@ -387,14 +387,14 @@ class SendText(Action):
 		self._message = message
 
 	def queue_action(self):
-		self._chanAction.channel[telepathy.server.CHANNEL_TYPE_TEXT].SendText(
+		self._chanAction.channel[telepathy.server.CHANNEL_TYPE_TEXT].Send(
 			self._messageType,
 			self._message,
 			reply_handler = self._on_done,
 			error_handler = self._on_error,
 		)
 
-	def _on_done(self, handle):
+	def _on_done(self,):
 		print "Message sent"
 		super(SendText, self)._on_done()
 
