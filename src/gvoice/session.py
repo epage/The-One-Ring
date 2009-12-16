@@ -78,5 +78,5 @@ class Session(object):
 		"""
 		if self._conversations is None:
 			_moduleLogger.info("Initializing conversations")
-			self._conversations = conversations.Conversationst(self.backend)
+			self._conversations = conversations.Conversations(self.backend)
 		return self._conversations

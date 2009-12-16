@@ -25,13 +25,13 @@ class TextChannel(telepathy.server.ChannelTypeText):
 		self._otherHandle = h
 
 		self._conn.session.conversations.updateSignalHandler.register_sink(
-			self._on_message_received
+			self._on_conversations_updated
 		)
 
 		# The only reason there should be anything in the conversation is if
 		# its new, so report it all
 		try:
-			conversation = self._conn.session.conversations[self._contactKey]
+			conversation = self._conn.session.conversations.get_conversation(self._contactKey)
 		except KeyError:
 			pass
 		else:
@@ -50,10 +50,10 @@ class TextChannel(telepathy.server.ChannelTypeText):
 	def Close(self):
 		try:
 			# Clear since the user has seen it all and it should start a new conversation
-			self._conn.session.clear_conversation(self._contactKey)
+			self._conn.session.conversations.clear_conversation(self._contactKey)
 
 			self._conn.session.conversations.updateSignalHandler.unregister_sink(
-				self._on_message_received
+				self._on_conversations_updated
 			)
 		finally:
 			telepathy.server.ChannelTypeText.Close(self)
@@ -70,7 +70,7 @@ class TextChannel(telepathy.server.ChannelTypeText):
 	def _on_conversations_updated(self, conversationIds):
 		if self._contactKey not in conversationIds:
 			return
-		conversation = self._conn.session.conversations[self._contactKey]
+		conversation = self._conn.session.conversations.get_conversation(self._contactKey)
 		self._report_conversation(conversation)
 
 	def _report_conversation(self, conversation):

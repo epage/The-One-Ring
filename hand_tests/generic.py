@@ -376,6 +376,29 @@ class Call(Action):
 		super(Call, self)._on_done()
 
 
+class SendText(Action):
+
+	def __init__(self, connAction, chanAction, handleAction, messageType, message):
+		super(SendText, self).__init__()
+		self._connAction = connAction
+		self._chanAction = chanAction
+		self._handleAction = handleAction
+		self._messageType = messageType
+		self._message = message
+
+	def queue_action(self):
+		self._chanAction.channel[telepathy.server.CHANNEL_TYPE_TEXT].SendText(
+			self._messageType,
+			self._message,
+			reply_handler = self._on_done,
+			error_handler = self._on_error,
+		)
+
+	def _on_done(self, handle):
+		print "Message sent"
+		super(SendText, self)._on_done()
+
+
 class Disconnect(Action):
 
 	def __init__(self, connAction):
@@ -432,21 +455,22 @@ if __name__ == '__main__':
 			lastAction.append_action(sps)
 			lastAction = sps
 
-			setdnd = SetSimplePresence(con, "dnd", "")
-			lastAction.append_action(setdnd)
-			lastAction = setdnd
+			if False:
+				setdnd = SetSimplePresence(con, "dnd", "")
+				lastAction.append_action(setdnd)
+				lastAction = setdnd
 
-			sps = SimplePresenceStatus(con, uh)
-			lastAction.append_action(sps)
-			lastAction = sps
+				sps = SimplePresenceStatus(con, uh)
+				lastAction.append_action(sps)
+				lastAction = sps
 
-			setdnd = SetSimplePresence(con, "available", "")
-			lastAction.append_action(setdnd)
-			lastAction = setdnd
+				setdnd = SetSimplePresence(con, "available", "")
+				lastAction.append_action(setdnd)
+				lastAction = setdnd
 
-			sps = SimplePresenceStatus(con, uh)
-			lastAction.append_action(sps)
-			lastAction = sps
+				sps = SimplePresenceStatus(con, uh)
+				lastAction.append_action(sps)
+				lastAction = sps
 
 		if True:
 			rclh = RequestHandle(con, telepathy.HANDLE_TYPE_LIST, ["subscribe"])
@@ -469,6 +493,7 @@ if __name__ == '__main__':
 			lastAction.append_action(rch)
 			lastAction = rch
 
+			# making a phone call
 			if True:
 				smHandle = rch
 				smHandleType = telepathy.HANDLE_TYPE_CONTACT
@@ -488,6 +513,22 @@ if __name__ == '__main__':
 				call = Call(con, rsmc, rch)
 				lastAction.append_action(call)
 				lastAction = call
+
+			# sending a text
+			rtc = RequestChannel(
+				con,
+				rch,
+				telepathy.CHANNEL_TYPE_TEXT,
+				smHandleType,
+			)
+			lastAction.append_action(rtc)
+			lastAction = rtc
+
+			if False:
+				sendtext = SendText(con, rtc, rch, telepathy.CHANNEL_TEXT_MESSAGE_TYPE_NORMAL, "Boo!")
+				lastAction.append_action(sendtext)
+				lastAction = sendtext
+
 
 		dis = Disconnect(con)
 		lastAction.append_action(dis)

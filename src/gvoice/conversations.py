@@ -59,7 +59,10 @@ class Conversations(object):
 		return self._conversations[key]
 
 	def clear_conversation(self, key):
-		del self._conversations[key]
+		try:
+			del self._conversations[key]
+		except KeyError:
+			_moduleLogger.info("Conversation never existed for %r" % (key,))
 
 	def clear_all(self):
 		self._conversations.clear()
