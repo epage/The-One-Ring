@@ -30,6 +30,15 @@ def generate_mock(cookiesSucceed, username, password):
 				):
 				return ""
 
+			def load_cookies(self, *args):
+				pass
+
+			def save_cookies(self, *args):
+				pass
+
+			def clear_cookies(self, *args):
+				pass
+
 	return MockModule
 
 
@@ -43,7 +52,7 @@ def test_not_logged_in():
 		assert not backend.login("bad_name", "bad_password")
 		backend.logout()
 		with test_utils.expected(RuntimeError):
-			backend.dial("5551234567")
+			backend.call("5551234567")
 		with test_utils.expected(RuntimeError):
 			backend.send_sms("5551234567", "Hello World")
 		assert backend.get_account_number() == "", "%s" % backend.get_account_number()

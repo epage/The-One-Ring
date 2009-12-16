@@ -72,7 +72,13 @@ def test_one_contact_no_details():
 	assert len(callbackData) == 0, "%r" % callbackData
 
 	contacts = list(book.get_contacts())
-	assert len(contacts) == 1
+	assert len(contacts) == 0, "%r" % contacts
+
+	book.update()
+	assert len(callbackData) == 1, "%r" % callbackData
+	del callbackData[:]
+	contacts = list(book.get_contacts())
+	assert len(contacts) == 1, "%r" % contacts
 	id = contacts[0]
 	name = book.get_contact_name(id)
 	assert name == backend.contactsData[id]["name"]
@@ -108,7 +114,13 @@ def test_one_contact_with_details():
 	assert len(callbackData) == 0, "%r" % callbackData
 
 	contacts = list(book.get_contacts())
-	assert len(contacts) == 1
+	assert len(contacts) == 0, "%r" % contacts
+
+	book.update()
+	assert len(callbackData) == 1, "%r" % callbackData
+	del callbackData[:]
+	contacts = list(book.get_contacts())
+	assert len(contacts) == 1, "%r" % contacts
 	id = contacts[0]
 	name = book.get_contact_name(id)
 	assert name == backend.contactsData[id]["name"]
@@ -151,6 +163,10 @@ def test_adding_a_contact():
 	assert len(callbackData) == 0, "%r" % callbackData
 
 	book.update()
+	assert len(callbackData) == 1, "%r" % callbackData
+	del callbackData[:]
+
+	book.update()
 	assert len(callbackData) == 0, "%r" % callbackData
 
 	book.update(force=True)
@@ -188,6 +204,10 @@ def test_removing_a_contact():
 	book = gvoice.addressbook.Addressbook(backend)
 	book.updateSignalHandler.register_sink(callback)
 	assert len(callbackData) == 0, "%r" % callbackData
+
+	book.update()
+	assert len(callbackData) == 1, "%r" % callbackData
+	del callbackData[:]
 
 	book.update()
 	assert len(callbackData) == 0, "%r" % callbackData
