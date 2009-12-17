@@ -75,6 +75,10 @@ def test_a_conversation():
 	conversings.updateSignalHandler.register_sink(callback)
 	assert len(callbackData) == 0, "%r" % callbackData
 
+	conversings.update()
+	assert len(callbackData) == 1, "%r" % callbackData
+	del callbackData[:]
+
 	cons = list(conversings.get_conversations())
 	assert len(cons) == 1
 	assert cons[0] == ("con1", "5555551224"), cons
@@ -108,6 +112,10 @@ def test_adding_a_conversation():
 	conversings = gvoice.conversations.Conversations(backend)
 	conversings.updateSignalHandler.register_sink(callback)
 	assert len(callbackData) == 0, "%r" % callbackData
+
+	conversings.update()
+	assert len(callbackData) == 1, "%r" % callbackData
+	del callbackData[:]
 
 	cons = list(conversings.get_conversations())
 	assert len(cons) == 1
@@ -171,6 +179,10 @@ def test_merging_a_conversation():
 	conversings = gvoice.conversations.Conversations(backend)
 	conversings.updateSignalHandler.register_sink(callback)
 	assert len(callbackData) == 0, "%r" % callbackData
+
+	conversings.update()
+	assert len(callbackData) == 1, "%r" % callbackData
+	del callbackData[:]
 
 	cons = list(conversings.get_conversations())
 	assert len(cons) == 1

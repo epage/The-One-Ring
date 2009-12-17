@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+"""
+@todo Look into switching from POLL_TIME = min(F * 2^n, MAX) to POLL_TIME = min(CONST + F * 2^n, MAX)
+@todo Look into supporting more states that have a different F and MAX
+"""
+
 import Queue
 import threading
 import logging
@@ -8,6 +13,7 @@ import gobject
 
 import util.algorithms as algorithms
 import util.coroutines as coroutines
+
 
 _moduleLogger = logging.getLogger("gvoice.state_machine")
 
@@ -78,6 +84,8 @@ class StateMachine(object):
 		self.reset_timers()
 
 	def _run(self):
+		logging.basicConfig(level=logging.DEBUG)
+		_moduleLogger.info("Starting State Machine")
 		for item in self._initItems:
 			try:
 				item.update()
@@ -95,11 +103,14 @@ class StateMachine(object):
 			actions = list(algorithms.itr_available(self._actions, initiallyBlock = True))
 
 			if self._ACTION_STOP in actions:
+				_moduleLogger.info("Requested to stop")
 				self._stop_update()
 				break
 			elif self._ACTION_RESET in actions:
+				_moduleLogger.info("Reseting timers")
 				self._reset_timers()
 			elif self._ACTION_UPDATE in actions:
+				_moduleLogger.info("Update")
 				for item in self._updateItems:
 					try:
 						item.update(force=True)

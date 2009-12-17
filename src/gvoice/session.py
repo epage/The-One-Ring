@@ -5,6 +5,7 @@ import logging
 import backend
 import addressbook
 import conversations
+import state_machine
 
 
 _moduleLogger = logging.getLogger("gvoice.session")
@@ -12,31 +13,38 @@ _moduleLogger = logging.getLogger("gvoice.session")
 
 class Session(object):
 
-	def __init__(self, cookiePath):
-		self._cookiePath = cookiePath
+	def __init__(self, cookiePath = None):
 		self._username = None
 		self._password = None
-		self._backend = None
-		self._addressbook = None
-		self._conversations = None
+
+		self._backend = backend.GVoiceBackend(cookiePath)
+		self._addressbook = addressbook.Addressbook(self._backend)
+		self._conversations = conversations.Conversations(self._backend)
+		self._stateMachine = state_machine.StateMachine([self.addressbook], [self.conversations])
+
+		self._conversations.updateSignalHandler.register_sink(
+			self._stateMachine.request_reset_timers
+		)
 
 	def login(self, username, password):
 		self._username = username
 		self._password = password
-		self._backend = backend.GVoiceBackend(self._cookiePath)
 		if not self._backend.is_authed():
 			self._backend.login(self._username, self._password)
 
+		self._stateMachine.start()
+
 	def logout(self):
+		self._loggedIn = False
+		self._stateMachine.stop()
+		self._backend.logout()
+
 		self._username = None
 		self._password = None
-		self._backend = None
-		self._addressbook = None
-		self._conversations = None
 
 	def is_logged_in(self):
-		if self._backend is None:
-			_moduleLogger.info("No Backend")
+		if self._username is None and self._password is None:
+			_moduleLogger.info("Hasn't even attempted to login yet")
 			return False
 		elif self._backend.is_authed():
 			return True
@@ -66,9 +74,6 @@ class Session(object):
 		"""
 		Delay initialized addressbook
 		"""
-		if self._addressbook is None:
-			_moduleLogger.info("Initializing addressbook")
-			self._addressbook = addressbook.Addressbook(self.backend)
 		return self._addressbook
 
 	@property
@@ -76,7 +81,4 @@ class Session(object):
 		"""
 		Delay initialized addressbook
 		"""
-		if self._conversations is None:
-			_moduleLogger.info("Initializing conversations")
-			self._conversations = conversations.Conversations(self.backend)
 		return self._conversations

@@ -399,6 +399,19 @@ class SendText(Action):
 		super(SendText, self)._on_done()
 
 
+class Block(Action):
+
+	def __init__(self):
+		super(Block, self).__init__()
+
+	def queue_action(self):
+		print "Blocking"
+
+	def _on_done(self):
+		#super(SendText, self)._on_done()
+		pass
+
+
 class Disconnect(Action):
 
 	def __init__(self, connAction):
@@ -529,6 +542,10 @@ if __name__ == '__main__':
 				lastAction.append_action(sendtext)
 				lastAction = sendtext
 
+		if True:
+			bl = Block()
+			lastAction.append_action(bl)
+			lastAction = bl
 
 		dis = Disconnect(con)
 		lastAction.append_action(dis)

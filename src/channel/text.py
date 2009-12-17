@@ -67,14 +67,16 @@ class TextChannel(telepathy.server.ChannelTypeText):
 	@coroutines.func_sink
 	@coroutines.expand_positional
 	@gobject_utils.async
+	@gtk_toolbox.log_exception(_moduleLogger)
 	def _on_conversations_updated(self, conversationIds):
 		if self._contactKey not in conversationIds:
 			return
+		_moduleLogger.info("Incoming messages from %r for existing conversation" % (self._contactKey, ))
 		conversation = self._conn.session.conversations.get_conversation(self._contactKey)
 		self._report_conversation(conversation)
 
 	def _report_conversation(self, conversation):
-		# @bug Check if messages sent need to be filtered out
+		# @bug? Check if messages sent need to be filtered out
 		completeMessageHistory = conversation["messageParts"]
 		messages = self._filter_seen_messages(completeMessageHistory)
 		self._lastMessageTimestamp = messages[-1][0]

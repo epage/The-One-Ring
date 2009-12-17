@@ -59,7 +59,7 @@ class TheOneRingConnection(
 			self._callbackNumber = parameters['forward'].encode('utf-8')
 			self._channelManager = channel_manager.ChannelManager(self)
 
-			cookieFilePath = "%s/cookies.txt" % constants._data_path_
+			cookieFilePath = None
 			self._session = gvoice.session.Session(cookieFilePath)
 
 			self.set_self_handle(handle.create_handle(self, 'connection'))
@@ -96,6 +96,9 @@ class TheOneRingConnection(
 			telepathy.CONNECTION_STATUS_REASON_REQUESTED
 		)
 		try:
+			self.session.conversations.updateSignalHandler.register_sink(
+				self._on_conversations_updated
+			)
 			self.session.login(*self._credentials)
 			self.session.backend.set_callback_number(self._callbackNumber)
 		except gvoice.backend.NetworkError, e:
@@ -125,6 +128,9 @@ class TheOneRingConnection(
 		"""
 		_moduleLogger.info("Disconnecting")
 		try:
+			self.session.conversations.updateSignalHandler.unregister_sink(
+				self._on_conversations_updated
+			)
 			self._channelManager.close()
 			self.session.logout()
 			_moduleLogger.info("Disconnected")
@@ -202,9 +208,11 @@ class TheOneRingConnection(
 	@coroutines.func_sink
 	@coroutines.expand_positional
 	@gobject_utils.async
+	@gtk_toolbox.log_exception(_moduleLogger)
 	def _on_conversations_updated(self, conversationIds):
 		# @todo get conversations update running
 		# @todo test conversatiuons
+		_moduleLogger.info("Incoming messages from: %r" % (conversationIds, ))
 		channelManager = self._channelManager
 		for contactId, phoneNumber in conversationIds:
 			h = self._create_contact_handle(contactId, phoneNumber)

@@ -51,6 +51,7 @@ class AllContactsListChannel(AbstractListChannel):
 	@coroutines.func_sink
 	@coroutines.expand_positional
 	@gobject_utils.async
+	@gtk_toolbox.log_exception(_moduleLogger)
 	def _on_contacts_refreshed(self, addressbook, added, removed, changed):
 		self._process_refresh(addressbook, added, removed)
 
