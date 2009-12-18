@@ -64,6 +64,11 @@ class TheOneRingConnection(
 
 			self.set_self_handle(handle.create_handle(self, 'connection'))
 
+			self._callback = coroutines.func_sink(
+				coroutines.expand_positional(
+					self._on_conversations_updated
+				)
+			)
 			_moduleLogger.info("Connection to the account %s created" % account)
 		except Exception, e:
 			_moduleLogger.exception("Failed to create Connection")
@@ -97,7 +102,7 @@ class TheOneRingConnection(
 		)
 		try:
 			self.session.conversations.updateSignalHandler.register_sink(
-				self._on_conversations_updated
+				self._callback
 			)
 			self.session.login(*self._credentials)
 			self.session.backend.set_callback_number(self._callbackNumber)
@@ -129,7 +134,7 @@ class TheOneRingConnection(
 		_moduleLogger.info("Disconnecting")
 		try:
 			self.session.conversations.updateSignalHandler.unregister_sink(
-				self._on_conversations_updated
+				self._callback
 			)
 			self._channelManager.close()
 			self.session.logout()
@@ -205,17 +210,15 @@ class TheOneRingConnection(
 		h = handle.create_handle(self, 'contact', requestedContactId, requestedContactNumber)
 		return h
 
-	@coroutines.func_sink
-	@coroutines.expand_positional
 	@gobject_utils.async
 	@gtk_toolbox.log_exception(_moduleLogger)
-	def _on_conversations_updated(self, conversationIds):
+	def _on_conversations_updated(self, conv, conversationIds):
 		# @todo get conversations update running
 		# @todo test conversatiuons
 		_moduleLogger.info("Incoming messages from: %r" % (conversationIds, ))
 		channelManager = self._channelManager
 		for contactId, phoneNumber in conversationIds:
-			h = self._create_contact_handle(contactId, phoneNumber)
+			h = handle.create_handle(self, 'contact', contactId, phoneNumber)
 			# if its new, __init__ will take care of things
 			# if its old, its own update will take care of it
-			channel = channelManager.channel_for_text(handle)
+			channel = channelManager.channel_for_text(h)

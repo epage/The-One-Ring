@@ -98,7 +98,8 @@ class GVoiceBackend(object):
 		self._downloadVoicemailURL = SECURE_URL_BASE + "media/send_voicemail/"
 
 		self._XML_SEARCH_URL = SECURE_URL_BASE + "inbox/search/"
-		self._XML_ACCOUNT_URL = SECURE_URL_BASE + "inbox/contacts/"
+		self._XML_ACCOUNT_URL = SECURE_URL_BASE + "contacts/"
+		self._XML_CONTACTS_URL = "http://www.google.com/voice/inbox/search/contact"
 		self._XML_RECENT_URL = SECURE_URL_BASE + "inbox/recent/"
 
 		self.XML_FEEDS = (
@@ -117,18 +118,12 @@ class GVoiceBackend(object):
 		self._XML_RECEIVED_URL = SECURE_URL_BASE + "inbox/recent/received/"
 		self._XML_MISSED_URL = SECURE_URL_BASE + "inbox/recent/missed/"
 
-		self._contactsURL = SECURE_MOBILE_URL_BASE + "contacts"
-		self._contactDetailURL = SECURE_MOBILE_URL_BASE + "contact"
-
 		self._galxRe = re.compile(r"""<input.*?name="GALX".*?value="(.*?)".*?/>""", re.MULTILINE | re.DOTALL)
 		self._tokenRe = re.compile(r"""<input.*?name="_rnr_se".*?value="(.*?)"\s*/>""")
 		self._accountNumRe = re.compile(r"""<b class="ms\d">(.{14})</b></div>""")
 		self._callbackRe = re.compile(r"""\s+(.*?):\s*(.*?)<br\s*/>\s*$""", re.M)
 
-		self._contactsRe = re.compile(r"""<a href="/voice/m/contact/(\d+)">(.*?)</a>""", re.S)
-		self._contactsNextRe = re.compile(r""".*<a href="/voice/m/contacts(\?p=\d+)">Next.*?</a>""", re.S)
-		self._contactDetailPhoneRe = re.compile(r"""<div.*?>([0-9+\-\(\) \t]+?)<span.*?>\((\w+)\)</span>""", re.S)
-
+		self._contactsBodyRe = re.compile(r"""gcData\s*=\s*({.*?});""", re.MULTILINE | re.DOTALL)
 		self._seperateVoicemailsRegex = re.compile(r"""^\s*<div id="(\w+)"\s* class=".*?gc-message.*?">""", re.MULTILINE | re.DOTALL)
 		self._exactVoicemailTimeRegex = re.compile(r"""<span class="gc-message-time">(.*?)</span>""", re.MULTILINE)
 		self._relativeVoicemailTimeRegex = re.compile(r"""<span class="gc-message-relative">(.*?)</span>""", re.MULTILINE)
@@ -385,30 +380,13 @@ class GVoiceBackend(object):
 		"""
 		@returns Iterable of (contact id, contact name)
 		"""
-		contactsPagesUrls = [self._contactsURL]
-		for contactsPageUrl in contactsPagesUrls:
-			contactsPage = self._get_page(contactsPageUrl)
-			for contact_match in self._contactsRe.finditer(contactsPage):
-				contactId = contact_match.group(1)
-				contactName = saxutils.unescape(contact_match.group(2))
-				contact = contactId, contactName
-				yield contact
-
-			next_match = self._contactsNextRe.match(contactsPage)
-			if next_match is not None:
-				newContactsPageUrl = self._contactsURL + next_match.group(1)
-				contactsPagesUrls.append(newContactsPageUrl)
-
-	def get_contact_details(self, contactId):
-		"""
-		@returns Iterable of (Phone Type, Phone Number)
-		"""
-		detailPage = self._get_page(self._contactDetailURL + '/' + contactId)
-
-		for detail_match in self._contactDetailPhoneRe.finditer(detailPage):
-			phoneNumber = detail_match.group(1)
-			phoneType = saxutils.unescape(detail_match.group(2))
-			yield (phoneType, phoneNumber)
+		page = self._get_page(self._XML_CONTACTS_URL)
+		contactsBody = self._contactsBodyRe.search(page)
+		if contactsBody is None:
+			raise RuntimeError("Could not extract contact information")
+		accountData = _fake_parse_json(contactsBody.group(1))
+		for contactId, contactDetails in accountData["contacts"].iteritems():
+			yield contactId, contactDetails
 
 	def get_messages(self):
 		voicemailPage = self._get_page(self._XML_VOICEMAIL_URL)
@@ -799,7 +777,7 @@ def test_backend(username, password):
 	if not backend.is_authed():
 		print "Login?: ", backend.login(username, password)
 	print "Authenticated: ", backend.is_authed()
-	print "Is Dnd: ", backend.is_dnd()
+	#print "Is Dnd: ", backend.is_dnd()
 	#print "Setting Dnd", backend.set_dnd(True)
 	#print "Is Dnd: ", backend.is_dnd()
 	#print "Setting Dnd", backend.set_dnd(False)
@@ -809,7 +787,7 @@ def test_backend(username, password):
 	#print "Account: ", backend.get_account_number()
 	#print "Callback: ", backend.get_callback_number()
 	#print "All Callback: ",
-	#import pprint
+	import pprint
 	#pprint.pprint(backend.get_callback_numbers())
 
 	#print "Recent: "
@@ -819,10 +797,9 @@ def test_backend(username, password):
 	#	pprint.pprint(decorate_recent(data))
 	#pprint.pprint(list(backend.get_recent()))
 
-	#print "Contacts: ",
-	#for contact in backend.get_contacts():
-	#	print contact
-	#	pprint.pprint(list(backend.get_contact_details(contact[0])))
+	print "Contacts: ",
+	for contact in backend.get_contacts():
+		pprint.pprint(contact)
 
 	#print "Messages: ",
 	#for message in backend.get_messages():
@@ -848,9 +825,9 @@ def grab_debug_info(username, password):
 		("token", backend._tokenURL),
 		("login", backend._loginURL),
 		("isdnd", backend._isDndURL),
-		("contacts", backend._contactsURL),
-
 		("account", backend._XML_ACCOUNT_URL),
+		("contacts", backend._XML_CONTACTS_URL),
+
 		("voicemail", backend._XML_VOICEMAIL_URL),
 		("sms", backend._XML_SMS_URL),
 
@@ -894,19 +871,19 @@ def grab_debug_info(username, password):
 		try:
 			page = browser.download(url)
 		except StandardError, e:
-			print e.message
+			print str(e)
 			continue
 		print "\tWriting to file"
 		with open("loggedin_%s.txt" % name, "w") as f:
 			f.write(page)
 
 	# Cookies
-	browser.cookies.save()
+	browser.save_cookies()
 	print "\tWriting cookies to file"
 	with open("cookies.txt", "w") as f:
 		f.writelines(
 			"%s: %s\n" % (c.name, c.value)
-			for c in browser.cookies
+			for c in browser._cookies
 		)
 
 

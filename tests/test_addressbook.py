@@ -20,12 +20,9 @@ class MockBackend(object):
 
 	def get_contacts(self):
 		return (
-			(i, contactData["name"])
+			(i, contactData)
 			for (i, contactData) in enumerate(self.contactsData)
 		)
-
-	def get_contact_details(self, contactId):
-		return self.contactsData[contactId]["details"]
 
 
 def generate_update_callback(callbackData):
@@ -64,7 +61,7 @@ def test_one_contact_no_details():
 	backend = MockBackend([
 		{
 			"name": "One",
-			"details": [],
+			"numbers": [],
 		},
 	])
 	book = gvoice.addressbook.Addressbook(backend)
@@ -94,9 +91,6 @@ def test_one_contact_no_details():
 	id = contacts[0]
 	name = book.get_contact_name(id)
 	assert name == backend.contactsData[id]["name"]
-
-	contactDetails = list(book.get_contact_details(id))
-	assert len(contactDetails) == 0
 
 
 def test_one_contact_with_details():
@@ -106,7 +100,10 @@ def test_one_contact_with_details():
 	backend = MockBackend([
 		{
 			"name": "One",
-			"details": [("Type A", "123"), ("Type B", "456"), ("Type C", "789")],
+			"numbers": [
+				{"phoneType": "Type A", "phoneNumber": "123"},
+				{"phoneType": "Type B", "phoneNumber": "456"},
+				{"phoneType": "Type C", "phoneNumber": "789"}],
 		},
 	])
 	book = gvoice.addressbook.Addressbook(backend)
@@ -137,16 +134,6 @@ def test_one_contact_with_details():
 	name = book.get_contact_name(id)
 	assert name == backend.contactsData[id]["name"]
 
-	contactDetails = list(book.get_contact_details(id))
-	print "%r" % contactDetails
-	assert len(contactDetails) == 3
-	assert contactDetails[0][0] == "Type A"
-	assert contactDetails[0][1] == "123"
-	assert contactDetails[1][0] == "Type B"
-	assert contactDetails[1][1] == "456"
-	assert contactDetails[2][0] == "Type C"
-	assert contactDetails[2][1] == "789"
-
 
 def test_adding_a_contact():
 	callbackData = []
@@ -155,7 +142,7 @@ def test_adding_a_contact():
 	backend = MockBackend([
 		{
 			"name": "One",
-			"details": [],
+			"numbers": [],
 		},
 	])
 	book = gvoice.addressbook.Addressbook(backend)
@@ -174,7 +161,7 @@ def test_adding_a_contact():
 
 	backend.contactsData.append({
 		"name": "Two",
-		"details": [],
+		"numbers": [],
 	})
 
 	book.update()
@@ -198,7 +185,7 @@ def test_removing_a_contact():
 	backend = MockBackend([
 		{
 			"name": "One",
-			"details": [],
+			"numbers": [],
 		},
 	])
 	book = gvoice.addressbook.Addressbook(backend)

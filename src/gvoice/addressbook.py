@@ -56,8 +56,13 @@ class Addressbook(object):
 		if self._contacts:
 			return
 		contacts = self._backend.get_contacts()
-		for contactId, contactName in contacts:
-			self._contacts[contactId] = (contactName, [])
+		for contactId, contactDetails in contacts:
+			contactName = contactDetails["name"]
+			contactNumbers = [
+				(numberDetails.get("phoneType", "Mobile"), numberDetails["phoneNumber"])
+				for numberDetails in contactDetails["numbers"]
+			]
+			self._contacts[contactId] = (contactName, contactNumbers)
 
 	def _populate_contact_details(self, contactId):
 		if self._get_contact_details(contactId):

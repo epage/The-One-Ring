@@ -24,8 +24,13 @@ class TextChannel(telepathy.server.ChannelTypeText):
 
 		self._otherHandle = h
 
+		self._callback = coroutines.func_sink(
+			coroutines.expand_positional(
+				self._on_conversations_updated
+			)
+		)
 		self._conn.session.conversations.updateSignalHandler.register_sink(
-			self._on_conversations_updated
+			self._callback
 		)
 
 		# The only reason there should be anything in the conversation is if
@@ -53,7 +58,7 @@ class TextChannel(telepathy.server.ChannelTypeText):
 			self._conn.session.conversations.clear_conversation(self._contactKey)
 
 			self._conn.session.conversations.updateSignalHandler.unregister_sink(
-				self._on_conversations_updated
+				self._callback
 			)
 		finally:
 			telepathy.server.ChannelTypeText.Close(self)
@@ -64,11 +69,9 @@ class TextChannel(telepathy.server.ChannelTypeText):
 		contactKey = self._otherHandle.contactID, self._otherHandle.phoneNumber
 		return contactKey
 
-	@coroutines.func_sink
-	@coroutines.expand_positional
 	@gobject_utils.async
 	@gtk_toolbox.log_exception(_moduleLogger)
-	def _on_conversations_updated(self, conversationIds):
+	def _on_conversations_updated(self, conv, conversationIds):
 		if self._contactKey not in conversationIds:
 			return
 		_moduleLogger.info("Incoming messages from %r for existing conversation" % (self._contactKey, ))
@@ -84,11 +87,11 @@ class TextChannel(telepathy.server.ChannelTypeText):
 		self._report_new_message(formattedMessage)
 
 	def _filter_seen_messages(self, messages):
-		return (
+		return [
 			message
 			for message in messages
 			if self._lastMessageTimestamp < message[0]
-		)
+		]
 
 	def _format_messages(self, messages):
 		return "\n".join(message[1] for message in messages)
@@ -98,9 +101,8 @@ class TextChannel(telepathy.server.ChannelTypeText):
 
 		timestamp = int(time.time())
 		type = telepathy.CHANNEL_TEXT_MESSAGE_TYPE_NORMAL
-		message = message.content
 
 		_moduleLogger.info("Received message from User %r" % self._otherHandle)
-		self.Received(id, timestamp, self._otherHandle, type, 0, message)
+		self.Received(currentReceivedId, timestamp, self._otherHandle, type, 0, message)
 
 		self._nextRecievedId += 1

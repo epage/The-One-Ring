@@ -6,13 +6,14 @@
 """
 
 import Queue
-import threading
 import logging
 
 import gobject
 
 import util.algorithms as algorithms
+import util.go_utils as gobject_utils
 import util.coroutines as coroutines
+import gtk_toolbox
 
 
 _moduleLogger = logging.getLogger("gvoice.state_machine")
@@ -49,25 +50,31 @@ class StateMachine(object):
 		self._initItems = initItems
 		self._updateItems = updateItems
 
-		self._actions = Queue.Queue()
 		self._state = self.STATE_ACTIVE
 		self._timeoutId = None
-		self._thread = None
 		self._currentPeriod = self._INITIAL_ACTIVE_PERIOD
 		self._set_initial_period()
 
+		self._callback = coroutines.func_sink(
+			coroutines.expand_positional(
+				self._request_reset_timers
+			)
+		)
+
+	@gobject_utils.async
+	@gtk_toolbox.log_exception(_moduleLogger)
 	def start(self):
-		assert self._thread is None
-		self._thread = threading.Thread(target=self._run)
-		self._thread.setDaemon(self._IS_DAEMON)
-		self._thread.start()
+		_moduleLogger.info("Starting State Machine")
+		for item in self._initItems:
+			try:
+				item.update()
+			except Exception:
+				_moduleLogger.exception("Initial update failed for %r" % item)
+		self._schedule_update()
 
 	def stop(self):
-		if self._thread is not None:
-			self._actions.put(self._ACTION_STOP)
-			self._thread = None
-		else:
-			_moduleLogger.info("Stopping an already stopped state machine")
+		_moduleLogger.info("Stopping an already stopped state machine")
+		self._stop_update()
 
 	def set_state(self, state):
 		self._state = state
@@ -77,54 +84,19 @@ class StateMachine(object):
 		return self._state
 
 	def reset_timers(self):
-		self._actions.put(self._ACTION_RESET)
+		self._reset_timers()
 
-	@coroutines.func_sink
-	def request_reset_timers(self, args):
+	@property
+	def request_reset_timers(self):
+		return self._callback
+
+	@gobject_utils.async
+	@gtk_toolbox.log_exception(_moduleLogger)
+	def _request_reset_timers(self, *args):
 		self.reset_timers()
-
-	def _run(self):
-		logging.basicConfig(level=logging.DEBUG)
-		_moduleLogger.info("Starting State Machine")
-		for item in self._initItems:
-			try:
-				item.update()
-			except Exception:
-				_moduleLogger.exception("Initial update failed for %r" % item)
-
-		# empty the task queue
-		actions = list(algorithms.itr_available(self._actions, initiallyBlock = False))
-		self._schedule_update()
-		if len(self._updateItems) == 0:
-			self.stop()
-
-		while True:
-			# block till we get a task, or get all the tasks if we were late 
-			actions = list(algorithms.itr_available(self._actions, initiallyBlock = True))
-
-			if self._ACTION_STOP in actions:
-				_moduleLogger.info("Requested to stop")
-				self._stop_update()
-				break
-			elif self._ACTION_RESET in actions:
-				_moduleLogger.info("Reseting timers")
-				self._reset_timers()
-			elif self._ACTION_UPDATE in actions:
-				_moduleLogger.info("Update")
-				for item in self._updateItems:
-					try:
-						item.update(force=True)
-					except Exception:
-						_moduleLogger.exception("Update failed for %r" % item)
-				self._schedule_update()
 
 	def _set_initial_period(self):
 		self._currentPeriod = self._INITIAL_ACTIVE_PERIOD / 2 # We will double it later
-
-	def _reset_timers(self):
-		self._stop_update()
-		self._set_initial_period()
-		self._schedule_update()
 
 	def _schedule_update(self):
 		nextTimeout = self._calculate_step(self._state, self._currentPeriod)
@@ -139,8 +111,19 @@ class StateMachine(object):
 		gobject.source_remove(self._timeoutId)
 		self._timeoutId = None
 
+	def _reset_timers(self):
+		self._stop_update()
+		self._set_initial_period()
+		self._schedule_update()
+
 	def _on_timeout(self):
-		self._actions.put(self._ACTION_UPDATE)
+		_moduleLogger.info("Update")
+		for item in self._updateItems:
+			try:
+				item.update(force=True)
+			except Exception:
+				_moduleLogger.exception("Update failed for %r" % item)
+		self._schedule_update()
 		return False # do not continue
 
 	@classmethod

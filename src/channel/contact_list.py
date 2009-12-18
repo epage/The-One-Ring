@@ -31,8 +31,13 @@ class AllContactsListChannel(AbstractListChannel):
 
 	def __init__(self, connection, h):
 		AbstractListChannel.__init__(self, connection, h)
+		self._callback = coroutines.func_sink(
+			coroutines.expand_positional(
+				self._on_contacts_refreshed
+			)
+		)
 		self._session.addressbook.updateSignalHandler.register_sink(
-			self._on_contacts_refreshed
+			self._callback
 		)
 		self.GroupFlagsChanged(0, 0)
 
@@ -45,11 +50,9 @@ class AllContactsListChannel(AbstractListChannel):
 		telepathy.server.ChannelTypeContactList.Close(self)
 		self.remove_from_connection()
 		self._session.addressbook.updateSignalHandler.unregister_sink(
-			self._on_contacts_refreshed
+			self._callback
 		)
 
-	@coroutines.func_sink
-	@coroutines.expand_positional
 	@gobject_utils.async
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def _on_contacts_refreshed(self, addressbook, added, removed, changed):
