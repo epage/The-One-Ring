@@ -356,8 +356,8 @@ class Aliases(Action):
 
 	def _on_done(self, aliases):
 		print "\tAliases:"
-		for alias in aliases:
-			print "\t\t", alias
+		for h, alias in zip(self._handleAction.handles, aliases):
+			print "\t\t", h, alias
 		super(Aliases, self)._on_done()
 
 
@@ -500,6 +500,11 @@ if __name__ == '__main__':
 				sps = SimplePresenceStatus(con, uh)
 				lastAction.append_action(sps)
 				lastAction = sps
+
+		if True:
+			sl = Sleep(10 * 1000)
+			lastAction.append_action(sl)
+			lastAction = sl
 
 		if True:
 			rclh = RequestHandle(con, telepathy.HANDLE_TYPE_LIST, ["subscribe"])
