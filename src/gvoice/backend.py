@@ -99,6 +99,7 @@ class GVoiceBackend(object):
 
 		self._XML_SEARCH_URL = SECURE_URL_BASE + "inbox/search/"
 		self._XML_ACCOUNT_URL = SECURE_URL_BASE + "contacts/"
+		# HACK really this redirects to the main pge and we are grabbing some javascript
 		self._XML_CONTACTS_URL = "http://www.google.com/voice/inbox/search/contact"
 		self._XML_RECENT_URL = SECURE_URL_BASE + "inbox/recent/"
 
@@ -386,7 +387,9 @@ class GVoiceBackend(object):
 			raise RuntimeError("Could not extract contact information")
 		accountData = _fake_parse_json(contactsBody.group(1))
 		for contactId, contactDetails in accountData["contacts"].iteritems():
-			yield contactId, contactDetails
+			# A zero contact id is the catch all for unknown contacts
+			if contactId != "0":
+				yield contactId, contactDetails
 
 	def get_messages(self):
 		voicemailPage = self._get_page(self._XML_VOICEMAIL_URL)
