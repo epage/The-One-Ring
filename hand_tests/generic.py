@@ -287,9 +287,15 @@ class ContactHandles(Action):
 		return self._handles
 
 	def queue_action(self):
-		pass
+		self._chanAction.channel[DBUS_PROPERTIES].Get(
+			telepathy.server.CHANNEL_INTERFACE_GROUP,
+			'Members',
+			reply_handler = self._on_done,
+			error_handler = self._on_error,
+		)
 
-	def _on_done(self, handle):
+	def _on_done(self, handles):
+		self._handles = list(handles)
 		super(ContactHandles, self)._on_done()
 
 
@@ -399,6 +405,16 @@ class SendText(Action):
 		super(SendText, self)._on_done()
 
 
+class Sleep(Action):
+
+	def __init__(self, length):
+		super(Sleep, self).__init__()
+		self._length = length
+
+	def queue_action(self):
+		gobject.timeout_add(self._length, self._on_done)
+
+
 class Block(Action):
 
 	def __init__(self):
@@ -499,9 +515,15 @@ if __name__ == '__main__':
 			lastAction.append_action(rclc)
 			lastAction = rclc
 
-			# @todo get aliases for contacts
+			ch = ContactHandles(con, rclc)
+			lastAction.append_action(ch)
+			lastAction = ch
 
-		if True:
+			ca = Aliases(con, ch)
+			lastAction.append_action(ca)
+			lastAction = ca
+
+		if False:
 			rch = RequestHandle(con, telepathy.HANDLE_TYPE_CONTACT, ["18005558355"]) #(1-800-555-TELL)
 			lastAction.append_action(rch)
 			lastAction = rch
@@ -542,10 +564,15 @@ if __name__ == '__main__':
 				lastAction.append_action(sendtext)
 				lastAction = sendtext
 
-		if True:
+		if False:
 			bl = Block()
 			lastAction.append_action(bl)
 			lastAction = bl
+
+		if True:
+			sl = Sleep(30 * 1000)
+			lastAction.append_action(sl)
+			lastAction = sl
 
 		dis = Disconnect(con)
 		lastAction.append_action(dis)
