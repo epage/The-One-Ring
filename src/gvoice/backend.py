@@ -79,7 +79,7 @@ class GVoiceBackend(object):
 
 		# Suprisingly, moving all of these from class to self sped up startup time
 
-		self._validateRe = re.compile("^[0-9]{10,}$")
+		self._validateRe = re.compile("^\+?[0-9]{10,}$")
 
 		self._loginURL = "https://www.google.com/accounts/ServiceLoginAuth"
 

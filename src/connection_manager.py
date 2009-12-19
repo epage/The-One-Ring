@@ -1,3 +1,12 @@
+"""
+Empathy Experience:
+	.profile file needs to be updated with proper presence
+	Conversations are incomplete
+	Conversations show the persons name, not needed due to aliases
+	Can't reopen a conversation for someone when I've already closed it
+	Can't call
+"""
+
 import logging
 
 import gobject
