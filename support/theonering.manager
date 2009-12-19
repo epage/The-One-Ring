@@ -3,7 +3,7 @@ Name = theonering
 BusName = org.freedesktop.Telepathy.ConnectionManager.theonering
 ObjectPath = /org/freedesktop/Telepathy/ConnectionManager/theonering
 
-[Protocol GoogleVoice]
+[Protocol sip]
 param-username = s required
 param-password = s required secret
 param-forward = s required
