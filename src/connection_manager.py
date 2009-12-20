@@ -1,8 +1,7 @@
 """
 Empathy Experience:
 	.profile file needs to be updated with proper presence
-	Conversations are incomplete
-	Conversations show the persons name, not needed due to aliases
+	Did not properly merge old conversation with an updated one
 	Can't reopen a conversation for someone when I've already closed it
 	Can't call
 """

@@ -80,27 +80,31 @@ class TextChannel(telepathy.server.ChannelTypeText):
 
 	def _report_conversation(self, mergedConversations):
 		newConversations = mergedConversations.conversations
-		newConversations = list(newConversations)
-		lenMerged = len(newConversations)
 		newConversations = self._filter_out_reported(newConversations)
-		newConversations = list(newConversations)
-		lenUnreported = len(newConversations)
 		newConversations = self._filter_out_read(newConversations)
 		newConversations = list(newConversations)
-		lenUnread = len(newConversations)
 		if not newConversations:
 			_moduleLogger.info(
 				"New messages for %r have already been read externally" % (self._contactKey, )
 			)
 			return
-		_moduleLogger.debug("%s, %s, %s" % (lenMerged, lenUnreported, lenUnread))
 		self._lastMessageTimestamp = newConversations[-1].time
 
-		for newConversation in newConversations:
-			for newMessage in newConversations.messages:
-				if newMessage.name != "Me:":
-					formattedMessage = self._format_message(newMessage)
-					self._report_new_message(formattedMessage)
+		messages = [
+			newMessage
+			for newConversation in newConversations
+			for newMessage in newConversation.messages
+			if newMessage.whoFrom != "Me:"
+		]
+		if not newConversations:
+			_moduleLogger.info(
+				"All incoming messages were really outbound messages for %r" % (self._contactKey, )
+			)
+			return
+
+		for newMessage in messages:
+			formattedMessage = self._format_message(newMessage)
+			self._report_new_message(formattedMessage)
 
 	def _filter_out_reported(self, conversations):
 		return (
