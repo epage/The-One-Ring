@@ -5,12 +5,10 @@
 @todo Look into supporting more states that have a different F and MAX
 """
 
-import Queue
 import logging
 
 import gobject
 
-import util.algorithms as algorithms
 import util.go_utils as gobject_utils
 import util.coroutines as coroutines
 import gtk_toolbox

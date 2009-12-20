@@ -35,7 +35,7 @@ import time
 import datetime
 import itertools
 import logging
-from xml.sax import saxutils
+import inspect
 
 from xml.etree import ElementTree
 
@@ -53,6 +53,90 @@ _moduleLogger = logging.getLogger("gvoice.backend")
 
 class NetworkError(RuntimeError):
 	pass
+
+
+class MessageText(object):
+
+	ACCURACY_LOW = "med1"
+	ACCURACY_MEDIUM = "med2"
+	ACCURACY_HIGH = "high"
+
+	def __init__(self):
+		self.accuracy = None
+		self.text = None
+
+	def __str__(self):
+		return self.text
+
+	def to_dict(self):
+		return to_dict(self)
+
+	def __eq__(self, other):
+		return self.accuracy == other.accuracy and self.text == other.text
+
+
+class Message(object):
+
+	def __init__(self):
+		self.whoFrom = None
+		self.body = None
+		self.when = None
+
+	def __str__(self):
+		return "%s (%s): %s" % (
+			self.whoFrom,
+			self.when,
+			"".join(str(part) for part in self.body)
+		)
+
+	def to_dict(self):
+		selfDict = to_dict(self)
+		selfDict["body"] = [text.to_dict() for text in self.body] if self.body is not None else None
+		return selfDict
+
+	def __eq__(self, other):
+		return self.whoFrom == other.whoFrom and self.when == other.when and self.body == other.body
+
+
+class Conversation(object):
+
+	TYPE_VOICEMAIL = "Voicemail"
+	TYPE_SMS = "SMS"
+
+	def __init__(self):
+		self.type = None
+		self.id = None
+		self.contactId = None
+		self.name = None
+		self.location = None
+		self.prettyNumber = None
+		self.number = None
+
+		self.time = None
+		self.relTime = None
+		self.messages = None
+		self.isRead = None
+		self.isSpam = None
+		self.isTrash = None
+		self.isArchived = None
+
+	def __cmp__(self, other):
+		cmpValue = cmp(self.contactId, other.contactId)
+		if cmpValue != 0:
+			return cmpValue
+
+		cmpValue = cmp(self.time, other.time)
+		if cmpValue != 0:
+			return cmpValue
+
+		cmpValue = cmp(self.id, other.id)
+		if cmpValue != 0:
+			return cmpValue
+
+	def to_dict(self):
+		selfDict = to_dict(self)
+		selfDict["messages"] = [message.to_dict() for message in self.messages] if self.messages is not None else None
+		return selfDict
 
 
 class GVoiceBackend(object):
@@ -96,6 +180,8 @@ class GVoiceBackend(object):
 		self._setDndURL = "https://www.google.com/voice/m/savednd"
 
 		self._downloadVoicemailURL = SECURE_URL_BASE + "media/send_voicemail/"
+		self._markAsReadURL = SECURE_URL_BASE + "m/mark"
+		self._archiveMessageURL = SECURE_URL_BASE + "m/archive"
 
 		self._XML_SEARCH_URL = SECURE_URL_BASE + "inbox/search/"
 		self._XML_ACCOUNT_URL = SECURE_URL_BASE + "contacts/"
@@ -235,10 +321,9 @@ class GVoiceBackend(object):
 	def set_dnd(self, doNotDisturb):
 		dndPostData = {
 			"doNotDisturb": 1 if doNotDisturb else 0,
-			"_rnr_se": self._token,
 		}
 
-		dndPage = self._get_page(self._setDndURL, dndPostData)
+		dndPage = self._get_page_with_token(self._setDndURL, dndPostData)
 
 	def call(self, outgoingNumber):
 		"""
@@ -372,7 +457,7 @@ class GVoiceBackend(object):
 			flatXml = self._get_page(url)
 
 			allRecentHtml = self._grab_html(flatXml)
-			allRecentData = self._parse_voicemail(allRecentHtml)
+			allRecentData = self._parse_history(allRecentHtml)
 			for recentCallData in allRecentData:
 				recentCallData["action"] = action
 				yield recentCallData
@@ -391,23 +476,37 @@ class GVoiceBackend(object):
 			if contactId != "0":
 				yield contactId, contactDetails
 
-	def get_messages(self):
+	def get_conversations(self):
 		voicemailPage = self._get_page(self._XML_VOICEMAIL_URL)
 		voicemailHtml = self._grab_html(voicemailPage)
 		voicemailJson = self._grab_json(voicemailPage)
 		parsedVoicemail = self._parse_voicemail(voicemailHtml)
-		voicemails = self._merge_messages(parsedVoicemail, voicemailJson)
-		decoratedVoicemails = self._decorate_voicemail(voicemails)
+		voicemails = self._merge_conversation_sources(parsedVoicemail, voicemailJson)
 
 		smsPage = self._get_page(self._XML_SMS_URL)
 		smsHtml = self._grab_html(smsPage)
 		smsJson = self._grab_json(smsPage)
 		parsedSms = self._parse_sms(smsHtml)
-		smss = self._merge_messages(parsedSms, smsJson)
+		smss = self._merge_conversation_sources(parsedSms, smsJson)
 		decoratedSms = self._decorate_sms(smss)
 
-		allMessages = itertools.chain(decoratedVoicemails, decoratedSms)
-		return allMessages
+		allConversations = itertools.chain(voicemails, decoratedSms)
+		return allConversations
+
+	def mark_message(self, messageId, asRead):
+		postData = {
+			"read": 1 if asRead else 0,
+			"id": messageId,
+		}
+
+		markPage = self._get_page(self._markAsReadURL, postData)
+
+	def archive_message(self, messageId):
+		postData = {
+			"id": messageId,
+		}
+
+		markPage = self._get_page(self._archiveMessageURL, postData)
 
 	def _grab_json(self, flatXml):
 		xmlTree = ElementTree.fromstring(flatXml)
@@ -453,16 +552,8 @@ class GVoiceBackend(object):
 			number = number[1:]
 		return number
 
-	@staticmethod
-	def _interpret_voicemail_regex(group):
-		quality, content, number = group.group(2), group.group(3), group.group(4)
-		if quality is not None and content is not None:
-			return quality, content
-		elif number is not None:
-			return "high", number
-
-	def _parse_voicemail(self, voicemailHtml):
-		splitVoicemail = self._seperateVoicemailsRegex.split(voicemailHtml)
+	def _parse_history(self, historyHtml):
+		splitVoicemail = self._seperateVoicemailsRegex.split(historyHtml)
 		for messageId, messageHtml in itergroup(splitVoicemail[1:], 2):
 			exactTimeGroup = self._exactVoicemailTimeRegex.search(messageHtml)
 			exactTime = exactTimeGroup.group(1).strip() if exactTimeGroup else ""
@@ -481,12 +572,6 @@ class GVoiceBackend(object):
 			contactIdGroup = self._messagesContactIDRegex.search(messageHtml)
 			contactId = contactIdGroup.group(1).strip() if contactIdGroup else ""
 
-			messageGroups = self._voicemailMessageRegex.finditer(messageHtml)
-			messageParts = (
-				self._interpret_voicemail_regex(group)
-				for group in messageGroups
-			) if messageGroups else ()
-
 			yield {
 				"id": messageId.strip(),
 				"contactId": contactId,
@@ -496,45 +581,93 @@ class GVoiceBackend(object):
 				"prettyNumber": prettyNumber,
 				"number": number,
 				"location": location,
-				"messageParts": messageParts,
-				"type": "Voicemail",
 			}
 
-	def _decorate_voicemail(self, parsedVoicemails):
-		messagePartFormat = {
-			"med1": "<i>%s</i>",
-			"med2": "%s",
-			"high": "<b>%s</b>",
-		}
-		for voicemailData in parsedVoicemails:
-			message = " ".join((
-				messagePartFormat[quality] % part
-				for (quality, part) in voicemailData["messageParts"]
-			)).strip()
-			if not message:
-				message = "No Transcription"
-			whoFrom = voicemailData["name"]
-			when = voicemailData["time"]
-			voicemailData["messageParts"] = ((whoFrom, message, when), )
-			yield voicemailData
+	@staticmethod
+	def _interpret_voicemail_regex(group):
+		quality, content, number = group.group(2), group.group(3), group.group(4)
+		text = MessageText()
+		if quality is not None and content is not None:
+			text.accuracy = quality
+			text.text = content
+			return text
+		elif number is not None:
+			text.accuracy = MessageText.ACCURACY_HIGH
+			text.text = number
+			return text
+
+	def _parse_voicemail(self, voicemailHtml):
+		splitVoicemail = self._seperateVoicemailsRegex.split(voicemailHtml)
+		for messageId, messageHtml in itergroup(splitVoicemail[1:], 2):
+			conv = Conversation()
+			conv.type = Conversation.TYPE_VOICEMAIL
+			conv.id = messageId.strip()
+
+			exactTimeGroup = self._exactVoicemailTimeRegex.search(messageHtml)
+			exactTimeText = exactTimeGroup.group(1).strip() if exactTimeGroup else ""
+			conv.time = datetime.datetime.strptime(exactTimeText, "%m/%d/%y %I:%M %p")
+			relativeTimeGroup = self._relativeVoicemailTimeRegex.search(messageHtml)
+			conv.relTime = relativeTimeGroup.group(1).strip() if relativeTimeGroup else ""
+			locationGroup = self._voicemailLocationRegex.search(messageHtml)
+			conv.location = locationGroup.group(1).strip() if locationGroup else ""
+
+			nameGroup = self._voicemailNameRegex.search(messageHtml)
+			conv.name = nameGroup.group(1).strip() if nameGroup else ""
+			numberGroup = self._voicemailNumberRegex.search(messageHtml)
+			conv.number = numberGroup.group(1).strip() if numberGroup else ""
+			prettyNumberGroup = self._prettyVoicemailNumberRegex.search(messageHtml)
+			conv.prettyNumber = prettyNumberGroup.group(1).strip() if prettyNumberGroup else ""
+			contactIdGroup = self._messagesContactIDRegex.search(messageHtml)
+			conv.contactId = contactIdGroup.group(1).strip() if contactIdGroup else ""
+
+			messageGroups = self._voicemailMessageRegex.finditer(messageHtml)
+			messageParts = [
+				self._interpret_voicemail_regex(group)
+				for group in messageGroups
+			] if messageGroups else ((MessageText.ACCURACY_LOW, "No Transcription"), )
+			message = Message()
+			message.body = messageParts
+			message.whoFrom = conv.name
+			message.when = conv.time.strftime("%I:%M %p")
+			conv.messages = (message, )
+
+			yield conv
+
+	@staticmethod
+	def _interpret_sms_message_parts(fromPart, textPart, timePart):
+		text = MessageText()
+		text.accuracy = MessageText.ACCURACY_MEDIUM
+		text.text = textPart
+
+		message = Message()
+		message.body = (text, )
+		message.whoFrom = fromPart
+		message.when = timePart
+
+		return message
 
 	def _parse_sms(self, smsHtml):
 		splitSms = self._seperateVoicemailsRegex.split(smsHtml)
 		for messageId, messageHtml in itergroup(splitSms[1:], 2):
+			conv = Conversation()
+			conv.type = Conversation.TYPE_SMS
+			conv.id = messageId.strip()
+
 			exactTimeGroup = self._exactVoicemailTimeRegex.search(messageHtml)
-			exactTime = exactTimeGroup.group(1).strip() if exactTimeGroup else ""
-			exactTime = datetime.datetime.strptime(exactTime, "%m/%d/%y %I:%M %p")
+			exactTimeText = exactTimeGroup.group(1).strip() if exactTimeGroup else ""
+			conv.time = datetime.datetime.strptime(exactTimeText, "%m/%d/%y %I:%M %p")
 			relativeTimeGroup = self._relativeVoicemailTimeRegex.search(messageHtml)
-			relativeTime = relativeTimeGroup.group(1).strip() if relativeTimeGroup else ""
+			conv.relTime = relativeTimeGroup.group(1).strip() if relativeTimeGroup else ""
+			conv.location = ""
 
 			nameGroup = self._voicemailNameRegex.search(messageHtml)
-			name = nameGroup.group(1).strip() if nameGroup else ""
+			conv.name = nameGroup.group(1).strip() if nameGroup else ""
 			numberGroup = self._voicemailNumberRegex.search(messageHtml)
-			number = numberGroup.group(1).strip() if numberGroup else ""
+			conv.number = numberGroup.group(1).strip() if numberGroup else ""
 			prettyNumberGroup = self._prettyVoicemailNumberRegex.search(messageHtml)
-			prettyNumber = prettyNumberGroup.group(1).strip() if prettyNumberGroup else ""
+			conv.prettyNumber = prettyNumberGroup.group(1).strip() if prettyNumberGroup else ""
 			contactIdGroup = self._messagesContactIDRegex.search(messageHtml)
-			contactId = contactIdGroup.group(1).strip() if contactIdGroup else ""
+			conv.contactId = contactIdGroup.group(1).strip() if contactIdGroup else ""
 
 			fromGroups = self._smsFromRegex.finditer(messageHtml)
 			fromParts = (group.group(1).strip() for group in fromGroups)
@@ -544,32 +677,22 @@ class GVoiceBackend(object):
 			timeParts = (group.group(1).strip() for group in timeGroups)
 
 			messageParts = itertools.izip(fromParts, textParts, timeParts)
+			messages = [self._interpret_sms_message_parts(*parts) for parts in messageParts]
+			conv.messages = messages
 
-			yield {
-				"id": messageId.strip(),
-				"contactId": contactId,
-				"name": name,
-				"time": exactTime,
-				"relTime": relativeTime,
-				"prettyNumber": prettyNumber,
-				"number": number,
-				"location": "",
-				"messageParts": messageParts,
-				"type": "Texts",
-			}
+			yield conv
 
 	def _decorate_sms(self, parsedTexts):
 		return parsedTexts
 
 	@staticmethod
-	def _merge_messages(parsedMessages, json):
+	def _merge_conversation_sources(parsedMessages, json):
 		for message in parsedMessages:
-			id = message["id"]
-			jsonItem = json["messages"][id]
-			message["isRead"] = jsonItem["isRead"]
-			message["isSpam"] = jsonItem["isSpam"]
-			message["isTrash"] = jsonItem["isTrash"]
-			message["isArchived"] = "inbox" not in jsonItem["labels"]
+			jsonItem = json["messages"][message.id]
+			message.isRead = jsonItem["isRead"]
+			message.isSpam = jsonItem["isSpam"]
+			message.isTrash = jsonItem["isTrash"]
+			message.isArchived = "inbox" not in jsonItem["labels"]
 			yield message
 
 	def _get_page(self, url, data = None, refererUrl = None):
@@ -715,102 +838,13 @@ def set_sane_callback(backend):
 			return
 
 
-def sort_messages(allMessages):
-	sortableAllMessages = [
-		(message["time"], message)
-		for message in allMessages
-	]
-	sortableAllMessages.sort(reverse=True)
-	return (
-		message
-		for (exactTime, message) in sortableAllMessages
-	)
+def _is_not_special(name):
+	return not name.startswith("_") and name[0].lower() == name[0] and "_" not in name
 
 
-def decorate_recent(recentCallData):
-	"""
-	@returns (personsName, phoneNumber, date, action)
-	"""
-	contactId = recentCallData["contactId"]
-	if recentCallData["name"]:
-		header = recentCallData["name"]
-	elif recentCallData["prettyNumber"]:
-		header = recentCallData["prettyNumber"]
-	elif recentCallData["location"]:
-		header = recentCallData["location"]
-	else:
-		header = "Unknown"
-
-	number = recentCallData["number"]
-	relTime = recentCallData["relTime"]
-	action = recentCallData["action"]
-	return contactId, header, number, relTime, action
-
-
-def decorate_message(messageData):
-	contactId = messageData["contactId"]
-	exactTime = messageData["time"]
-	if messageData["name"]:
-		header = messageData["name"]
-	elif messageData["prettyNumber"]:
-		header = messageData["prettyNumber"]
-	else:
-		header = "Unknown"
-	number = messageData["number"]
-	relativeTime = messageData["relTime"]
-
-	messageParts = list(messageData["messageParts"])
-	if len(messageParts) == 0:
-		messages = ("No Transcription", )
-	elif len(messageParts) == 1:
-		messages = (messageParts[0][1], )
-	else:
-		messages = [
-			"<b>%s</b>: %s" % (messagePart[0], messagePart[1])
-			for messagePart in messageParts
-		]
-
-	decoratedResults = contactId, header, number, relativeTime, messages
-	return decoratedResults
-
-
-def test_backend(username, password):
-	backend = GVoiceBackend()
-	print "Authenticated: ", backend.is_authed()
-	if not backend.is_authed():
-		print "Login?: ", backend.login(username, password)
-	print "Authenticated: ", backend.is_authed()
-	#print "Is Dnd: ", backend.is_dnd()
-	#print "Setting Dnd", backend.set_dnd(True)
-	#print "Is Dnd: ", backend.is_dnd()
-	#print "Setting Dnd", backend.set_dnd(False)
-	#print "Is Dnd: ", backend.is_dnd()
-
-	#print "Token: ", backend._token
-	#print "Account: ", backend.get_account_number()
-	#print "Callback: ", backend.get_callback_number()
-	#print "All Callback: ",
-	import pprint
-	#pprint.pprint(backend.get_callback_numbers())
-
-	#print "Recent: "
-	#for data in backend.get_recent():
-	#	pprint.pprint(data)
-	#for data in sort_messages(backend.get_recent()):
-	#	pprint.pprint(decorate_recent(data))
-	#pprint.pprint(list(backend.get_recent()))
-
-	print "Contacts: ",
-	for contact in backend.get_contacts():
-		pprint.pprint(contact)
-
-	#print "Messages: ",
-	#for message in backend.get_messages():
-	#	pprint.pprint(message)
-	#for message in sort_messages(backend.get_messages()):
-	#	pprint.pprint(decorate_message(message))
-
-	return backend
+def to_dict(obj):
+	members = inspect.getmembers(obj)
+	return dict((name, value) for (name, value) in members if _is_not_special(name))
 
 
 def grab_debug_info(username, password):
@@ -890,10 +924,16 @@ def grab_debug_info(username, password):
 		)
 
 
-if __name__ == "__main__":
+def main():
 	import sys
 	logging.basicConfig(level=logging.DEBUG)
-	if True:
-		grab_debug_info(sys.argv[1], sys.argv[2])
-	else:
-		test_backend(sys.argv[1], sys.argv[2])
+	args = sys.argv
+	if 3 <= len(args):
+		username = args[1]
+		password = args[2]
+
+	grab_debug_info(username, password)
+
+
+if __name__ == "__main__":
+	main()

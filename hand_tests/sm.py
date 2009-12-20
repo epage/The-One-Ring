@@ -3,6 +3,7 @@
 import threading
 import datetime
 import time
+import logging
 
 import gtk
 
@@ -31,6 +32,7 @@ def loop(state):
 
 
 def main():
+	logging.basicConfig(level=logging.DEBUG)
 	startTime = datetime.datetime.now()
 
 	state = [True]

@@ -35,7 +35,6 @@ class Session(object):
 		self._stateMachine.start()
 
 	def logout(self):
-		self._loggedIn = False
 		self._stateMachine.stop()
 		self._backend.logout()
 

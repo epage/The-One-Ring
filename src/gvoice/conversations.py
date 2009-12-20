@@ -5,8 +5,6 @@ import logging
 
 import util.coroutines as coroutines
 
-import backend
-
 
 _moduleLogger = logging.getLogger("gvoice.conversations")
 
@@ -26,23 +24,21 @@ class Conversations(object):
 		oldConversationIds = set(self._conversations.iterkeys())
 
 		updateConversationIds = set()
-		messages = self._backend.get_messages()
-		sortedMessages = backend.sort_messages(messages)
-		for messageData in sortedMessages:
-			key = messageData["contactId"], messageData["number"]
+		conversations = list(self._backend.get_conversations())
+		conversations.sort()
+		for conversation in conversations:
+			key = conversation.contactId, conversation.number
 			try:
-				conversation = self._conversations[key]
-				isNewConversation = False
+				mergedConversations = self._conversations[key]
 			except KeyError:
-				conversation = Conversation(self._backend, messageData)
-				self._conversations[key] = conversation
-				isNewConversation = True
+				mergedConversations = MergedConversations()
+				self._conversations[key] = mergedConversations
 
-			if isNewConversation:
-				# @todo see if this has issues with a user marking a item as unread/unarchive?
+			try:
+				mergedConversations.append_conversation(conversation)
 				isConversationUpdated = True
-			else:
-				isConversationUpdated = conversation.merge_conversation(messageData)
+			except RuntimeError:
+				isConversationUpdated = False
 
 			if isConversationUpdated:
 				updateConversationIds.add(key)
@@ -67,54 +63,48 @@ class Conversations(object):
 		self._conversations.clear()
 
 
-class Conversation(object):
+class MergedConversations(object):
 
-	def __init__(self, backend, data):
-		self._backend = backend
-		self._data = dict((key, value) for (key, value) in data.iteritems())
+	def __init__(self):
+		self._conversations = []
 
-		# confirm we have a list
-		self._data["messageParts"] = list(
-			self._append_time(message, self._data["time"])
-			for message in self._data["messageParts"]
-		)
+	def append_conversation(self, newConversation):
+		self._validate(newConversation)
+		self._remove_repeats(newConversation)
+		self._conversations.append(newConversation)
 
-	def __getitem__(self, key):
-		return self._data[key]
+	@property
+	def conversations(self):
+		return self._conversations
 
-	def merge_conversation(self, moreData):
-		"""
-		@returns True if there was content to merge (new messages arrived
-		rather than being a duplicate)
+	def _validate(self, newConversation):
+		if not self._conversations:
+			return
 
-		@warning This assumes merges are done in chronological order
-		"""
 		for constantField in ("contactId", "number"):
-			assert self._data[constantField] == moreData[constantField], "Constant field changed, soemthing is seriously messed up: %r v %r" % (self._data, moreData)
+			assert getattr(self._conversations[0], constantField) == getattr(newConversation, constantField), "Constant field changed, soemthing is seriously messed up: %r v %r" % (
+				getattr(self._conversations[0], constantField),
+				getattr(newConversation, constantField),
+			)
 
-		if moreData["time"] < self._data["time"]:
-			# If its older, assuming it has nothing new to report
-			return False
+		if newConversation.time <= self._conversations[-1].time:
+			raise RuntimeError("Conversations got out of order")
 
-		for preferredMoreField in ("id", "name", "time", "relTime", "prettyNumber", "location"):
-			preferredFieldValue = moreData[preferredMoreField]
-			if preferredFieldValue:
-				self._data[preferredMoreField] = preferredFieldValue
+	def _remove_repeats(self, newConversation):
+		similarConversations = [
+			conversation
+			for conversation in self._conversations
+			if conversation.id == newConversation.id
+		]
 
-		messageAppended = False
+		for similarConversation in similarConversations:
+			for commonField in ("isRead", "isSpam", "isTrash", "isArchived"):
+				newValue = getattr(newConversation, commonField)
+				setattr(similarConversation, commonField, newValue)
 
-		# @todo Handle No Transcription voicemails
-		messageParts = self._data["messageParts"]
-		for message in moreData["messageParts"]:
-			messageWithTimestamp = self._append_time(message, moreData["time"])
-			if messageWithTimestamp not in messageParts:
-				messageParts.append(messageWithTimestamp)
-				messageAppended = True
-		messageParts.sort()
-
-		return messageAppended
-
-	@staticmethod
-	def _append_time(message, exactWhen):
-		whoFrom, message, when = message
-		return exactWhen, whoFrom, message, when
+			newConversation.messages = [
+				newMessage
+				for newMessage in newConversation.messages
+				if newMessage not in similarConversation.messages
+			]
+			assert 0 < len(newConversation.messages), "Everything shouldn't have been removed"

@@ -501,12 +501,12 @@ if __name__ == '__main__':
 				lastAction.append_action(sps)
 				lastAction = sps
 
-		if True:
+		if False:
 			sl = Sleep(10 * 1000)
 			lastAction.append_action(sl)
 			lastAction = sl
 
-		if True:
+		if False:
 			rclh = RequestHandle(con, telepathy.HANDLE_TYPE_LIST, ["subscribe"])
 			lastAction.append_action(rclh)
 			lastAction = rclh

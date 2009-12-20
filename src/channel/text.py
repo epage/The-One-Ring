@@ -36,11 +36,11 @@ class TextChannel(telepathy.server.ChannelTypeText):
 		# The only reason there should be anything in the conversation is if
 		# its new, so report it all
 		try:
-			conversation = self._conn.session.conversations.get_conversation(self._contactKey)
+			mergedConversations = self._conn.session.conversations.get_conversation(self._contactKey)
 		except KeyError:
 			pass
 		else:
-			self._report_conversation(conversation)
+			self._report_conversation(mergedConversations)
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def Send(self, messageType, text):
@@ -75,26 +75,49 @@ class TextChannel(telepathy.server.ChannelTypeText):
 		if self._contactKey not in conversationIds:
 			return
 		_moduleLogger.info("Incoming messages from %r for existing conversation" % (self._contactKey, ))
-		conversation = self._conn.session.conversations.get_conversation(self._contactKey)
-		self._report_conversation(conversation)
+		mergedConversations = self._conn.session.conversations.get_conversation(self._contactKey)
+		self._report_conversation(mergedConversations)
 
-	def _report_conversation(self, conversation):
-		# @bug? Check if messages sent need to be filtered out
-		completeMessageHistory = conversation["messageParts"]
-		messages = self._filter_seen_messages(completeMessageHistory)
-		self._lastMessageTimestamp = messages[-1][0]
-		formattedMessage = self._format_messages(messages)
-		self._report_new_message(formattedMessage)
+	def _report_conversation(self, mergedConversations):
+		newConversations = mergedConversations.conversations
+		newConversations = list(newConversations)
+		lenMerged = len(newConversations)
+		newConversations = self._filter_out_reported(newConversations)
+		newConversations = list(newConversations)
+		lenUnreported = len(newConversations)
+		newConversations = self._filter_out_read(newConversations)
+		newConversations = list(newConversations)
+		lenUnread = len(newConversations)
+		if not newConversations:
+			_moduleLogger.info(
+				"New messages for %r have already been read externally" % (self._contactKey, )
+			)
+			return
+		_moduleLogger.debug("%s, %s, %s" % (lenMerged, lenUnreported, lenUnread))
+		self._lastMessageTimestamp = newConversations[-1].time
 
-	def _filter_seen_messages(self, messages):
-		return [
-			message
-			for message in messages
-			if self._lastMessageTimestamp < message[0]
-		]
+		for newConversation in newConversations:
+			for newMessage in newConversations.messages:
+				if newMessage.name != "Me:":
+					formattedMessage = self._format_message(newMessage)
+					self._report_new_message(formattedMessage)
 
-	def _format_messages(self, messages):
-		return "\n".join(message[1] for message in messages)
+	def _filter_out_reported(self, conversations):
+		return (
+			conversation
+			for conversation in conversations
+			if self._lastMessageTimestamp < conversation.time
+		)
+
+	def _filter_out_read(self, conversations):
+		return (
+			conversation
+			for conversation in conversations
+			if not conversation.isRead and not conversation.isArchived
+		)
+
+	def _format_message(self, message):
+		return " ".join(part.text.strip() for part in message.body)
 
 	def _report_new_message(self, message):
 		currentReceivedId = self._nextRecievedId

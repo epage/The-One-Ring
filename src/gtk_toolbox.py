@@ -213,7 +213,7 @@ def safecall(f, errorDisplay=None, default=None, exception=Exception):
 	'''
 	def _safecall(*args, **argv):
 		try:
-			return f(*args,**argv)
+			return f(*args, **argv)
 		except exception, e:
 			if errorDisplay is not None:
 				errorDisplay.push_exception(e)
