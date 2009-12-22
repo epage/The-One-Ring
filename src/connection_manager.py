@@ -1,9 +1,10 @@
 """
 Empathy Experience:
 	.profile file needs to be updated with proper presence
-	Did not properly merge old conversation with an updated one
 	Can't reopen a conversation for someone when I've already closed it
 	Can't call
+	When first started, reports all read conversations when some might have been read
+	When first started, reports all of an SMS conversation even though some has been reported previously
 """
 
 import logging

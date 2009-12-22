@@ -81,3 +81,7 @@ class Session(object):
 		Delay initialized addressbook
 		"""
 		return self._conversations
+
+	@property
+	def stateMachine(self):
+		return self._stateMachine

@@ -37,7 +37,8 @@ class Conversations(object):
 			try:
 				mergedConversations.append_conversation(conversation)
 				isConversationUpdated = True
-			except RuntimeError:
+			except RuntimeError, e:
+				_moduleLogger.info("Skipping conversation for %r because '%s'" % (key, e))
 				isConversationUpdated = False
 
 			if isConversationUpdated:
@@ -70,7 +71,9 @@ class MergedConversations(object):
 
 	def append_conversation(self, newConversation):
 		self._validate(newConversation)
-		self._remove_repeats(newConversation)
+		for similarConversation in self._find_related_conversation(newConversation.id):
+			self._update_previous_related_conversation(similarConversation, newConversation)
+			self._remove_repeats(similarConversation, newConversation)
 		self._conversations.append(newConversation)
 
 	@property
@@ -90,21 +93,30 @@ class MergedConversations(object):
 		if newConversation.time <= self._conversations[-1].time:
 			raise RuntimeError("Conversations got out of order")
 
-	def _remove_repeats(self, newConversation):
-		similarConversations = [
+	def _find_related_conversation(self, convId):
+		similarConversations = (
 			conversation
 			for conversation in self._conversations
-			if conversation.id == newConversation.id
+			if conversation.id == convId
+		)
+		return similarConversations
+
+	def _update_previous_related_conversation(self, relatedConversation, newConversation):
+		for commonField in ("isRead", "isSpam", "isTrash", "isArchived"):
+			newValue = getattr(newConversation, commonField)
+			setattr(relatedConversation, commonField, newValue)
+
+	def _remove_repeats(self, relatedConversation, newConversation):
+		newConversationMessages = newConversation.messages
+		newConversation.messages = [
+			newMessage
+			for newMessage in newConversationMessages
+			if newMessage not in relatedConversation.messages
 		]
-
-		for similarConversation in similarConversations:
-			for commonField in ("isRead", "isSpam", "isTrash", "isArchived"):
-				newValue = getattr(newConversation, commonField)
-				setattr(similarConversation, commonField, newValue)
-
-			newConversation.messages = [
-				newMessage
-				for newMessage in newConversation.messages
-				if newMessage not in similarConversation.messages
-			]
-			assert 0 < len(newConversation.messages), "Everything shouldn't have been removed"
+		_moduleLogger.info("Found %d new messages in conversation %s (%d/%d)" % (
+			len(newConversationMessages) - len(newConversation.messages),
+			newConversation.id,
+			len(newConversation.messages),
+			len(newConversationMessages),
+		))
+		assert 0 < len(newConversation.messages), "Everything shouldn't have been removed"

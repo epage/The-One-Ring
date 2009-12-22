@@ -219,6 +219,5 @@ class TheOneRingConnection(
 		channelManager = self._channelManager
 		for contactId, phoneNumber in conversationIds:
 			h = handle.create_handle(self, 'contact', contactId, phoneNumber)
-			# if its new, __init__ will take care of things
-			# if its old, its own update will take care of it
+			# Just let the TextChannel decide whether it should be reported to the user or not
 			channel = channelManager.channel_for_text(h)

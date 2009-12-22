@@ -101,6 +101,7 @@ class StateMachine(object):
 		nextTimeout = int(nextTimeout)
 		if nextTimeout != self._INFINITE_PERIOD:
 			self._timeoutId = gobject.timeout_add(nextTimeout, self._on_timeout)
+		_moduleLogger.info("Next update in %s ms" % (nextTimeout, ))
 		self._currentPeriod = nextTimeout
 
 	def _stop_update(self):
