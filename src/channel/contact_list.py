@@ -31,6 +31,7 @@ class AllContactsListChannel(AbstractListChannel):
 
 	def __init__(self, connection, h):
 		AbstractListChannel.__init__(self, connection, h)
+
 		self._callback = coroutines.func_sink(
 			coroutines.expand_positional(
 				self._on_contacts_refreshed
@@ -39,6 +40,7 @@ class AllContactsListChannel(AbstractListChannel):
 		self._session.addressbook.updateSignalHandler.register_sink(
 			self._callback
 		)
+
 		self.GroupFlagsChanged(0, 0)
 
 		addressbook = connection.session.addressbook
@@ -47,11 +49,17 @@ class AllContactsListChannel(AbstractListChannel):
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def Close(self):
-		telepathy.server.ChannelTypeContactList.Close(self)
-		self.remove_from_connection()
+		self.close()
+
+	def close(self):
 		self._session.addressbook.updateSignalHandler.unregister_sink(
 			self._callback
 		)
+		self._callback = None
+
+		telepathy.server.ChannelTypeContactList.Close(self)
+		self.remove_from_connection()
+		self._prop_getters = None # HACK to get around python-telepathy memory leaks
 
 	@gobject_utils.async
 	@gtk_toolbox.log_exception(_moduleLogger)

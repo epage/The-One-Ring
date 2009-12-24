@@ -4,20 +4,25 @@ import telepathy
 
 import gtk_toolbox
 import handle
+import gvoice.state_machine as state_machine
 
 
 _moduleLogger = logging.getLogger("simple_presence")
 
 
 class TheOneRingPresence(object):
+
+	# Note: these strings are also in the theonering.profile file
 	ONLINE = 'available'
-	IDLE = 'idle'
-	BUSY = 'dnd'
+	AWAY = 'away'
+	HIDDEN = 'hidden'
+	OFFLINE = 'offline'
 
 	TO_PRESENCE_TYPE = {
 		ONLINE: telepathy.constants.CONNECTION_PRESENCE_TYPE_AVAILABLE,
-		IDLE: telepathy.constants.CONNECTION_PRESENCE_TYPE_AWAY,
-		BUSY: telepathy.constants.CONNECTION_PRESENCE_TYPE_HIDDEN,
+		AWAY: telepathy.constants.CONNECTION_PRESENCE_TYPE_AWAY,
+		HIDDEN: telepathy.constants.CONNECTION_PRESENCE_TYPE_HIDDEN,
+		OFFLINE: telepathy.constants.CONNECTION_PRESENCE_TYPE_OFFLINE,
 	}
 
 
@@ -26,9 +31,10 @@ class SimplePresenceMixin(telepathy.server.ConnectionInterfaceSimplePresence):
 	def __init__(self):
 		telepathy.server.ConnectionInterfaceSimplePresence.__init__(self)
 
-		dbus_interface = 'org.freedesktop.Telepathy.Connection.Interface.SimplePresence'
-
-		self._implement_property_get(dbus_interface, {'Statuses' : self._get_statuses})
+		self._implement_property_get(
+			telepathy.server.CONNECTION_INTERFACE_SIMPLE_PRESENCE,
+			{'Statuses' : self._get_statuses}
+		)
 
 	@property
 	def session(self):
@@ -44,6 +50,12 @@ class SimplePresenceMixin(telepathy.server.ConnectionInterfaceSimplePresence):
 		"""
 		raise NotImplementedError("Abstract property called")
 
+	def Disconnect(self):
+		"""
+		@abstract
+		"""
+		raise NotImplementedError("Abstract function called")
+
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def GetPresences(self, contacts):
 		"""
@@ -55,10 +67,15 @@ class SimplePresenceMixin(telepathy.server.ConnectionInterfaceSimplePresence):
 			if isinstance(h, handle.ConnectionHandle):
 				isDnd = self.session.backend.is_dnd()
 				if isDnd:
-					presence = TheOneRingPresence.BUSY
+					presence = TheOneRingPresence.HIDDEN
 				else:
-					# @todo switch this over to also supporting idle
-					presence = TheOneRingPresence.ONLINE
+					state = self.session.stateMachine.get_state()
+					if state == state_machine.StateMachine.STATE_ACTIVE:
+						presence = TheOneRingPresence.ONLINE
+					elif state == state_machine.StateMachine.STATE_IDLE:
+						presence = TheOneRingPresence.AWAY
+					else:
+						raise telepathy.errors.InvalidArgument("Unsupported state on the state machine: %s" % state)
 				personalMessage = u""
 				presenceType = TheOneRingPresence.TO_PRESENCE_TYPE[presence]
 			else:
@@ -76,11 +93,13 @@ class SimplePresenceMixin(telepathy.server.ConnectionInterfaceSimplePresence):
 
 		if status == TheOneRingPresence.ONLINE:
 			self.session.backend.set_dnd(False)
-		elif status == TheOneRingPresence.IDLE:
-			# @todo Add idle support
-			raise telepathy.errors.InvalidArgument("Not Supported Yet")
-		elif status == TheOneRingPresence.BUSY:
+			self.session.stateMachine.set_state(state_machine.StateMachine.STATE_ACTIVE)
+		elif status == TheOneRingPresence.AWAY:
+			self.session.stateMachine.set_state(state_machine.StateMachine.STATE_IDLE)
+		elif status == TheOneRingPresence.HIDDEN:
 			self.session.backend.set_dnd(True)
+		elif status == TheOneRingPresence.OFFLINE:
+			self.Disconnect()
 		else:
 			raise telepathy.errors.InvalidArgument("Unsupported status: %r" % status)
 		_moduleLogger.info("Setting Presence to '%s'" % status)

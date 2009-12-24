@@ -21,6 +21,15 @@ class CallChannel(
 		self._contactHandle = contactHandle
 
 	@gtk_toolbox.log_exception(_moduleLogger)
+	def Close(self):
+		self.close()
+
+	def close(self):
+		telepathy.server.ChannelTypeStreamedMedia.Close(self)
+		self.remove_from_connection()
+		self._prop_getters = None # HACK to get around python-telepathy memory leaks
+
+	@gtk_toolbox.log_exception(_moduleLogger)
 	def ListStreams(self):
 		"""
 		For org.freedesktop.Telepathy.Channel.Type.StreamedMedia

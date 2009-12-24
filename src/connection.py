@@ -11,6 +11,7 @@ import gvoice
 import handle
 import aliasing
 import simple_presence
+import capabilities
 import channel_manager
 
 
@@ -21,6 +22,7 @@ class TheOneRingConnection(
 	telepathy.server.Connection,
 	aliasing.AliasingMixin,
 	simple_presence.SimplePresenceMixin,
+	capabilities.CapabilitiesMixin,
 ):
 
 	# Overriding a base class variable
@@ -50,6 +52,7 @@ class TheOneRingConnection(
 			)
 			aliasing.AliasingMixin.__init__(self)
 			simple_presence.SimplePresenceMixin.__init__(self)
+			capabilities.CapabilitiesMixin.__init__(self)
 
 			self._manager = weakref.proxy(manager)
 			self._credentials = (
@@ -59,16 +62,11 @@ class TheOneRingConnection(
 			self._callbackNumber = parameters['forward'].encode('utf-8')
 			self._channelManager = channel_manager.ChannelManager(self)
 
-			cookieFilePath = None
-			self._session = gvoice.session.Session(cookieFilePath)
+			self._session = gvoice.session.Session(None)
 
 			self.set_self_handle(handle.create_handle(self, 'connection'))
 
-			self._callback = coroutines.func_sink(
-				coroutines.expand_positional(
-					self._on_conversations_updated
-				)
-			)
+			self._callback = None
 			_moduleLogger.info("Connection to the account %s created" % account)
 		except Exception, e:
 			_moduleLogger.exception("Failed to create Connection")
@@ -101,6 +99,14 @@ class TheOneRingConnection(
 			telepathy.CONNECTION_STATUS_REASON_REQUESTED
 		)
 		try:
+			cookieFilePath = None
+			self._session = gvoice.session.Session(cookieFilePath)
+
+			self._callback = coroutines.func_sink(
+				coroutines.expand_positional(
+					self._on_conversations_updated
+				)
+			)
 			self.session.conversations.updateSignalHandler.register_sink(
 				self._callback
 			)
@@ -136,8 +142,11 @@ class TheOneRingConnection(
 			self.session.conversations.updateSignalHandler.unregister_sink(
 				self._callback
 			)
+			self._callback = None
 			self._channelManager.close()
 			self.session.logout()
+			self.session.close()
+			self._session = None
 			_moduleLogger.info("Disconnected")
 		except Exception:
 			_moduleLogger.exception("Disconnecting Failed")
@@ -145,6 +154,7 @@ class TheOneRingConnection(
 			telepathy.CONNECTION_STATUS_DISCONNECTED,
 			telepathy.CONNECTION_STATUS_REASON_REQUESTED
 		)
+		self.manager.disconnected(self)
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def RequestChannel(self, type, handleType, handleId, suppressHandler):

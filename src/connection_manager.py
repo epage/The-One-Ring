@@ -1,10 +1,9 @@
 """
 Empathy Experience:
-	.profile file needs to be updated with proper presence
-	Can't reopen a conversation for someone when I've already closed it
 	Can't call
 	When first started, reports all read conversations when some might have been read
 	When first started, reports all of an SMS conversation even though some has been reported previously
+	Still leaking one of two contact lists
 """
 
 import logging
@@ -82,7 +81,7 @@ class TheOneRingConnectionManager(telepathy.server.ConnectionManager):
 		Overrides telepathy.server.ConnectionManager
 		"""
 		result = telepathy.server.ConnectionManager.disconnected(self, conn)
-		gobject.timeout_add(5000, self.shutdown)
+		gobject.timeout_add(5000, self._shutdown)
 
 	def quit(self):
 		"""
@@ -92,6 +91,7 @@ class TheOneRingConnectionManager(telepathy.server.ConnectionManager):
 			connection.Disconnect()
 		_moduleLogger.info("Connection manager quitting")
 
+	@gtk_toolbox.log_exception(_moduleLogger)
 	def _shutdown(self):
 		if (
 			self._on_shutdown is not None and

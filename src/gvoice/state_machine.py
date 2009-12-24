@@ -29,9 +29,9 @@ def _to_milliseconds(**kwd):
 
 class StateMachine(object):
 
-	STATE_ACTIVE = "active"
-	STATE_IDLE = "idle"
-	STATE_DND = "dnd"
+	STATE_ACTIVE = 0, "active"
+	STATE_IDLE = 1, "idle"
+	STATE_DND = 2, "dnd"
 
 	_ACTION_UPDATE = "update"
 	_ACTION_RESET = "reset"
@@ -59,6 +59,9 @@ class StateMachine(object):
 			)
 		)
 
+	def close(self):
+		self._callback = None
+
 	@gobject_utils.async
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def start(self):
@@ -74,8 +77,11 @@ class StateMachine(object):
 		_moduleLogger.info("Stopping an already stopped state machine")
 		self._stop_update()
 
-	def set_state(self, state):
-		self._state = state
+	def set_state(self, newState):
+		oldState = self._state
+		_moduleLogger.info("Transitioning from %s to %s" % (oldState, newState))
+
+		self._state = newState
 		self.reset_timers()
 
 	def get_state(self):

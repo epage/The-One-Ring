@@ -54,16 +54,18 @@ class TextChannel(telepathy.server.ChannelTypeText):
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def Close(self):
-		try:
-			# Clear since the user has seen it all and it should start a new conversation
-			self._conn.session.conversations.clear_conversation(self._contactKey)
+		self.close()
 
-			self._conn.session.conversations.updateSignalHandler.unregister_sink(
-				self._callback
-			)
-		finally:
-			telepathy.server.ChannelTypeText.Close(self)
-			self.remove_from_connection()
+	def close(self):
+		_moduleLogger.info("Closing text channel for %r" % (self._otherHandle, ))
+		self._conn.session.conversations.updateSignalHandler.unregister_sink(
+			self._callback
+		)
+		self._callback = None
+
+		telepathy.server.ChannelTypeText.Close(self)
+		self.remove_from_connection()
+		self._prop_getters = None # HACK to get around python-telepathy memory leaks
 
 	@property
 	def _contactKey(self):

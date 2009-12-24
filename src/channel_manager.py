@@ -1,4 +1,5 @@
 import weakref
+import itertools
 import logging
 
 import telepathy
@@ -18,12 +19,13 @@ class ChannelManager(object):
 		self._callChannels = weakref.WeakValueDictionary()
 
 	def close(self):
-		for chan in self._listChannels.values():
-			chan.Close()
-		for chan in self._textChannels.values():
-			chan.Close()
-		for chan in self._callChannels.values():
-			chan.Close()
+		for chan in itertools.chain(
+			self._listChannels.values(), self._textChannels.values(), self._callChannels.values()
+		):
+			try:
+				chan.close()
+			except Exception:
+				_moduleLogger.exception("Shutting down %r" % (chan, ))
 
 	def channel_for_list(self, handle, suppress_handler=False):
 		try:

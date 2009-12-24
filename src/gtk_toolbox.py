@@ -221,6 +221,23 @@ def safecall(f, errorDisplay=None, default=None, exception=Exception):
 	return _safecall
 
 
+def log_call(logger):
+
+	def log_call_decorator(func):
+
+		@functools.wraps(func)
+		def wrapper(*args, **kwds):
+			_moduleLogger.info("-> %s" % (func.__name__, ))
+			try:
+				return func(*args, **kwds)
+			finally:
+				_moduleLogger.info("<- %s" % (func.__name__, ))
+
+		return wrapper
+
+	return log_call_decorator
+
+
 def log_exception(logger):
 
 	def log_exception_decorator(func):

@@ -96,10 +96,10 @@ class DisplayParams(Action):
 		super(DisplayParams, self)._on_done()
 
 
-class Connect(Action):
+class RequestConnection(Action):
 
 	def __init__(self, cm, username, password, forward):
-		super(Connect, self).__init__()
+		super(RequestConnection, self).__init__()
 		self._cm = cm
 
 		self._conn = None
@@ -125,18 +125,28 @@ class Connect(Action):
 				'password': self._password,
 				'forward':  self._forward,
 			},
-			reply_handler = self._on_connection_requested,
+			reply_handler = self._on_done,
 			error_handler = self._on_error,
 		)
 
-	def _on_connection_requested(self, busName, objectPath):
+	def _on_done(self, busName, objectPath):
 		self._serviceName = busName
 		self._conn = telepathy.client.Connection(busName, objectPath)
-		self._conn[telepathy.server.CONNECTION].connect_to_signal(
+		super(RequestConnection, self)._on_done()
+
+
+class Connect(Action):
+
+	def __init__(self, connAction):
+		super(Connect, self).__init__()
+		self._connAction = connAction
+
+	def queue_action(self):
+		self._connAction.conn[telepathy.server.CONNECTION].connect_to_signal(
 			'StatusChanged',
 			self._on_change,
 		)
-		self._conn[telepathy.server.CONNECTION].Connect(
+		self._connAction.conn[telepathy.server.CONNECTION].Connect(
 			reply_handler = self._on_generic_message,
 			error_handler = self._on_error,
 		)
@@ -272,6 +282,24 @@ class RequestChannel(Action):
 	def _on_done(self, channelObjectPath):
 		self._channel = telepathy.client.Channel(self._connAction.serviceName, channelObjectPath)
 		super(RequestChannel, self)._on_done()
+
+
+class CloseChannel(Action):
+
+	def __init__(self, connAction, chanAction):
+		super(CloseChannel, self).__init__()
+		self._connAction = connAction
+		self._chanAction = chanAction
+		self._handles = []
+
+	def queue_action(self):
+		self._chanAction.channel[telepathy.server.CHANNEL].Close(
+			reply_handler = self._on_done,
+			error_handler = self._on_error,
+		)
+
+	def _on_done(self):
+		super(CloseChannel, self)._on_done()
 
 
 class ContactHandles(Action):
@@ -462,42 +490,51 @@ if __name__ == '__main__':
 		username = sys.argv[1]
 		password = sys.argv[2]
 		forward = sys.argv[3]
-		con = Connect(cm, username, password, forward)
+		reqcon = RequestConnection(cm, username, password, forward)
+		lastAction.append_action(reqcon)
+		lastAction = reqcon
+
+		if False:
+			reqcon = RequestConnection(cm, username, password, forward)
+			lastAction.append_action(reqcon)
+			lastAction = reqcon
+
+		con = Connect(reqcon)
 		lastAction.append_action(con)
 		lastAction = con
 
 		if True:
-			spo = SimplePresenceOptions(con)
+			spo = SimplePresenceOptions(reqcon)
 			lastAction.append_action(spo)
 			lastAction = spo
 
 		if True:
-			uh = UserHandle(con)
+			uh = UserHandle(reqcon)
 			lastAction.append_action(uh)
 			lastAction = uh
 
-			ua = Aliases(con, uh)
+			ua = Aliases(reqcon, uh)
 			lastAction.append_action(ua)
 			lastAction = ua
 
-			sps = SimplePresenceStatus(con, uh)
+			sps = SimplePresenceStatus(reqcon, uh)
 			lastAction.append_action(sps)
 			lastAction = sps
 
 			if False:
-				setdnd = SetSimplePresence(con, "dnd", "")
+				setdnd = SetSimplePresence(reqcon, "dnd", "")
 				lastAction.append_action(setdnd)
 				lastAction = setdnd
 
-				sps = SimplePresenceStatus(con, uh)
+				sps = SimplePresenceStatus(reqcon, uh)
 				lastAction.append_action(sps)
 				lastAction = sps
 
-				setdnd = SetSimplePresence(con, "available", "")
+				setdnd = SetSimplePresence(reqcon, "available", "")
 				lastAction.append_action(setdnd)
 				lastAction = setdnd
 
-				sps = SimplePresenceStatus(con, uh)
+				sps = SimplePresenceStatus(reqcon, uh)
 				lastAction.append_action(sps)
 				lastAction = sps
 
@@ -507,12 +544,12 @@ if __name__ == '__main__':
 			lastAction = sl
 
 		if False:
-			rclh = RequestHandle(con, telepathy.HANDLE_TYPE_LIST, ["subscribe"])
+			rclh = RequestHandle(reqcon, telepathy.HANDLE_TYPE_LIST, ["subscribe"])
 			lastAction.append_action(rclh)
 			lastAction = rclh
 
 			rclc = RequestChannel(
-				con,
+				reqcon,
 				rclh,
 				telepathy.CHANNEL_TYPE_CONTACT_LIST,
 				telepathy.HANDLE_TYPE_LIST,
@@ -520,16 +557,16 @@ if __name__ == '__main__':
 			lastAction.append_action(rclc)
 			lastAction = rclc
 
-			ch = ContactHandles(con, rclc)
+			ch = ContactHandles(reqcon, rclc)
 			lastAction.append_action(ch)
 			lastAction = ch
 
-			ca = Aliases(con, ch)
+			ca = Aliases(reqcon, ch)
 			lastAction.append_action(ca)
 			lastAction = ca
 
-		if False:
-			rch = RequestHandle(con, telepathy.HANDLE_TYPE_CONTACT, ["18005558355"]) #(1-800-555-TELL)
+		if True:
+			rch = RequestHandle(reqcon, telepathy.HANDLE_TYPE_CONTACT, ["18005558355"]) #(1-800-555-TELL)
 			lastAction.append_action(rch)
 			lastAction = rch
 
@@ -541,7 +578,7 @@ if __name__ == '__main__':
 				smHandle = nullHandle
 				smHandleType = telepathy.HANDLE_TYPE_NONE
 			rsmc = RequestChannel(
-				con,
+				reqcon,
 				smHandle,
 				telepathy.CHANNEL_TYPE_STREAMED_MEDIA,
 				smHandleType,
@@ -550,13 +587,13 @@ if __name__ == '__main__':
 			lastAction = rsmc
 
 			if False:
-				call = Call(con, rsmc, rch)
+				call = Call(reqcon, rsmc, rch)
 				lastAction.append_action(call)
 				lastAction = call
 
 			# sending a text
 			rtc = RequestChannel(
-				con,
+				reqcon,
 				rch,
 				telepathy.CHANNEL_TYPE_TEXT,
 				smHandleType,
@@ -564,8 +601,22 @@ if __name__ == '__main__':
 			lastAction.append_action(rtc)
 			lastAction = rtc
 
+			if True:
+				closechan = CloseChannel(reqcon, rtc)
+				lastAction.append_action(closechan)
+				lastAction = closechan
+
+				rtc = RequestChannel(
+					reqcon,
+					rch,
+					telepathy.CHANNEL_TYPE_TEXT,
+					smHandleType,
+				)
+				lastAction.append_action(rtc)
+				lastAction = rtc
+
 			if False:
-				sendtext = SendText(con, rtc, rch, telepathy.CHANNEL_TEXT_MESSAGE_TYPE_NORMAL, "Boo!")
+				sendtext = SendText(reqcon, rtc, rch, telepathy.CHANNEL_TEXT_MESSAGE_TYPE_NORMAL, "Boo!")
 				lastAction.append_action(sendtext)
 				lastAction = sendtext
 
@@ -574,12 +625,12 @@ if __name__ == '__main__':
 			lastAction.append_action(bl)
 			lastAction = bl
 
-		if True:
+		if False:
 			sl = Sleep(30 * 1000)
 			lastAction.append_action(sl)
 			lastAction = sl
 
-		dis = Disconnect(con)
+		dis = Disconnect(reqcon)
 		lastAction.append_action(dis)
 		lastAction = dis
 

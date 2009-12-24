@@ -26,6 +26,12 @@ class Session(object):
 			self._stateMachine.request_reset_timers
 		)
 
+	def close(self):
+		self._conversations.updateSignalHandler.unregister_sink(
+			self._stateMachine.request_reset_timers
+		)
+		self._stateMachine.close()
+
 	def login(self, username, password):
 		self._username = username
 		self._password = password
