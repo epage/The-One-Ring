@@ -24,27 +24,39 @@ class CapabilitiesMixin(telepathy.server.ConnectionInterfaceCapabilities):
 		"""
 		raise NotImplementedError("Abstract property called")
 
-	@property
-	def handle(self):
+	def handle(self, handleType, handleId):
 		"""
 		@abstract
 		"""
-		raise NotImplementedError("Abstract property called")
+		raise NotImplementedError("Abstract function called")
+
+	def GetSelfHandle(self):
+		"""
+		@abstract
+		"""
+		raise NotImplementedError("Abstract function called")
 
 	@gtk_toolbox.log_exception(_moduleLogger)
-	def GetCapabilities(self, handles):
+	def GetCapabilities(self, handleIds):
 		"""
 		@todo HACK Remove this once we are building against a fixed version of python-telepathy
 		"""
 		ret = []
-		for handle in handles:
-			if handle != 0 and (telepathy.HANDLE_TYPE_CONTACT, handle) not in self._handles:
+		for handleId in handleIds:
+			h = self.handle(telepathy.HANDLE_TYPE_CONTACT, handleId)
+			if handleId != 0 and (telepathy.HANDLE_TYPE_CONTACT, handleId) not in self._handles:
 				raise telepathy.errors.InvalidHandle
-			elif handle in self._caps:
-				theirs = self._caps[handle]
-				for type in theirs:
-					ret.append([handle, type, theirs[0], theirs[1]])
-		_moduleLogger.info("GetCaps %r" % ret)
+			elif h in self._caps:
+				types = self._caps[h]
+				for type in types:
+					for ctype, specs in types.iteritems():
+						ret.append([handleId, type, specs[0], specs[1]])
+			else:
+				# No caps, so just default to the connection's caps
+				types = self._caps[self.GetSelfHandle()]
+				for type in types:
+					for ctype, specs in types.iteritems():
+						ret.append([handleId, type, specs[0], specs[1]])
 		return ret
 
 	@gtk_toolbox.log_exception(_moduleLogger)
@@ -52,7 +64,7 @@ class CapabilitiesMixin(telepathy.server.ConnectionInterfaceCapabilities):
 		"""
 		@todo HACK Remove this once we are building against a fixed version of python-telepathy
 		"""
-		my_caps = self._caps.setdefault(self._self_handle, {})
+		my_caps = self._caps.setdefault(self.GetSelfHandle(), {})
 
 		changed = {}
 		for ctype, spec_caps in add:
@@ -70,13 +82,12 @@ class CapabilitiesMixin(telepathy.server.ConnectionInterfaceCapabilities):
 				# channel type supports new capabilities
 				gen_new, spec_new = gen_old, spec_old | spec_caps
 			if spec_old != spec_new or gen_old != gen_new:
-				caps.append((self._self_handle, ctype, gen_old, gen_new,
+				caps.append((self.GetSelfHandle(), ctype, gen_old, gen_new,
 							spec_old, spec_new))
 
-		_moduleLogger.info("CapsChanged %r" % caps)
 		self.CapabilitiesChanged(caps)
+		_moduleLogger.info("CapsChanged %r" % self._caps)
 
 		# return all my capabilities
 		ret = [(ctype, caps[1]) for ctype, caps in my_caps.iteritems()]
-		_moduleLogger.info("Adv %r" % ret)
 		return ret

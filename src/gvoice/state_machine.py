@@ -72,6 +72,7 @@ class StateMachine(object):
 			except Exception:
 				_moduleLogger.exception("Initial update failed for %r" % item)
 		self._schedule_update()
+		return False # do not continue
 
 	def stop(self):
 		_moduleLogger.info("Stopping an already stopped state machine")
@@ -103,6 +104,7 @@ class StateMachine(object):
 		self._currentPeriod = self._INITIAL_ACTIVE_PERIOD / 2 # We will double it later
 
 	def _schedule_update(self):
+		assert self._timeoutId is None
 		nextTimeout = self._calculate_step(self._state, self._currentPeriod)
 		nextTimeout = int(nextTimeout)
 		if nextTimeout != self._INFINITE_PERIOD:
@@ -117,6 +119,8 @@ class StateMachine(object):
 		self._timeoutId = None
 
 	def _reset_timers(self):
+		if self._timeoutId is None:
+			return # not started yet
 		self._stop_update()
 		self._set_initial_period()
 		self._schedule_update()
@@ -128,6 +132,7 @@ class StateMachine(object):
 				item.update(force=True)
 			except Exception:
 				_moduleLogger.exception("Update failed for %r" % item)
+		self._timeoutId = None
 		self._schedule_update()
 		return False # do not continue
 

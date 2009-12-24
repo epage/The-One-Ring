@@ -437,6 +437,7 @@ class GVoiceBackend(object):
 		@param callbacknumber should be a proper 10 digit number
 		"""
 		self._callbackNumber = callbacknumber
+		_moduleLogger.info("Callback number changed: %r" % self._callbackNumber)
 		return True
 
 	def get_callback_number(self):

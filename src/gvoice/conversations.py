@@ -38,7 +38,8 @@ class Conversations(object):
 				mergedConversations.append_conversation(conversation)
 				isConversationUpdated = True
 			except RuntimeError, e:
-				_moduleLogger.info("Skipping conversation for %r because '%s'" % (key, e))
+				if False:
+					_moduleLogger.info("Skipping conversation for %r because '%s'" % (key, e))
 				isConversationUpdated = False
 
 			if isConversationUpdated:

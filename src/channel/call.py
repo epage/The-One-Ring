@@ -60,15 +60,13 @@ class CallChannel(
 
 		@returns [(Stream ID, contact, stream type, stream state, stream direction, pending send flags)]
 		"""
-		for streamType in streamTypes:
-			if streamType != telepathy.constants.MEDIA_STREAM_TYPE_AUDIO:
-				raise telepathy.errors.NotImplemented("Audio is the only stream type supported")
-
 		contact = self._conn.handle(telepathy.constants.HANDLE_TYPE_CONTACT, contactId)
 		assert self._contactHandle == contact, "%r != %r" % (self._contactHandle, contact)
 		contactId, contactNumber = handle.ContactHandle.from_handle_name(contact.name)
 
+		self.CallStateChanged(self._contactHandle, telepathy.constants.CHANNEL_CALL_STATE_RINGING)
 		self._conn.session.backend.call(contactNumber)
+		self.CallStateChanged(self._contactHandle, telepathy.constants.CHANNEL_CALL_STATE_FORWARDED)
 
 		streamId = 0
 		streamState = telepathy.constants.MEDIA_STREAM_STATE_DISCONNECTED
@@ -84,4 +82,4 @@ class CallChannel(
 		Get the current call states for all contacts involved in this call. 
 		@returns {Contact: telepathy.constants.CHANNEL_CALL_STATE_*}
 		"""
-		return {}
+		return {self._contactHandle: telepathy.constants.CHANNEL_CALL_STATE_FORWARDED}

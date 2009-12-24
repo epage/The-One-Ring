@@ -32,14 +32,13 @@ class TheOneRingPresence(object):
 		"""
 		raise NotImplementedError()
 
-	@property
-	def handle(self):
+	def Disconnect(self):
 		"""
 		@abstract
 		"""
-		raise NotImplementedError("Abstract property called")
+		raise NotImplementedError("Abstract function called")
 
-	def Disconnect(self):
+	def handle(self, handleType, handleId):
 		"""
 		@abstract
 		"""

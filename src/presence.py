@@ -4,7 +4,6 @@ import telepathy
 
 import gtk_toolbox
 import simple_presence
-import gvoice.state_machine as state_machine
 
 
 _moduleLogger = logging.getLogger('presence')

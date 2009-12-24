@@ -77,12 +77,11 @@ class AliasingMixin(telepathy.server.ConnectionInterfaceAliasing):
 		"""
 		raise NotImplementedError("Abstract property called")
 
-	@property
-	def handle(self):
+	def handle(self, handleType, handleId):
 		"""
 		@abstract
 		"""
-		raise NotImplementedError("Abstract property called")
+		raise NotImplementedError("Abstract function called")
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def GetAliasFlags(self):
