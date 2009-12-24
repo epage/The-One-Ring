@@ -22,23 +22,31 @@
 		<h4>Status: Pre Alpha</h4>
 
 		<ul>
-			<li>Support for GV Contacts w/ names</li>
-			<li>Support for System contacts (in theory)</li>
-			<li>Setting of presence: Available, Away (check for messages less often), and Do Not Disturb (disables in-bound phone calls)</li>
-			<li>Sending a text</li>
-			<li>Making a phone call</li>
-			<li>Only tested by telepathy-inspector and hand rolled testing tools (not through the Maemo's RTComm or Empathy)</li>
+			<li>Support for GV Contacts w/ names (ti, ht, e)</li>
+			<li>Support for System contacts (ti, ht)</li>
+			<li>Setting of presence: Available, Away (check for messages less often), and Do Not Disturb (disables in-bound phone calls) (ht, e)</li>
+			<li>Sending a text (ti, ht, e)</li>
+			<li>Receiving a text (ht, e)</li>
+			<li>Making a phone call (ti, ht)</li>
+		</ul>
+
+		<p>Clients:</p>
+		<ul>
+			<li>ti = telepathy-inspector (hand testing through a UI)</li>
+			<li>ht = programmatic hand-tests</li>
+			<li>e = empathy</li>
+			<li>m4 = Maemo 4.1</li>
+			<li>m5 = Maemo 5</li>
 		</ul>
 
 		<h4>What's Left</h4>
 
 		<ul>
 			<li>Validate system contacts and the dialpad work</li>
-			<li>Validate receiving of texts works</li>
 			<li>Improve the server polling heuristics to reduce battery drain while keeping average latency for seeing a message low</li>
+			<li>Support for Empathy (Ubuntu client)</li>
 			<li>Support for Maemo 5 client</li>
 			<li>Support for Maemo 4.1 client</li>
-			<li>Support for Empathy (Ubuntu client)</li>
 		</ul>
 
 	</body>
