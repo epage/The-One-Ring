@@ -9,16 +9,30 @@ import handle
 _moduleLogger = logging.getLogger("channel.call")
 
 
-# @todo Test Calls
 class CallChannel(
 		telepathy.server.ChannelTypeStreamedMedia,
 		telepathy.server.ChannelInterfaceCallState,
+		telepathy.server.ChannelInterfaceGroup,
 	):
 
 	def __init__(self, connection, contactHandle):
 		telepathy.server.ChannelTypeStreamedMedia.__init__(self, connection, None)
 		telepathy.server.ChannelInterfaceCallState.__init__(self)
+		telepathy.server.ChannelInterfaceGroup.__init__(self)
 		self._contactHandle = contactHandle
+		self._implement_property_get(
+			telepathy.interfaces.CHANNEL_TYPE_STREAMED_MEDIA,
+			{
+				"InitialAudio": self.initial_audio,
+				"InitialVideo": self.initial_video,
+			},
+		)
+
+	def initial_audio(self):
+		return False
+
+	def initial_video(self):
+		return False
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def Close(self):
