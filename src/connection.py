@@ -11,6 +11,7 @@ import gvoice
 import handle
 import aliasing
 import simple_presence
+import presence
 import capabilities
 import channel_manager
 
@@ -22,6 +23,7 @@ class TheOneRingConnection(
 	telepathy.server.Connection,
 	aliasing.AliasingMixin,
 	simple_presence.SimplePresenceMixin,
+	presence.PresenceMixin,
 	capabilities.CapabilitiesMixin,
 ):
 
@@ -52,6 +54,7 @@ class TheOneRingConnection(
 			)
 			aliasing.AliasingMixin.__init__(self)
 			simple_presence.SimplePresenceMixin.__init__(self)
+			presence.PresenceMixin.__init__(self)
 			capabilities.CapabilitiesMixin.__init__(self)
 
 			self._manager = weakref.proxy(manager)

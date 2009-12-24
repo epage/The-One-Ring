@@ -25,17 +25,6 @@ class TheOneRingPresence(object):
 		OFFLINE: telepathy.constants.CONNECTION_PRESENCE_TYPE_OFFLINE,
 	}
 
-
-class SimplePresenceMixin(telepathy.server.ConnectionInterfaceSimplePresence):
-
-	def __init__(self):
-		telepathy.server.ConnectionInterfaceSimplePresence.__init__(self)
-
-		self._implement_property_get(
-			telepathy.server.CONNECTION_INTERFACE_SIMPLE_PRESENCE,
-			{'Statuses' : self._get_statuses}
-		)
-
 	@property
 	def session(self):
 		"""
@@ -56,13 +45,12 @@ class SimplePresenceMixin(telepathy.server.ConnectionInterfaceSimplePresence):
 		"""
 		raise NotImplementedError("Abstract function called")
 
-	@gtk_toolbox.log_exception(_moduleLogger)
-	def GetPresences(self, contacts):
+	def get_presences(self, contactIds):
 		"""
 		@return {ContactHandle: (Status, Presence Type, Message)}
 		"""
 		presences = {}
-		for handleId in contacts:
+		for handleId in contactIds:
 			h = self.handle(telepathy.HANDLE_TYPE_CONTACT, handleId)
 			if isinstance(h, handle.ConnectionHandle):
 				isDnd = self.session.backend.is_dnd()
@@ -76,34 +64,57 @@ class SimplePresenceMixin(telepathy.server.ConnectionInterfaceSimplePresence):
 						presence = TheOneRingPresence.AWAY
 					else:
 						raise telepathy.errors.InvalidArgument("Unsupported state on the state machine: %s" % state)
-				personalMessage = u""
 				presenceType = TheOneRingPresence.TO_PRESENCE_TYPE[presence]
 			else:
 				presence = TheOneRingPresence.ONLINE
-				personalMessage = u""
 				presenceType = TheOneRingPresence.TO_PRESENCE_TYPE[presence]
 
-			presences[h] = (presenceType, presence, personalMessage)
+			presences[h] = (presenceType, presence)
 		return presences
+
+	def set_presence(self, status):
+		if status == self.ONLINE:
+			self.session.backend.set_dnd(False)
+			self.session.stateMachine.set_state(state_machine.StateMachine.STATE_ACTIVE)
+		elif status == self.AWAY:
+			self.session.stateMachine.set_state(state_machine.StateMachine.STATE_IDLE)
+		elif status == self.HIDDEN:
+			self.session.backend.set_dnd(True)
+		elif status == self.OFFLINE:
+			self.Disconnect()
+		else:
+			raise telepathy.errors.InvalidArgument("Unsupported status: %r" % status)
+		_moduleLogger.info("Setting Presence to '%s'" % status)
+
+
+class SimplePresenceMixin(telepathy.server.ConnectionInterfaceSimplePresence, TheOneRingPresence):
+
+	def __init__(self):
+		telepathy.server.ConnectionInterfaceSimplePresence.__init__(self)
+		TheOneRingPresence.__init__(self)
+
+		self._implement_property_get(
+			telepathy.server.CONNECTION_INTERFACE_SIMPLE_PRESENCE,
+			{'Statuses' : self._get_statuses}
+		)
+
+	@gtk_toolbox.log_exception(_moduleLogger)
+	def GetPresences(self, contacts):
+		"""
+		@return {ContactHandle: (Status, Presence Type, Message)}
+		"""
+		personalMessage = u""
+		return dict(
+			(h, (presenceType, presence, personalMessage))
+			for (h, (presenceType, presence)) in self.get_presences(contacts).iteritems()
+		)
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def SetPresence(self, status, message):
 		if message:
 			raise telepathy.errors.InvalidArgument("Messages aren't supported")
 
-		if status == TheOneRingPresence.ONLINE:
-			self.session.backend.set_dnd(False)
-			self.session.stateMachine.set_state(state_machine.StateMachine.STATE_ACTIVE)
-		elif status == TheOneRingPresence.AWAY:
-			self.session.stateMachine.set_state(state_machine.StateMachine.STATE_IDLE)
-		elif status == TheOneRingPresence.HIDDEN:
-			self.session.backend.set_dnd(True)
-		elif status == TheOneRingPresence.OFFLINE:
-			self.Disconnect()
-		else:
-			raise telepathy.errors.InvalidArgument("Unsupported status: %r" % status)
-		_moduleLogger.info("Setting Presence to '%s'" % status)
-
+		self.set_presence(status)
 
 	def _get_statuses(self):
 		"""
@@ -113,5 +124,5 @@ class SimplePresenceMixin(telepathy.server.ConnectionInterfaceSimplePresence):
 		"""
 		return dict(
 			(localType, (telepathyType, True, False))
-			for (localType, telepathyType) in TheOneRingPresence.TO_PRESENCE_TYPE.iteritems()
+			for (localType, telepathyType) in self.TO_PRESENCE_TYPE.iteritems()
 		)
