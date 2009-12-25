@@ -1,7 +1,7 @@
 PROJECT_NAME=theonering
 SOURCE_PATH=src
 SOURCE=$(shell find $(SOURCE_PATH) -iname "*.py")
-PROGRAM=$(SOURCE_PATH)/$(PROJECT_NAME).py
+PROGRAM=$(SOURCE_PATH)/telepathy-$(PROJECT_NAME)
 DATA_TYPES=*.ini *.map *.glade *.png
 DATA=$(foreach type, $(DATA_TYPES), $(shell find $(SOURCE_PATH) -iname "$(type)"))
 OBJ=$(SOURCE:.py=.pyc)
@@ -68,11 +68,11 @@ package: $(OBJ)
 	cp -R $(BUILD_PATH)/generic/* $(BUILD_PATH)/debian
 	cd $(BUILD_PATH)/debian ; python builddeb.py debian
 
-upload: package
-	dput fremantle-extras-builder $(BUILD_PATH)/fremantle/$(PROJECT_NAME)*.changes
-	dput diablo-extras-builder $(BUILD_PATH)/diablo/$(PROJECT_NAME)*.changes
-	dput chinook-extras-builder $(BUILD_PATH)/chinook/$(PROJECT_NAME)*.changes
-	cp $(BUILD_PATH)/debian/*.deb www/$(PROJECT_NAME).deb
+upload:
+	dput fremantle-extras-builder $(BUILD_PATH)/fremantle/telepathy-$(PROJECT_NAME)*.changes
+	dput diablo-extras-builder $(BUILD_PATH)/diablo/telepathy-$(PROJECT_NAME)*.changes
+	dput chinook-extras-builder $(BUILD_PATH)/chinook/telepathy-$(PROJECT_NAME)*.changes
+	cp $(BUILD_PATH)/debian/*.deb www/telepathy-$(PROJECT_NAME).deb
 
 lint: $(OBJ)
 	$(foreach file, $(SOURCE), $(LINT) $(file) ; )
