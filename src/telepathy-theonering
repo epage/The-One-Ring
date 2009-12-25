@@ -80,13 +80,22 @@ def run_theonering(persist):
 			quit()
 
 
-if __name__ == '__main__':
+def main(logToFile):
+	try:
+		os.makedirs(constants._data_path_)
+	except OSError, e:
+		if e.errno != 17:
+			raise
+
 	telepathy_utils.debug_divert_messages(os.getenv('THEONERING_LOGFILE'))
-	logging.basicConfig(
-		level=logging.DEBUG,
-		format='(%(asctime)s) %(levelname)s:%(name)s:%(message)s',
-		datefmt='%H:%M:%S',
-	)
+	if logToFile:
+		logging.basicConfig(
+			level=logging.DEBUG,
+			format='(%(asctime)s) %(levelname)s:%(name)s:%(message)s',
+			datefmt='%H:%M:%S',
+		)
+	else:
+		logging.basicConfig(level=logging.DEBUG, filename=constants._user_logpath_)
 	logging.info("telepathy-theonering %s-%s" % (constants.__version__, constants.__build__))
 	logging.info("OS: %s" % (os.uname()[0], ))
 	logging.info("Kernel: %s (%s) for %s" % os.uname()[2:])
@@ -94,4 +103,11 @@ if __name__ == '__main__':
 
 	persist = 'THEONERING_PERSIST' in os.environ
 	persist = True
-	run_theonering(persist)
+
+	try:
+		run_theonering(persist)
+	finally:
+		logging.shutdown()
+
+if __name__ == "__main__":
+	main(False)
