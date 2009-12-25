@@ -38,7 +38,7 @@ __changelog__ = """
 __postinstall__ = """#!/bin/sh -e
 
 gtk-update-icon-cache -f /usr/share/icons/hicolor
-rm -f ~/.telepathy-theonering/telepathy-theonering.log
+rm -f ~/.telepathy-theonering/theonering.log
 """
 
 def find_files(path):
@@ -77,10 +77,10 @@ def build_package(distribution):
 	p.mail = __email__
 	p.license = "lgpl"
 	p.depends = ", ".join([
-		"python (>= 2.5)",
-		"python-dbus",
-		"python-gobject",
-		"python-telepathy",
+		"python (>= 2.5) | python2.5",
+		"python-dbus | python2.5-dbus",
+		"python-gobject | python2.5-gobject",
+		"python-telepathy | python2.5-telepathy",
 	])
 	p.section = {
 		"debian": "comm",

@@ -230,6 +230,7 @@ def deprecated_api(func):
 	def newFunc(*args, **kwargs):
 		warnings.warn("Call to deprecated function %s." % func.__name__, category=DeprecationWarning)
 		return func(*args, **kwargs)
+
 	_append_docstring(newFunc, "\n@deprecated")
 	return newFunc
 
@@ -408,6 +409,22 @@ def ExpHandler(handler = print_handler, *exceptions):
 		dec_func = functools.update_wrapper(dec_func, f)
 		return dec_func
 	return wrapper
+
+
+def into_debugger(func):
+	"""
+	>>> validate_decorator(into_debugger)
+	"""
+
+	@functools.wraps(func)
+	def newFunc(*args, **kwargs):
+		try:
+			return func(*args, **kwargs)
+		except:
+			import pdb
+			pdb.post_mortem()
+
+	return newFunc
 
 
 class bindclass(object):

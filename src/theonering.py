@@ -91,11 +91,16 @@ def main(logToFile):
 	if logToFile:
 		logging.basicConfig(
 			level=logging.DEBUG,
+			filename=constants._user_logpath_,
 			format='(%(asctime)s) %(levelname)s:%(name)s:%(message)s',
 			datefmt='%H:%M:%S',
 		)
 	else:
-		logging.basicConfig(level=logging.DEBUG, filename=constants._user_logpath_)
+		logging.basicConfig(
+			level=logging.DEBUG,
+			format='(%(asctime)s) %(levelname)s:%(name)s:%(message)s',
+			datefmt='%H:%M:%S',
+		)
 	logging.info("telepathy-theonering %s-%s" % (constants.__version__, constants.__build__))
 	logging.info("OS: %s" % (os.uname()[0], ))
 	logging.info("Kernel: %s (%s) for %s" % os.uname()[2:])
