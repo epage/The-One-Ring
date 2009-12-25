@@ -13,6 +13,15 @@ import constants
 
 __appname__ = constants.__app_name__
 __description__ = """Google Voice Communication Plugin
+Features:
+.
+* Send Texts and Receive both Texts and Voicemail through your chat window
+.
+* Save battery life by setting your status to "Away"
+.
+* Block incoming calls by switching your status to "Hidden"
+.
+* Access to all of your Google Voice contacts
 .
 Homepage: http://theonering.garage.maemo.org
 """
