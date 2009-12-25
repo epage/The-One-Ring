@@ -1,9 +1,8 @@
 #!/usr/bin/python
 
-import sys
-sys.path.insert(0,"/usr/lib/theonering/")
-
 
 import theonering
 
-theonering.main(logToFile=True)
+
+if __name__ == "__main__":
+	theonering.main(logToFile=True)
