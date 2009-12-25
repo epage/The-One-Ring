@@ -29,7 +29,7 @@ __changelog__ = """
 __postinstall__ = """#!/bin/sh -e
 
 gtk-update-icon-cache -f /usr/share/icons/hicolor
-rm -f ~/.theonering/theonering.log
+rm -f ~/.telepathy-theonering/telepathy-theonering.log
 """
 
 def find_files(path):
