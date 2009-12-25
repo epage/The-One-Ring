@@ -29,6 +29,7 @@ __changelog__ = """
 __postinstall__ = """#!/bin/sh -e
 
 gtk-update-icon-cache -f /usr/share/icons/hicolor
+rm -f ~/.theonering/theonering.log
 """
 
 def find_files(path):
@@ -62,7 +63,7 @@ def build_package(distribution):
 	p.prettyName = constants.__pretty_app_name__
 	p.description = __description__
 	p.bugTracker = "https://bugs.maemo.org/enter_bug.cgi?product=theonering"
-	p.upgradeDescription = __changelog__.split("\n\n", 1)[0]
+	#p.upgradeDescription = __changelog__.split("\n\n", 1)[0]
 	p.author = __author__
 	p.mail = __email__
 	p.license = "lgpl"
@@ -108,16 +109,28 @@ def build_package(distribution):
 	p["/usr/share/icons/hicolor/64x64/hildon"] = ["64x64-theonering.png|theonering.png"]
 	p["/usr/share/icons/hicolor/scalable/hildon"] = ["scale-theonering.png|theonering.png"]
 
-	print p
-	print p.generate(
-		version="%s-%s" % (__version__, __build__),
-		changelog=__changelog__,
-		build=True,
-		tar=True,
-		changes=True,
-		dsc=True,
-	)
-	print "Building for %s finished" % distribution
+	if distribution == "debian":
+		print p
+		print p.generate(
+			version="%s-%s" % (__version__, __build__),
+			changelog=__changelog__,
+			build=True,
+			tar=False,
+			changes=False,
+			dsc=False,
+		)
+		print "Building for %s finished" % distribution
+	else:
+		print p
+		print p.generate(
+			version="%s-%s" % (__version__, __build__),
+			changelog=__changelog__,
+			build=False,
+			tar=True,
+			changes=True,
+			dsc=True,
+		)
+		print "Building for %s finished" % distribution
 
 
 if __name__ == "__main__":
