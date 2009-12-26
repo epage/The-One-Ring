@@ -84,20 +84,18 @@ def build_package(distribution):
 	])
 	p.section = {
 		"debian": "comm",
-		"chinook": "communication",
 		"diablo": "user/network",
 		"fremantle": "user/network",
 		"mer": "user/network",
 	}[distribution]
 	p.arch = "all"
 	p.urgency = "low"
-	p.distribution = "chinook diablo fremantle mer debian"
+	p.distribution = "diablo fremantle mer debian"
 	p.repository = "extras"
 	p.changelog = __changelog__
 	p.postinstall = __postinstall__
 	p.icon = {
 		"debian": "26x26-theonering.png",
-		"chinook": "26x26-theonering.png",
 		"diablo": "26x26-theonering.png",
 		"fremantle": "64x64-theonering.png", # Fremantle natively uses 48x48
 		"mer": "64x64-theonering.png",
@@ -111,8 +109,10 @@ def build_package(distribution):
 			for (oldName, newName) in files
 		)
 	p["/usr/share/dbus-1/services"] = ["org.freedesktop.Telepathy.ConnectionManager.theonering.service"]
-	if distribution == "debian":
+	if distribution in ("debian", ):
 		p["/usr/share/mission-control/profiles"] = ["theonering.profile"]
+	elif distribution in ("diablo", "fremantle", "mer"):
+		p["/usr/share/osso-rtcom"] = ["theonering.profile"]
 	p["/usr/share/telepathy/managers"] = ["theonering.manager"]
 	p["/usr/share/icons/hicolor/26x26/hildon"] = ["26x26-theonering.png|theonering.png"]
 	p["/usr/share/icons/hicolor/64x64/hildon"] = ["64x64-theonering.png|theonering.png"]

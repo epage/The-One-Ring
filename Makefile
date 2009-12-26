@@ -52,9 +52,6 @@ package: $(OBJ)
 	cp support/py2deb.py $(BUILD_PATH)/generic
 	cp support/fake_py2deb.py $(BUILD_PATH)/generic
 
-	mkdir -p $(BUILD_PATH)/chinook
-	cp -R $(BUILD_PATH)/generic/* $(BUILD_PATH)/chinook
-	cd $(BUILD_PATH)/chinook ; python builddeb.py chinook
 	mkdir -p $(BUILD_PATH)/diablo
 	cp -R $(BUILD_PATH)/generic/* $(BUILD_PATH)/diablo
 	cd $(BUILD_PATH)/diablo ; python builddeb.py diablo
@@ -71,7 +68,6 @@ package: $(OBJ)
 upload:
 	dput fremantle-extras-builder $(BUILD_PATH)/fremantle/telepathy-$(PROJECT_NAME)*.changes
 	dput diablo-extras-builder $(BUILD_PATH)/diablo/telepathy-$(PROJECT_NAME)*.changes
-	dput chinook-extras-builder $(BUILD_PATH)/chinook/telepathy-$(PROJECT_NAME)*.changes
 	cp $(BUILD_PATH)/debian/*.deb www/telepathy-$(PROJECT_NAME).deb
 
 lint: $(OBJ)

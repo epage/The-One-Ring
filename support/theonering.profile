@@ -2,7 +2,7 @@
 Manager=theonering
 Protocol=sip
 DisplayName=Google Voice
-IconName = im-google-talk
+IconName = theonering
 SupportsInvisible = 1
 Capabilities = chat-p2p, voice-p2p, supports-alias
 VCardDefault = 1
