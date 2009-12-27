@@ -1,0 +1,37 @@
+[Profile]
+Manager=theonering
+Protocol=sip
+DisplayName=Google Voice
+IconName = theonering
+ConfigurationUI = osso-accounts
+SupportsInvisible = 1
+Capabilities = chat-p2p, voice-p2p, supports-alias
+VCardDefault = 1
+VCardField = X-GV
+SupportedPresences = offline,available,away,hidden
+SupportsPresenceMessage = false
+
+[Action sms_gv]
+Name = addr_bd_cont_starter_chat
+IconName = general_sms
+VCardFields = X-GV
+prop-org.freedesktop.Telepathy.Channel.ChannelType-s = org.freedesktop.Telepathy.Channel.Type.Text
+
+[Action call_gv]
+Name = addr_bd_cont_starter_call
+IconName = general_call
+VCardFields = X-GV
+prop-org.freedesktop.Telepathy.Channel.ChannelType-s = org.freedesktop.Telepathy.Channel.Type.StreamedMedia
+
+[Action sms]
+Name = addr_bd_cont_starter_chat
+IconName = general_sms
+VCardFields = TEL
+prop-org.freedesktop.Telepathy.Channel.ChannelType-s = org.freedesktop.Telepathy.Channel.Type.Text
+
+[Action call]
+Name = addr_bd_cont_starter_skypeout
+IconName = general_call
+VCardFields = TEL
+prop-org.freedesktop.Telepathy.Channel.ChannelType-s = org.freedesktop.Telepathy.Channel.Type.StreamedMedia
+

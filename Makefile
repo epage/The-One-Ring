@@ -45,7 +45,7 @@ package: $(OBJ)
 	$(foreach file, $(DATA), cp $(file) $(BUILD_PATH)/generic/$(subst /,-,$(file)) ; )
 	$(foreach file, $(SOURCE), cp $(file) $(BUILD_PATH)/generic/$(subst /,-,$(file)) ; )
 	cp support/$(PROJECT_NAME).manager $(BUILD_PATH)/generic
-	cp support/$(PROJECT_NAME).profile $(BUILD_PATH)/generic
+	cp support/$(PROJECT_NAME).profile.* $(BUILD_PATH)/generic
 	cp support/org.freedesktop.Telepathy.ConnectionManager.$(PROJECT_NAME).service $(BUILD_PATH)/generic
 	cp support/icons/*-$(PROJECT_NAME).png $(BUILD_PATH)/generic/
 	cp support/builddeb.py $(BUILD_PATH)/generic
