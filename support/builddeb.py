@@ -44,8 +44,8 @@ rm -f ~/.telepathy-theonering/theonering.log
 def find_files(path):
 	for root, dirs, files in os.walk(path):
 		for file in files:
-			if file.startswith("src-"):
-				fileParts = file.split("-")
+			if file.startswith("src!"):
+				fileParts = file.split("!")
 				unused, relPathParts, newName = fileParts[0], fileParts[1:-1], fileParts[-1]
 				assert unused == "src"
 				relPath = os.sep.join(relPathParts)

@@ -42,8 +42,9 @@ package: $(OBJ)
 
 	mkdir -p $(BUILD_PATH)/generic
 	cp $(SOURCE_PATH)/constants.py  $(BUILD_PATH)/generic
-	$(foreach file, $(DATA), cp $(file) $(BUILD_PATH)/generic/$(subst /,-,$(file)) ; )
-	$(foreach file, $(SOURCE), cp $(file) $(BUILD_PATH)/generic/$(subst /,-,$(file)) ; )
+	$(foreach file, $(DATA), cp $(file) $(BUILD_PATH)/generic/$(subst /,!,$(file)) ; )
+	$(foreach file, $(SOURCE), cp $(file) $(BUILD_PATH)/generic/$(subst /,!,$(file)) ; )
+	cp $(SOURCE_PATH)/telepathy-theonering $(BUILD_PATH)/generic/$(subst /,!,$(SOURCE_PATH)/telepathy-theonering)
 	cp support/$(PROJECT_NAME).manager $(BUILD_PATH)/generic
 	cp support/$(PROJECT_NAME).profile.* $(BUILD_PATH)/generic
 	cp support/org.freedesktop.Telepathy.ConnectionManager.$(PROJECT_NAME).service $(BUILD_PATH)/generic
