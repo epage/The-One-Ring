@@ -489,9 +489,8 @@ class GVoiceBackend(object):
 		smsJson = self._grab_json(smsPage)
 		parsedSms = self._parse_sms(smsHtml)
 		smss = self._merge_conversation_sources(parsedSms, smsJson)
-		decoratedSms = self._decorate_sms(smss)
 
-		allConversations = itertools.chain(voicemails, decoratedSms)
+		allConversations = itertools.chain(voicemails, smss)
 		return allConversations
 
 	def mark_message(self, messageId, asRead):
@@ -682,9 +681,6 @@ class GVoiceBackend(object):
 			conv.messages = messages
 
 			yield conv
-
-	def _decorate_sms(self, parsedTexts):
-		return parsedTexts
 
 	@staticmethod
 	def _merge_conversation_sources(parsedMessages, json):
