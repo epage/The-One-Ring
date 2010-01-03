@@ -88,6 +88,13 @@ def build_package(distribution):
 		"fremantle": "user/network",
 		"mer": "user/network",
 	}[distribution]
+	p.depends += {
+		"debian": "",
+		"chinook": "",
+		"diablo": "account-plugin-haze",
+		"fremantle": "account-plugin-haze",
+		"mer": "",
+	}[distribution]
 	p.arch = "all"
 	p.urgency = "low"
 	p.distribution = "diablo fremantle mer debian"

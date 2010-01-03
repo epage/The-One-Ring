@@ -30,7 +30,7 @@ class TheOneRingConnection(
 	# Overriding a base class variable
 	# Should the forwarding number be handled by the alias or by an option?
 	_mandatory_parameters = {
-		'username' : 's',
+		'account' : 's',
 		'password' : 's',
 		'forward' : 's',
 	}
@@ -43,7 +43,7 @@ class TheOneRingConnection(
 	def __init__(self, manager, parameters):
 		self.check_parameters(parameters)
 		try:
-			account = unicode(parameters['username'])
+			account = unicode(parameters['account'])
 
 			# Connection init must come first
 			telepathy.server.Connection.__init__(
@@ -59,7 +59,7 @@ class TheOneRingConnection(
 
 			self._manager = weakref.proxy(manager)
 			self._credentials = (
-				parameters['username'].encode('utf-8'),
+				parameters['account'].encode('utf-8'),
 				parameters['password'].encode('utf-8'),
 			)
 			self._callbackNumber = parameters['forward'].encode('utf-8')
