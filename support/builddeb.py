@@ -76,23 +76,23 @@ def build_package(distribution):
 	p.author = __author__
 	p.mail = __email__
 	p.license = "lgpl"
-	p.depends = ", ".join([
-		"python (>= 2.5) | python2.5",
-		"python-dbus | python2.5-dbus",
-		"python-gobject | python2.5-gobject",
-		"python-telepathy | python2.5-telepathy",
-	])
 	p.section = {
 		"debian": "comm",
 		"diablo": "user/network",
 		"fremantle": "user/network",
 		"mer": "user/network",
 	}[distribution]
+	p.depends = ", ".join([
+		"python (>= 2.5) | python2.5",
+		"python-dbus | python2.5-dbus",
+		"python-gobject | python2.5-gobject",
+		"python-telepathy | python2.5-telepathy",
+	])
 	p.depends += {
 		"debian": "",
 		"chinook": "",
-		"diablo": "account-plugin-haze",
-		"fremantle": "account-plugin-haze",
+		"diablo": ", account-plugin-haze",
+		"fremantle": ", account-plugin-haze",
 		"mer": "",
 	}[distribution]
 	p.arch = "all"
