@@ -4,6 +4,7 @@
 import logging
 
 import util.coroutines as coroutines
+import util.misc as util_misc
 
 
 _moduleLogger = logging.getLogger("gvoice.addressbook")
@@ -52,6 +53,13 @@ class Addressbook(object):
 		self._populate_contact_details(contactId)
 		return self._get_contact_details(contactId)
 
+	def find_contacts_with_number(self, queryNumber):
+		strippedQueryNumber = util_misc.strip_number(queryNumber)
+		for contactId, (contactName, contactDetails) in self.get_contacts():
+			for phoneType, number in contactDetails:
+				if number == strippedQueryNumber:
+					yield contactId
+
 	def _populate_contacts(self):
 		if self._contacts:
 			return
@@ -59,7 +67,10 @@ class Addressbook(object):
 		for contactId, contactDetails in contacts:
 			contactName = contactDetails["name"]
 			contactNumbers = [
-				(numberDetails.get("phoneType", "Mobile"), numberDetails["phoneNumber"])
+				(
+					numberDetails.get("phoneType", "Mobile"),
+					util_misc.strip_number(numberDetails["phoneNumber"]),
+				)
 				for numberDetails in contactDetails["numbers"]
 			]
 			self._contacts[contactId] = (contactName, contactNumbers)

@@ -3,6 +3,7 @@ import logging
 import telepathy
 
 import gtk_toolbox
+import util.misc as util_misc
 import handle
 
 
@@ -35,7 +36,7 @@ def make_pretty(phonenumber):
 	if phonenumber is None or phonenumber is "":
 		return ""
 
-	phonenumber = handle.strip_number(phonenumber)
+	phonenumber = util_misc.strip_number(phonenumber)
 
 	if len(phonenumber) < 3:
 		return phonenumber
@@ -126,7 +127,7 @@ class AliasingMixin(telepathy.server.ConnectionInterfaceAliasing):
 			return
 
 		# Update callback
-		uglyNumber = handle.strip_number(userHandleAndAlias[1])
+		uglyNumber = util_misc.strip_number(userHandleAndAlias[1])
 		self.session.backend.set_callback_number(uglyNumber)
 
 		# Inform of change

@@ -46,7 +46,7 @@ class TextChannel(telepathy.server.ChannelTypeText):
 		try:
 			mergedConversations = self._conn.session.conversations.get_conversation(self._contactKey)
 		except KeyError:
-			pass
+			_moduleLogger.info("Nothing in the conversation yet for %r" % (self._contactKey, ))
 		else:
 			self._report_conversation(mergedConversations)
 

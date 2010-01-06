@@ -640,3 +640,16 @@ def lexical_scope(*args):
 		for key in (x for x in f_locals.keys() if x not in saved):
 			del f_locals[key]
 		del frame
+
+
+def strip_number(prettynumber):
+	"""
+	function to take a phone number and strip out all non-numeric
+	characters
+
+	>>> strip_number("+012-(345)-678-90")
+	'01234567890'
+	"""
+	import re
+	uglynumber = re.sub('\D', '', prettynumber)
+	return uglynumber

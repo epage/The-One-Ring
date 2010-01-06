@@ -4,6 +4,7 @@
 import logging
 
 import util.coroutines as coroutines
+import util.misc as util_misc
 
 
 _moduleLogger = logging.getLogger("gvoice.conversations")
@@ -27,7 +28,7 @@ class Conversations(object):
 		conversations = list(self._backend.get_conversations())
 		conversations.sort()
 		for conversation in conversations:
-			key = conversation.contactId, conversation.number
+			key = conversation.contactId, util_misc.strip_number(conversation.number)
 			try:
 				mergedConversations = self._conversations[key]
 			except KeyError:

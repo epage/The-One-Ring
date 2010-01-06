@@ -4,6 +4,7 @@ import dbus
 import telepathy
 
 import channel
+import util.misc as util_misc
 
 
 _moduleLogger = logging.getLogger("channel_manager")
@@ -131,22 +132,28 @@ class ChannelManager(TelepathyChannelManager):
 		)
 
 	def _get_list_channel(self, props):
-		_, surpress_handler, handle = self._get_type_requested_handle(props)
+		_, surpress_handler, h = self._get_type_requested_handle(props)
 
 		_moduleLogger.debug('New contact list channel')
-		chan = channel.contact_list.create_contact_list_channel(self._conn, self, props, handle)
+		chan = channel.contact_list.create_contact_list_channel(self._conn, self, props, h)
 		return chan
 
 	def _get_text_channel(self, props):
-		_, surpress_handler, handle = self._get_type_requested_handle(props)
+		_, surpress_handler, h = self._get_type_requested_handle(props)
 
-		_moduleLogger.debug('New text channel')
-		chan = channel.text.TextChannel(self._conn, self, props, handle)
+		accountNumber = util_misc.strip_number(self._conn.session.backend.get_account_number())
+		if h.phoneNumber == accountNumber:
+			_moduleLogger.debug('New Debug channel')
+			chan = channel.debug_prompt.DebugPromptChannel(self._conn, self, props, h)
+		else:
+			_moduleLogger.debug('New text channel')
+			_moduleLogger.info('%r %r' % (accountNumber, h.phoneNumber))
+			chan = channel.text.TextChannel(self._conn, self, props, h)
 		return chan
 
 	def _get_media_channel(self, props):
-		_, surpress_handler, handle = self._get_type_requested_handle(props)
+		_, surpress_handler, h = self._get_type_requested_handle(props)
 
 		_moduleLogger.debug('New media channel')
-		chan = channel.call.CallChannel(self._conn, self, props, handle)
+		chan = channel.call.CallChannel(self._conn, self, props, h)
 		return chan

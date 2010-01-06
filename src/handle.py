@@ -3,6 +3,8 @@ import weakref
 
 import telepathy
 
+import util.misc as util_misc
+
 
 _moduleLogger = logging.getLogger("handle")
 
@@ -36,19 +38,6 @@ class ConnectionHandle(TheOneRingHandle):
 		self.profile = connection.username
 
 
-def strip_number(prettynumber):
-	"""
-	function to take a phone number and strip out all non-numeric
-	characters
-
-	>>> strip_number("+012-(345)-678-90")
-	'01234567890'
-	"""
-	import re
-	uglynumber = re.sub('\D', '', prettynumber)
-	return uglynumber
-
-
 class ContactHandle(TheOneRingHandle):
 
 	def __init__(self, connection, id, contactId, phoneNumber):
@@ -57,7 +46,7 @@ class ContactHandle(TheOneRingHandle):
 		TheOneRingHandle.__init__(self, connection, id, handleType, handleName)
 
 		self._contactId = contactId
-		self._phoneNumber = phoneNumber
+		self._phoneNumber = util_misc.strip_number(phoneNumber)
 
 	@staticmethod
 	def from_handle_name(handleName):
@@ -69,12 +58,12 @@ class ContactHandle(TheOneRingHandle):
 		else:
 			raise RuntimeError("Invalid handle: %s" % handleName)
 
-		contactNumber = strip_number(contactNumber)
+		contactNumber = util_misc.strip_number(contactNumber)
 		return contactId, contactNumber
 
 	@staticmethod
 	def to_handle_name(contactId, contactNumber):
-		handleName = "#".join((contactId, strip_number(contactNumber)))
+		handleName = "#".join((contactId, util_misc.strip_number(contactNumber)))
 		return handleName
 
 	@property
