@@ -21,7 +21,12 @@ class TextChannel(telepathy.server.ChannelTypeText):
 		self._manager = manager
 		self._props = props
 
-		telepathy.server.ChannelTypeText.__init__(self, connection, contactHandle)
+		try:
+			# Older python-telepathy way
+			telepathy.server.ChannelTypeText.__init__(self, connection, contactHandle)
+		except TypeError:
+			# Newer python-telepathy way
+			telepathy.server.ChannelTypeText.__init__(self, connection, manager, props)
 		self._nextRecievedId = 0
 		self._lastMessageTimestamp = datetime.datetime(1, 1, 1)
 

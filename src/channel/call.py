@@ -19,7 +19,12 @@ class CallChannel(
 		self._manager = manager
 		self._props = props
 
-		telepathy.server.ChannelTypeStreamedMedia.__init__(self, connection, None)
+		try:
+			# Older python-telepathy way
+			telepathy.server.ChannelTypeStreamedMedia.__init__(self, connection, None)
+		except TypeError:
+			# Newer python-telepathy way
+			telepathy.server.ChannelTypeStreamedMedia.__init__(self, connection, manager, props)
 		telepathy.server.ChannelInterfaceCallState.__init__(self)
 		telepathy.server.ChannelInterfaceGroup.__init__(self)
 		self._contactHandle = contactHandle

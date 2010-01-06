@@ -21,7 +21,12 @@ class AbstractListChannel(
 		self._manager = manager
 		self._props = props
 
-		telepathy.server.ChannelTypeContactList.__init__(self, connection, h)
+		try:
+			# Older python-telepathy way
+			telepathy.server.ChannelTypeContactList.__init__(self, connection, h)
+		except TypeError:
+			# Newer python-telepathy way
+			telepathy.server.ChannelTypeContactList.__init__(self, connection, manager, props)
 		telepathy.server.ChannelInterfaceGroup.__init__(self)
 
 		self._session = connection.session
