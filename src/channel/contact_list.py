@@ -100,7 +100,7 @@ class AllContactsListChannel(AbstractListChannel):
 		)
 
 
-def create_contact_list_channel(connection, h):
+def create_contact_list_channel(connection, manager, props, h):
 	if h.get_name() == 'subscribe':
 		# The group of contacts for whom you receive presence
 		ChannelClass = AllContactsListChannel
@@ -126,6 +126,6 @@ def create_contact_list_channel(connection, h):
 		ChannelClass = AllContactsListChannel
 	else:
 		raise TypeError("Unknown list type : " + h.get_name())
-	return ChannelClass(connection, h)
+	return ChannelClass(connection, manager, props, h)
 
 
