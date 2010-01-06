@@ -17,7 +17,10 @@ class AbstractListChannel(
 	):
 	"Abstract Contact List channels"
 
-	def __init__(self, connection, h):
+	def __init__(self, connection, manager, props, h):
+		self._manager = manager
+		self._props = props
+
 		telepathy.server.ChannelTypeContactList.__init__(self, connection, h)
 		telepathy.server.ChannelInterfaceGroup.__init__(self)
 
@@ -29,8 +32,8 @@ class AllContactsListChannel(AbstractListChannel):
 	The group of contacts for whom you receive presence
 	"""
 
-	def __init__(self, connection, h):
-		AbstractListChannel.__init__(self, connection, h)
+	def __init__(self, connection, manager, props, h):
+		AbstractListChannel.__init__(self, connection, manager, props, h)
 
 		self._callback = coroutines.func_sink(
 			coroutines.expand_positional(
@@ -58,8 +61,10 @@ class AllContactsListChannel(AbstractListChannel):
 		self._callback = None
 
 		telepathy.server.ChannelTypeContactList.Close(self)
+		if self._manager.channel_exists(self._props):
+			# Older python-telepathy requires doing this manually
+			self._manager.remove_channel(self)
 		self.remove_from_connection()
-		self._prop_getters = None # HACK to get around python-telepathy memory leaks
 
 	@gobject_utils.async
 	@gtk_toolbox.log_exception(_moduleLogger)

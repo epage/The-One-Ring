@@ -15,7 +15,10 @@ class CallChannel(
 		telepathy.server.ChannelInterfaceGroup,
 	):
 
-	def __init__(self, connection, contactHandle):
+	def __init__(self, connection, manager, props, contactHandle):
+		self._manager = manager
+		self._props = props
+
 		telepathy.server.ChannelTypeStreamedMedia.__init__(self, connection, None)
 		telepathy.server.ChannelInterfaceCallState.__init__(self)
 		telepathy.server.ChannelInterfaceGroup.__init__(self)
@@ -40,8 +43,10 @@ class CallChannel(
 
 	def close(self):
 		telepathy.server.ChannelTypeStreamedMedia.Close(self)
+		if self._manager.channel_exists(self._props):
+			# Older python-telepathy requires doing this manually
+			self._manager.remove_channel(self)
 		self.remove_from_connection()
-		self._prop_getters = None # HACK to get around python-telepathy memory leaks
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def ListStreams(self):

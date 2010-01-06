@@ -176,24 +176,16 @@ class TheOneRingConnection(
 		self.check_connected()
 		self.check_handle(handleType, handleId)
 
-		channel = None
-		channelManager = self._channelManager
-		handle = self.handle(handleType, handleId)
+		h = self.handle(handleType, handleId) if handleId != 0 else None
+		props = self._generate_props(type, h, suppressHandler)
+		if hasattr(self, "_validate_handle"):
+			# On newer python-telepathy
+			self._validate_handle(props)
 
-		if type == telepathy.CHANNEL_TYPE_CONTACT_LIST:
-			_moduleLogger.info("RequestChannel ContactList")
-			channel = channelManager.channel_for_list(handle, suppressHandler)
-		elif type == telepathy.CHANNEL_TYPE_TEXT:
-			_moduleLogger.info("RequestChannel Text")
-			channel = channelManager.channel_for_text(handle, suppressHandler)
-		elif type == telepathy.CHANNEL_TYPE_STREAMED_MEDIA:
-			_moduleLogger.info("RequestChannel Media")
-			channel = channelManager.channel_for_call(handle, suppressHandler)
-		else:
-			raise telepathy.errors.NotImplemented("unknown channel type %s" % type)
-
-		_moduleLogger.info("RequestChannel Object Path: %s" % channel._object_path)
-		return channel._object_path
+		chan = self._channelManager.channel_for_props(props, signal=True)
+		path = chan._object_path
+		_moduleLogger.info("RequestChannel Object Path: %s" % path)
+		return path
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def RequestHandles(self, handleType, names, sender):
@@ -244,8 +236,8 @@ class TheOneRingConnection(
 		# @todo get conversations update running
 		# @todo test conversatiuons
 		_moduleLogger.info("Incoming messages from: %r" % (conversationIds, ))
-		channelManager = self._channelManager
 		for contactId, phoneNumber in conversationIds:
 			h = handle.create_handle(self, 'contact', contactId, phoneNumber)
 			# Just let the TextChannel decide whether it should be reported to the user or not
-			channel = channelManager.channel_for_text(h)
+			props = self._generate_props(telepathy.CHANNEL_TYPE_TEXT, h, False)
+			channel = self._channelManager.channel_for_props(props, signal=True)

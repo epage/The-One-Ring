@@ -17,12 +17,15 @@ class TextChannel(telepathy.server.ChannelTypeText):
 	Look into implementing ChannelInterfaceMessages for rich text formatting
 	"""
 
-	def __init__(self, connection, h):
-		telepathy.server.ChannelTypeText.__init__(self, connection, h)
+	def __init__(self, connection, manager, props, contactHandle):
+		self._manager = manager
+		self._props = props
+
+		telepathy.server.ChannelTypeText.__init__(self, connection, contactHandle)
 		self._nextRecievedId = 0
 		self._lastMessageTimestamp = datetime.datetime(1, 1, 1)
 
-		self._otherHandle = h
+		self._otherHandle = contactHandle
 
 		self._callback = coroutines.func_sink(
 			coroutines.expand_positional(
@@ -57,15 +60,16 @@ class TextChannel(telepathy.server.ChannelTypeText):
 		self.close()
 
 	def close(self):
-		_moduleLogger.info("Closing text channel for %r" % (self._otherHandle, ))
 		self._conn.session.conversations.updateSignalHandler.unregister_sink(
 			self._callback
 		)
 		self._callback = None
 
 		telepathy.server.ChannelTypeText.Close(self)
+		if self._manager.channel_exists(self._props):
+			# Older python-telepathy requires doing this manually
+			self._manager.remove_channel(self)
 		self.remove_from_connection()
-		self._prop_getters = None # HACK to get around python-telepathy memory leaks
 
 	@property
 	def _contactKey(self):
