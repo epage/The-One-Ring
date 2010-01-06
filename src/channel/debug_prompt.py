@@ -49,7 +49,7 @@ class DebugPromptChannel(telepathy.server.ChannelTypeText, cmd.Cmd):
 		finally:
 			self.stdin, self.stdout = oldStdin, oldStdout
 
-		self._report_new_message(currentStdout.getvalue().strip())
+		self._report_new_message(currentStdout.getvalue())
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def Close(self):
@@ -68,7 +68,7 @@ class DebugPromptChannel(telepathy.server.ChannelTypeText, cmd.Cmd):
 		timestamp = int(time.time())
 		type = telepathy.CHANNEL_TEXT_MESSAGE_TYPE_NORMAL
 
-		self.Received(currentReceivedId, timestamp, self._otherHandle, type, 0, message)
+		self.Received(currentReceivedId, timestamp, self._otherHandle, type, 0, message.strip())
 
 		self._nextRecievedId += 1
 
@@ -154,11 +154,23 @@ class DebugPromptChannel(telepathy.server.ChannelTypeText, cmd.Cmd):
 
 	def do_call(self, args):
 		if len(args) != 1:
-			self._report_new_message("No arguments supported")
+			self._report_new_message("Must specify the phone number and only the phone nunber")
 			return
 
 		try:
 			number = args[0]
 			self._conn.session.backend.call(number)
+		except Exception, e:
+			self._report_new_message(str(e))
+
+	def do_send_sms(self, args):
+		if 1 < len(args):
+			self._report_new_message("Must specify the phone number and then message")
+			return
+
+		try:
+			number = args[0]
+			message = " ".join(args[1:])
+			self._conn.session.backend.send_sms(number, message)
 		except Exception, e:
 			self._report_new_message(str(e))
