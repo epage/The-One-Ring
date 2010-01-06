@@ -121,7 +121,7 @@ class RequestConnection(Action):
 		self._cm[telepathy.server.CONNECTION_MANAGER].RequestConnection(
 			'sip',
 			{
-				'username':  self._username,
+				'account':  self._username,
 				'password': self._password,
 				'forward':  self._forward,
 			},
