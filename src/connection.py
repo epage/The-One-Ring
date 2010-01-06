@@ -1,3 +1,11 @@
+
+"""
+@todo Add params for disable/enable state machines
+@todo Move addressbook to separate state machine
+@todo Add option to use screen name as callback
+"""
+
+
 import weakref
 import logging
 
