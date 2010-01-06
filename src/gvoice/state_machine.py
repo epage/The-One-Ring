@@ -65,6 +65,7 @@ class StateMachine(object):
 
 	def start(self):
 		assert self._startId is None
+		assert self._timeoutId is None
 		self._startId = gobject.idle_add(self._start)
 
 	def stop(self):
@@ -79,7 +80,7 @@ class StateMachine(object):
 		_moduleLogger.info("Transitioning from %s to %s" % (oldState, newState))
 
 		self._state = newState
-		self.reset_timers()
+		self._reset_timers()
 
 	def get_state(self):
 		return self._state
@@ -94,7 +95,7 @@ class StateMachine(object):
 	@gobject_utils.async
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def _request_reset_timers(self, *args):
-		self.reset_timers()
+		self._reset_timers()
 
 	def _set_initial_period(self):
 		self._currentPeriod = self._INITIAL_ACTIVE_PERIOD / 2 # We will double it later
