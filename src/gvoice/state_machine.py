@@ -49,6 +49,7 @@ class StateMachine(object):
 		self._updateItems = updateItems
 
 		self._state = self.STATE_ACTIVE
+		self._startId = None
 		self._timeoutId = None
 		self._currentPeriod = self._INITIAL_ACTIVE_PERIOD
 		self._set_initial_period()
@@ -62,20 +63,15 @@ class StateMachine(object):
 	def close(self):
 		self._callback = None
 
-	@gobject_utils.async
-	@gtk_toolbox.log_exception(_moduleLogger)
 	def start(self):
-		_moduleLogger.info("Starting State Machine")
-		for item in self._initItems:
-			try:
-				item.update()
-			except Exception:
-				_moduleLogger.exception("Initial update failed for %r" % item)
-		self._schedule_update()
-		return False # do not continue
+		assert self._startId is None
+		self._startId = gobject.idle_add(self._start)
 
 	def stop(self):
-		_moduleLogger.info("Stopping an already stopped state machine")
+		if self._startId is not None:
+			_moduleLogger.info("Stopping state machine before it even had a chance to start")
+			gobject.source_remove(self._startId)
+			self._startId = None
 		self._stop_update()
 
 	def set_state(self, newState):
@@ -112,8 +108,20 @@ class StateMachine(object):
 		_moduleLogger.info("Next update in %s ms" % (nextTimeout, ))
 		self._currentPeriod = nextTimeout
 
+	def _start(self):
+		_moduleLogger.info("Starting State Machine")
+		for item in self._initItems:
+			try:
+				item.update()
+			except Exception:
+				_moduleLogger.exception("Initial update failed for %r" % item)
+		self._schedule_update()
+		self._startId = None
+		return False # do not continue
+
 	def _stop_update(self):
 		if self._timeoutId is None:
+			_moduleLogger.info("Stopping an already stopped state machine")
 			return
 		gobject.source_remove(self._timeoutId)
 		self._timeoutId = None
