@@ -49,40 +49,42 @@ class TheOneRingConnection(
 	_parameter_defaults = {
 	}
 
+	@gtk_toolbox.log_exception(_moduleLogger)
 	def __init__(self, manager, parameters):
 		self.check_parameters(parameters)
-		try:
-			account = unicode(parameters['account'])
+		account = unicode(parameters['account'])
+		encodedAccount = parameters['account'].encode('utf-8')
+		encodedPassword = parameters['password'].encode('utf-8')
+		encodedCallback = parameters['forward'].encode('utf-8')
+		if not encodedCallback:
+			raise telepathy.errors.InvalidArgument("User must specify what number GV forwards calls to")
 
-			# Connection init must come first
-			telepathy.server.Connection.__init__(
-				self,
-				constants._telepathy_protocol_name_,
-				account,
-				constants._telepathy_implementation_name_
-			)
-			aliasing.AliasingMixin.__init__(self)
-			simple_presence.SimplePresenceMixin.__init__(self)
-			presence.PresenceMixin.__init__(self)
-			capabilities.CapabilitiesMixin.__init__(self)
+		# Connection init must come first
+		telepathy.server.Connection.__init__(
+			self,
+			constants._telepathy_protocol_name_,
+			account,
+			constants._telepathy_implementation_name_
+		)
+		aliasing.AliasingMixin.__init__(self)
+		simple_presence.SimplePresenceMixin.__init__(self)
+		presence.PresenceMixin.__init__(self)
+		capabilities.CapabilitiesMixin.__init__(self)
 
-			self._manager = weakref.proxy(manager)
-			self._credentials = (
-				parameters['account'].encode('utf-8'),
-				parameters['password'].encode('utf-8'),
-			)
-			self._callbackNumber = parameters['forward'].encode('utf-8')
-			self._channelManager = channel_manager.ChannelManager(self)
+		self._manager = weakref.proxy(manager)
+		self._credentials = (
+			encodedAccount,
+			encodedPassword,
+		)
+		self._callbackNumber = encodedCallback
+		self._channelManager = channel_manager.ChannelManager(self)
 
-			self._session = gvoice.session.Session(None)
+		self._session = gvoice.session.Session(None)
 
-			self.set_self_handle(handle.create_handle(self, 'connection'))
+		self.set_self_handle(handle.create_handle(self, 'connection'))
 
-			self._callback = None
-			_moduleLogger.info("Connection to the account %s created" % account)
-		except Exception, e:
-			_moduleLogger.exception("Failed to create Connection")
-			raise
+		self._callback = None
+		_moduleLogger.info("Connection to the account %s created" % account)
 
 	@property
 	def manager(self):
