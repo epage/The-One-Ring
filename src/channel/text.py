@@ -22,10 +22,10 @@ class TextChannel(telepathy.server.ChannelTypeText):
 		self._props = props
 
 		try:
-			# Older python-telepathy way
+			# HACK Older python-telepathy way
 			telepathy.server.ChannelTypeText.__init__(self, connection, contactHandle)
 		except TypeError:
-			# Newer python-telepathy way
+			# HACK Newer python-telepathy way
 			telepathy.server.ChannelTypeText.__init__(self, connection, manager, props)
 		self._nextRecievedId = 0
 		self._lastMessageTimestamp = datetime.datetime(1, 1, 1)
@@ -72,7 +72,7 @@ class TextChannel(telepathy.server.ChannelTypeText):
 
 		telepathy.server.ChannelTypeText.Close(self)
 		if self._manager.channel_exists(self._props):
-			# Older python-telepathy requires doing this manually
+			# HACK Older python-telepathy requires doing this manually
 			self._manager.remove_channel(self)
 		self.remove_from_connection()
 

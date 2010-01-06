@@ -20,10 +20,10 @@ class CallChannel(
 		self._props = props
 
 		try:
-			# Older python-telepathy way
+			# HACK Older python-telepathy way
 			telepathy.server.ChannelTypeStreamedMedia.__init__(self, connection, None)
 		except TypeError:
-			# Newer python-telepathy way
+			# HACK Newer python-telepathy way
 			telepathy.server.ChannelTypeStreamedMedia.__init__(self, connection, manager, props)
 		telepathy.server.ChannelInterfaceCallState.__init__(self)
 		telepathy.server.ChannelInterfaceGroup.__init__(self)
@@ -49,7 +49,7 @@ class CallChannel(
 	def close(self):
 		telepathy.server.ChannelTypeStreamedMedia.Close(self)
 		if self._manager.channel_exists(self._props):
-			# Older python-telepathy requires doing this manually
+			# HACK Older python-telepathy requires doing this manually
 			self._manager.remove_channel(self)
 		self.remove_from_connection()
 

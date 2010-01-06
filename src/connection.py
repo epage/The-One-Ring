@@ -187,7 +187,7 @@ class TheOneRingConnection(
 		h = self.handle(handleType, handleId) if handleId != 0 else None
 		props = self._generate_props(type, h, suppressHandler)
 		if hasattr(self, "_validate_handle"):
-			# On newer python-telepathy
+			# HACK Newer python-telepathy
 			self._validate_handle(props)
 
 		chan = self._channelManager.channel_for_props(props, signal=True)

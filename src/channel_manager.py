@@ -65,10 +65,10 @@ class TelepathyChannelManager(object):
 		chan = self._requestable_channel_classes[type](props, **args)
 
 		if hasattr(self._conn, "add_channels"):
-			# Newer python-telepathy
+			# HACK Newer python-telepathy
 			self._conn.add_channels([chan], signal=signal)
 		elif hasattr(self._conn, "add_channel"):
-			# Older python-telepathy
+			# HACK Older python-telepathy
 			self._conn.add_channel(chan, handle, suppress_handler)
 		else:
 			raise RuntimeError("Uhh, what just happened with the connection")
