@@ -155,7 +155,7 @@ class MozillaEmulator(object):
 		)
 		u.addheaders = [(
 			'User-Agent',
-			'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.7.8) Gecko/20050511 Firefox/1.0.4'
+			'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.4) Gecko/20091016 Firefox/3.5.4 (.NET CLR 3.5.30729)'
 		)]
 		if not postdata is None:
 			req.add_data(postdata)

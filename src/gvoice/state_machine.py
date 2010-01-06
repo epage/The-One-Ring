@@ -37,9 +37,9 @@ class StateMachine(object):
 	_ACTION_RESET = "reset"
 	_ACTION_STOP = "stop"
 
-	_INITIAL_ACTIVE_PERIOD = int(_to_milliseconds(seconds=5))
-	_FINAL_ACTIVE_PERIOD = int(_to_milliseconds(minutes=2))
-	_IDLE_PERIOD = int(_to_milliseconds(minutes=10))
+	_INITIAL_ACTIVE_PERIOD = int(_to_milliseconds(seconds=10))
+	_FINAL_ACTIVE_PERIOD = int(_to_milliseconds(minutes=10))
+	_IDLE_PERIOD = int(_to_milliseconds(minutes=30))
 	_INFINITE_PERIOD = -1
 
 	_IS_DAEMON = True

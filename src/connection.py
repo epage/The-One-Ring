@@ -87,6 +87,10 @@ class TheOneRingConnection(
 	def username(self):
 		return self._credentials[0]
 
+	@property
+	def userAliasType(self):
+		return self.USER_ALIAS_ACCOUNT
+
 	def handle(self, handleType, handleId):
 		self.check_handle(handleType, handleId)
 		return self._handles[handleType, handleId]
@@ -202,26 +206,37 @@ class TheOneRingConnection(
 
 		handles = []
 		for name in names:
-			name = name.encode('utf-8')
+			requestedHandleName = name.encode('utf-8')
 			if handleType == telepathy.HANDLE_TYPE_CONTACT:
-				_moduleLogger.info("RequestHandles Contact: %s" % name)
-				h = self._create_contact_handle(name)
+				_moduleLogger.info("RequestHandles Contact: %s" % requestedHandleName)
+				requestedContactId, requestedContactNumber = handle.ContactHandle.from_handle_name(
+					requestedHandleName
+				)
+				h = handle.create_handle(self, 'contact', requestedContactId, requestedContactNumber)
 			elif handleType == telepathy.HANDLE_TYPE_LIST:
 				# Support only server side (immutable) lists
-				_moduleLogger.info("RequestHandles List: %s" % name)
-				h = handle.create_handle(self, 'list', name)
+				_moduleLogger.info("RequestHandles List: %s" % requestedHandleName)
+				h = handle.create_handle(self, 'list', requestedHandleName)
 			else:
 				raise telepathy.errors.NotAvailable('Handle type unsupported %d' % handleType)
 			handles.append(h.id)
 			self.add_client_handle(h, sender)
 		return handles
 
-	def _create_contact_handle(self, requestedHandleName):
-		requestedContactId, requestedContactNumber = handle.ContactHandle.from_handle_name(
-			requestedHandleName
-		)
-		h = handle.create_handle(self, 'contact', requestedContactId, requestedContactNumber)
-		return h
+	def _generate_props(self, channelType, handle, suppressHandler, initiatorHandle=None):
+		targetHandle = 0 if handle is None else handle.get_id()
+		targetHandleType = telepathy.HANDLE_TYPE_NONE if handle is None else handle.get_type()
+		props = {
+			telepathy.CHANNEL_INTERFACE + '.ChannelType': channelType,
+			telepathy.CHANNEL_INTERFACE + '.TargetHandle': targetHandle,
+			telepathy.CHANNEL_INTERFACE + '.TargetHandleType': targetHandleType,
+			telepathy.CHANNEL_INTERFACE + '.Requested': suppressHandler
+		}
+
+		if initiatorHandle is not None:
+			props[telepathy.CHANNEL_INTERFACE + '.InitiatorHandle'] = initiatorHandle.id
+
+		return props
 
 	@gobject_utils.async
 	@gtk_toolbox.log_exception(_moduleLogger)
