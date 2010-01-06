@@ -1,7 +1,8 @@
 
 """
 @todo Add params for disable/enable state machines
-@todo Move addressbook to separate state machine
+@todo Separate voicemail/sms into separate conversation instances
+@todo Setup addressbook, voicemail, sms state machines
 @todo Add option to use screen name as callback
 """
 
