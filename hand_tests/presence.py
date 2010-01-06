@@ -27,7 +27,7 @@ from telepathy.constants import CONNECTION_STATUS_CONNECTED, \
 DBUS_PROPERTIES = 'org.freedesktop.DBus.Properties'
 
 
-class Example (object):
+class Example(object):
 
 	def __init__ (self, account, password, forward):
 		"""e.g. account  = 'bob@example.com/test'
@@ -45,7 +45,7 @@ class Example (object):
 		# Begin Example 2-3
 		cm[CONNECTION_MANAGER].RequestConnection('sip',
 			{
-				'username':  account,
+				'account':  account,
 				'forward':  forward,
 				'password': password,
 			},
