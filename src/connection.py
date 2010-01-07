@@ -16,12 +16,16 @@ import constants
 import util.go_utils as gobject_utils
 import util.coroutines as coroutines
 import gtk_toolbox
+
 import gvoice
 import handle
+
+import contacts
 import aliasing
 import simple_presence
 import presence
 import capabilities
+
 import channel_manager
 
 
@@ -30,6 +34,8 @@ _moduleLogger = logging.getLogger("connection")
 
 class TheOneRingConnection(
 	telepathy.server.Connection,
+	telepathy.server.ConnectionInterfaceRequests, # already a mixin
+	contacts.ContactsMixin,
 	aliasing.AliasingMixin,
 	simple_presence.SimplePresenceMixin,
 	presence.PresenceMixin,
@@ -66,6 +72,8 @@ class TheOneRingConnection(
 			account,
 			constants._telepathy_implementation_name_
 		)
+		telepathy.server.ConnectionInterfaceRequests.__init__(self)
+		contacts.ContactsMixin.__init__(self)
 		aliasing.AliasingMixin.__init__(self)
 		simple_presence.SimplePresenceMixin.__init__(self)
 		presence.PresenceMixin.__init__(self)
