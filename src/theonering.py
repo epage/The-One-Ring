@@ -107,7 +107,6 @@ def main(logToFile):
 	logging.info("Hostname: %s" % os.uname()[1])
 
 	persist = 'THEONERING_PERSIST' in os.environ
-	persist = True
 
 	try:
 		run_theonering(persist)
