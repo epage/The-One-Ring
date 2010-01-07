@@ -147,7 +147,6 @@ class ChannelManager(TelepathyChannelManager):
 			chan = channel.debug_prompt.DebugPromptChannel(self._conn, self, props, h)
 		else:
 			_moduleLogger.debug('New text channel')
-			_moduleLogger.info('%r %r' % (accountNumber, h.phoneNumber))
 			chan = channel.text.TextChannel(self._conn, self, props, h)
 		return chan
 
