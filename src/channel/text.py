@@ -137,7 +137,6 @@ class TextChannel(telepathy.server.ChannelTypeText):
 
 	def _report_new_message(self, message):
 		currentReceivedId = self._nextRecievedId
-
 		timestamp = int(time.time())
 		type = telepathy.CHANNEL_TEXT_MESSAGE_TYPE_NORMAL
 
