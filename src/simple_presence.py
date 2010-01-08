@@ -56,7 +56,7 @@ class TheOneRingPresence(object):
 				if isDnd:
 					presence = TheOneRingPresence.HIDDEN
 				else:
-					state = self.session.stateMachine.get_state()
+					state = self.session.stateMachine.state
 					if state == state_machine.StateMachine.STATE_ACTIVE:
 						presence = TheOneRingPresence.ONLINE
 					elif state == state_machine.StateMachine.STATE_IDLE:

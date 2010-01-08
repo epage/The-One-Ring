@@ -42,12 +42,26 @@ def main():
 	try:
 		state_machine.StateMachine._IS_DAEMON = False
 
-		initial = _I(startTime)
-		print "Initial:", initial
 		regular = _I(startTime)
 		print "Regular:", regular
 
-		sm = state_machine.StateMachine([initial], [regular])
+		sm = state_machine.UpdateStateMachine([regular])
+		sm.set_state_strategy(
+			state_machine.StateMachine.STATE_DND,
+			state_machine.NopStateStrategy(),
+		)
+		sm.set_state_strategy(
+			state_machine.StateMachine.STATE_IDLE,
+			state_machine.ConstantStateStrategy(state_machine.to_milliseconds(seconds=30)),
+		)
+		sm.set_state_strategy(
+			state_machine.StateMachine.STATE_ACTIVE,
+			state_machine.GeometricStateStrategy(
+				state_machine.to_milliseconds(seconds=3),
+				state_machine.to_milliseconds(seconds=3),
+				state_machine.to_milliseconds(seconds=20),
+			),
+		)
 		print "Starting", datetime.datetime.now() - startTime
 		sm.start()
 		time.sleep(60.0) # seconds
@@ -64,7 +78,4 @@ def main():
 
 
 if __name__ == "__main__":
-	print state_machine.StateMachine._INITIAL_ACTIVE_PERIOD
-	print state_machine.StateMachine._FINAL_ACTIVE_PERIOD
-	print state_machine.StateMachine._IDLE_PERIOD
 	main()

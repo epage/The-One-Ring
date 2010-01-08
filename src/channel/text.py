@@ -56,7 +56,7 @@ class TextChannel(telepathy.server.ChannelTypeText):
 			raise telepathy.errors.NotImplemented("Unhandled message type: %r" % messageType)
 
 		self._conn.session.backend.send_sms(self._otherHandle.phoneNumber, text)
-		self._conn.session.stateMachine.reset_timers()
+		self._conn.session.conversationsStateMachine.reset_timers()
 
 		self.Sent(int(time.time()), messageType, text)
 

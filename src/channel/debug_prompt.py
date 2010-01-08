@@ -78,7 +78,8 @@ class DebugPromptChannel(telepathy.server.ChannelTypeText, cmd.Cmd):
 			return
 
 		try:
-			self._conn.session.stateMachine.reset_timers()
+			for machine in self._conn.session.stateMachine._machines:
+				machine.reset_timers()
 		except Exception, e:
 			self._report_new_message(str(e))
 
@@ -88,7 +89,7 @@ class DebugPromptChannel(telepathy.server.ChannelTypeText, cmd.Cmd):
 			return
 
 		try:
-			state = self._conn.session.stateMachine.get_state()
+			state = self._conn.session.stateMachine.state
 			self._report_new_message(str(state))
 		except Exception, e:
 			self._report_new_message(str(e))

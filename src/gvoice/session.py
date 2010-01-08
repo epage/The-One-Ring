@@ -18,19 +18,54 @@ class Session(object):
 		self._password = None
 
 		self._backend = backend.GVoiceBackend(cookiePath)
+
 		self._addressbook = addressbook.Addressbook(self._backend)
+		self._addressbookStateMachine = state_machine.UpdateStateMachine([self.addressbook])
+		self._addressbookStateMachine.set_state_strategy(
+			state_machine.StateMachine.STATE_DND,
+			state_machine.NopStateStrategy()
+		)
+		self._addressbookStateMachine.set_state_strategy(
+			state_machine.StateMachine.STATE_IDLE,
+			state_machine.ConstantStateStrategy(state_machine.to_milliseconds(hours=6))
+		)
+		self._addressbookStateMachine.set_state_strategy(
+			state_machine.StateMachine.STATE_ACTIVE,
+			state_machine.ConstantStateStrategy(state_machine.to_milliseconds(hours=1))
+		)
+
 		self._conversations = conversations.Conversations(self._backend)
-		self._stateMachine = state_machine.StateMachine([self.addressbook], [self.conversations])
+		self._conversationsStateMachine = state_machine.UpdateStateMachine([self.conversations])
+		self._conversationsStateMachine.set_state_strategy(
+			state_machine.StateMachine.STATE_DND,
+			state_machine.NopStateStrategy()
+		)
+		self._conversationsStateMachine.set_state_strategy(
+			state_machine.StateMachine.STATE_IDLE,
+			state_machine.ConstantStateStrategy(state_machine.to_milliseconds(minutes=30))
+		)
+		self._conversationsStateMachine.set_state_strategy(
+			state_machine.StateMachine.STATE_ACTIVE,
+			state_machine.GeometricStateStrategy(
+				state_machine.to_milliseconds(seconds=10),
+				state_machine.to_milliseconds(seconds=1),
+				state_machine.to_milliseconds(minutes=10),
+			)
+		)
+
+		self._masterStateMachine = state_machine.MasterStateMachine()
+		self._masterStateMachine.append_machine(self._addressbookStateMachine)
+		self._masterStateMachine.append_machine(self._conversationsStateMachine)
 
 		self._conversations.updateSignalHandler.register_sink(
-			self._stateMachine.request_reset_timers
+			self._conversationsStateMachine.request_reset_timers
 		)
 
 	def close(self):
 		self._conversations.updateSignalHandler.unregister_sink(
-			self._stateMachine.request_reset_timers
+			self._conversationsStateMachine.request_reset_timers
 		)
-		self._stateMachine.close()
+		self._masterStateMachine.close()
 
 	def login(self, username, password):
 		self._username = username
@@ -38,10 +73,10 @@ class Session(object):
 		if not self._backend.is_authed():
 			self._backend.login(self._username, self._password)
 
-		self._stateMachine.start()
+		self._masterStateMachine.start()
 
 	def logout(self):
-		self._stateMachine.stop()
+		self._masterStateMachine.stop()
 		self._backend.logout()
 
 		self._username = None
@@ -90,4 +125,12 @@ class Session(object):
 
 	@property
 	def stateMachine(self):
-		return self._stateMachine
+		return self._masterStateMachine
+
+	@property
+	def addressbookStateMachine(self):
+		return self._addressbookStateMachine
+
+	@property
+	def conversationsStateMachine(self):
+		return self._conversationsStateMachine
