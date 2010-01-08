@@ -91,8 +91,7 @@ class Session(object):
 	def login(self, username, password):
 		self._username = username
 		self._password = password
-		if not self._backend.is_authed():
-			self._backend.login(self._username, self._password)
+		self._backend.login(self._username, self._password)
 
 		self._masterStateMachine.start()
 
