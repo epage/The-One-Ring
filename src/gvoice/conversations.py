@@ -12,8 +12,8 @@ _moduleLogger = logging.getLogger("gvoice.conversations")
 
 class Conversations(object):
 
-	def __init__(self, backend):
-		self._backend = backend
+	def __init__(self, getter):
+		self._get_raw_conversations = getter
 		self._conversations = {}
 
 		self.updateSignalHandler = coroutines.CoTee()
@@ -25,7 +25,7 @@ class Conversations(object):
 		oldConversationIds = set(self._conversations.iterkeys())
 
 		updateConversationIds = set()
-		conversations = list(self._backend.get_conversations())
+		conversations = list(self._get_raw_conversations())
 		conversations.sort()
 		for conversation in conversations:
 			key = conversation.contactId, util_misc.strip_number(conversation.number)

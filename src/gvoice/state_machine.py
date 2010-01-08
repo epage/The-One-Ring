@@ -151,7 +151,8 @@ class UpdateStateMachine(StateMachine):
 
 	_IS_DAEMON = True
 
-	def __init__(self, updateItems):
+	def __init__(self, updateItems, name=""):
+		self._name = name
 		self._updateItems = updateItems
 
 		self._state = self.STATE_ACTIVE
@@ -203,10 +204,6 @@ class UpdateStateMachine(StateMachine):
 	@property
 	def _strategy(self):
 		return self._strategies[self._state]
-
-	@property
-	def _name(self):
-		return "/".join(type(s).__name__ for s in self._updateItems)
 
 	@gobject_utils.async
 	@gtk_toolbox.log_exception(_moduleLogger)

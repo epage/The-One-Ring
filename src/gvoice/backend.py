@@ -477,21 +477,21 @@ class GVoiceBackend(object):
 			if contactId != "0":
 				yield contactId, contactDetails
 
-	def get_conversations(self):
+	def get_voicemails(self):
 		voicemailPage = self._get_page(self._XML_VOICEMAIL_URL)
 		voicemailHtml = self._grab_html(voicemailPage)
 		voicemailJson = self._grab_json(voicemailPage)
 		parsedVoicemail = self._parse_voicemail(voicemailHtml)
 		voicemails = self._merge_conversation_sources(parsedVoicemail, voicemailJson)
+		return voicemails
 
+	def get_texts(self):
 		smsPage = self._get_page(self._XML_SMS_URL)
 		smsHtml = self._grab_html(smsPage)
 		smsJson = self._grab_json(smsPage)
 		parsedSms = self._parse_sms(smsHtml)
 		smss = self._merge_conversation_sources(parsedSms, smsJson)
-
-		allConversations = itertools.chain(voicemails, smss)
-		return allConversations
+		return smss
 
 	def mark_message(self, messageId, asRead):
 		postData = {

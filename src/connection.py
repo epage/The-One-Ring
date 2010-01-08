@@ -1,12 +1,9 @@
 
 """
-@todo Add params for disable/enable state machines
-@todo Separate voicemail/sms into separate conversation instances
-@todo Setup addressbook, voicemail, sms state machines
+@todo Add params for different state machines update times
 @todo Add option to use screen name as callback
 @todo Get a callback for missed calls to force an update of the voicemail state machine
 @todo Get a callback on an incoming call and if its from GV, auto-pickup
-@todo Use state-strategies to keep mega-state-machine generic
 @todo Observe when connected/disconnected to disconnect CM
 """
 
@@ -137,7 +134,10 @@ class TheOneRingConnection(
 					self._on_conversations_updated
 				)
 			)
-			self.session.conversations.updateSignalHandler.register_sink(
+			self.session.voicemails.updateSignalHandler.register_sink(
+				self._callback
+			)
+			self.session.texts.updateSignalHandler.register_sink(
 				self._callback
 			)
 			self.session.login(*self._credentials)
@@ -169,7 +169,10 @@ class TheOneRingConnection(
 		"""
 		_moduleLogger.info("Disconnecting")
 		try:
-			self.session.conversations.updateSignalHandler.unregister_sink(
+			self.session.voicemails.updateSignalHandler.unregister_sink(
+				self._callback
+			)
+			self.session.texts.updateSignalHandler.unregister_sink(
 				self._callback
 			)
 			self._callback = None
@@ -256,8 +259,6 @@ class TheOneRingConnection(
 	@gobject_utils.async
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def _on_conversations_updated(self, conv, conversationIds):
-		# @todo get conversations update running
-		# @todo test conversatiuons
 		_moduleLogger.info("Incoming messages from: %r" % (conversationIds, ))
 		for contactId, phoneNumber in conversationIds:
 			h = handle.create_handle(self, 'contact', contactId, phoneNumber)

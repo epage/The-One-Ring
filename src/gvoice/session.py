@@ -20,7 +20,7 @@ class Session(object):
 		self._backend = backend.GVoiceBackend(cookiePath)
 
 		self._addressbook = addressbook.Addressbook(self._backend)
-		self._addressbookStateMachine = state_machine.UpdateStateMachine([self.addressbook])
+		self._addressbookStateMachine = state_machine.UpdateStateMachine([self.addressbook], "Addressbook")
 		self._addressbookStateMachine.set_state_strategy(
 			state_machine.StateMachine.STATE_DND,
 			state_machine.NopStateStrategy()
@@ -34,17 +34,35 @@ class Session(object):
 			state_machine.ConstantStateStrategy(state_machine.to_milliseconds(hours=1))
 		)
 
-		self._conversations = conversations.Conversations(self._backend)
-		self._conversationsStateMachine = state_machine.UpdateStateMachine([self.conversations])
-		self._conversationsStateMachine.set_state_strategy(
+		self._voicemails = conversations.Conversations(self._backend.get_voicemails)
+		self._voicemailsStateMachine = state_machine.UpdateStateMachine([self.voicemails], "Voicemail")
+		self._voicemailsStateMachine.set_state_strategy(
 			state_machine.StateMachine.STATE_DND,
 			state_machine.NopStateStrategy()
 		)
-		self._conversationsStateMachine.set_state_strategy(
+		self._voicemailsStateMachine.set_state_strategy(
 			state_machine.StateMachine.STATE_IDLE,
 			state_machine.ConstantStateStrategy(state_machine.to_milliseconds(minutes=30))
 		)
-		self._conversationsStateMachine.set_state_strategy(
+		self._voicemailsStateMachine.set_state_strategy(
+			state_machine.StateMachine.STATE_ACTIVE,
+			state_machine.ConstantStateStrategy(state_machine.to_milliseconds(minutes=5))
+		)
+		self._voicemails.updateSignalHandler.register_sink(
+			self._voicemailsStateMachine.request_reset_timers
+		)
+
+		self._texts = conversations.Conversations(self._backend.get_texts)
+		self._textsStateMachine = state_machine.UpdateStateMachine([self.texts], "Texting")
+		self._textsStateMachine.set_state_strategy(
+			state_machine.StateMachine.STATE_DND,
+			state_machine.NopStateStrategy()
+		)
+		self._textsStateMachine.set_state_strategy(
+			state_machine.StateMachine.STATE_IDLE,
+			state_machine.ConstantStateStrategy(state_machine.to_milliseconds(minutes=30))
+		)
+		self._textsStateMachine.set_state_strategy(
 			state_machine.StateMachine.STATE_ACTIVE,
 			state_machine.GeometricStateStrategy(
 				state_machine.to_milliseconds(seconds=10),
@@ -52,18 +70,21 @@ class Session(object):
 				state_machine.to_milliseconds(minutes=10),
 			)
 		)
+		self._texts.updateSignalHandler.register_sink(
+			self._textsStateMachine.request_reset_timers
+		)
 
 		self._masterStateMachine = state_machine.MasterStateMachine()
 		self._masterStateMachine.append_machine(self._addressbookStateMachine)
-		self._masterStateMachine.append_machine(self._conversationsStateMachine)
-
-		self._conversations.updateSignalHandler.register_sink(
-			self._conversationsStateMachine.request_reset_timers
-		)
+		self._masterStateMachine.append_machine(self._voicemailsStateMachine)
+		self._masterStateMachine.append_machine(self._textsStateMachine)
 
 	def close(self):
-		self._conversations.updateSignalHandler.unregister_sink(
-			self._conversationsStateMachine.request_reset_timers
+		self._voicemails.updateSignalHandler.unregister_sink(
+			self._voicemailsStateMachine.request_reset_timers
+		)
+		self._texts.updateSignalHandler.unregister_sink(
+			self._textsStateMachine.request_reset_timers
 		)
 		self._masterStateMachine.close()
 
@@ -111,17 +132,15 @@ class Session(object):
 
 	@property
 	def addressbook(self):
-		"""
-		Delay initialized addressbook
-		"""
 		return self._addressbook
 
 	@property
-	def conversations(self):
-		"""
-		Delay initialized addressbook
-		"""
-		return self._conversations
+	def texts(self):
+		return self._texts
+
+	@property
+	def voicemails(self):
+		return self._voicemails
 
 	@property
 	def stateMachine(self):
@@ -132,5 +151,9 @@ class Session(object):
 		return self._addressbookStateMachine
 
 	@property
-	def conversationsStateMachine(self):
-		return self._conversationsStateMachine
+	def voicemailsStateMachine(self):
+		return self._voicemailsStateMachine
+
+	@property
+	def textsStateMachine(self):
+		return self._textsStateMachine

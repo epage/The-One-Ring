@@ -37,14 +37,23 @@ class TextChannel(telepathy.server.ChannelTypeText):
 				self._on_conversations_updated
 			)
 		)
-		self._conn.session.conversations.updateSignalHandler.register_sink(
+		self._conn.session.voicemails.updateSignalHandler.register_sink(
+			self._callback
+		)
+		self._conn.session.texts.updateSignalHandler.register_sink(
 			self._callback
 		)
 
 		# The only reason there should be anything in the conversation is if
 		# its new, so report it all
 		try:
-			mergedConversations = self._conn.session.conversations.get_conversation(self._contactKey)
+			mergedConversations = self._conn.session.voicemails.get_conversation(self._contactKey)
+		except KeyError:
+			_moduleLogger.info("Nothing in the conversation yet for %r" % (self._contactKey, ))
+		else:
+			self._report_conversation(mergedConversations)
+		try:
+			mergedConversations = self._conn.session.texts.get_conversation(self._contactKey)
 		except KeyError:
 			_moduleLogger.info("Nothing in the conversation yet for %r" % (self._contactKey, ))
 		else:
@@ -56,7 +65,7 @@ class TextChannel(telepathy.server.ChannelTypeText):
 			raise telepathy.errors.NotImplemented("Unhandled message type: %r" % messageType)
 
 		self._conn.session.backend.send_sms(self._otherHandle.phoneNumber, text)
-		self._conn.session.conversationsStateMachine.reset_timers()
+		self._conn.session.textsStateMachine.reset_timers()
 
 		self.Sent(int(time.time()), messageType, text)
 
@@ -65,7 +74,10 @@ class TextChannel(telepathy.server.ChannelTypeText):
 		self.close()
 
 	def close(self):
-		self._conn.session.conversations.updateSignalHandler.unregister_sink(
+		self._conn.session.voicemails.updateSignalHandler.unregister_sink(
+			self._callback
+		)
+		self._conn.session.texts.updateSignalHandler.unregister_sink(
 			self._callback
 		)
 		self._callback = None
@@ -87,7 +99,7 @@ class TextChannel(telepathy.server.ChannelTypeText):
 		if self._contactKey not in conversationIds:
 			return
 		_moduleLogger.info("Incoming messages from %r for existing conversation" % (self._contactKey, ))
-		mergedConversations = self._conn.session.conversations.get_conversation(self._contactKey)
+		mergedConversations = conv.get_conversation(self._contactKey)
 		self._report_conversation(mergedConversations)
 
 	def _report_conversation(self, mergedConversations):
