@@ -24,7 +24,7 @@ class TelepathyChannelManager(object):
 		for channel_type in self._requestable_channel_classes:
 			for chan in self._channels[channel_type].values():
 				try:
-					_moduleLogger.info("Closing %s %s" % (channel_type, chan._object_path))
+					_moduleLogger.debug("Closing %s %s" % (channel_type, chan._object_path))
 					chan.Close()
 				except Exception:
 					_moduleLogger.exception("Shutting down %r" % (chan, ))

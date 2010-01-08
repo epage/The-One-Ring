@@ -94,7 +94,7 @@ class MozillaEmulator(object):
 
 		@return: The raw HTML page data
 		"""
-		_moduleLogger.info("Performing download of %s" % url)
+		_moduleLogger.debug("Performing download of %s" % url)
 
 		if extraheaders is None:
 			extraheaders = {}
@@ -116,13 +116,13 @@ class MozillaEmulator(object):
 
 				return self._read(openerdirector, trycount)
 			except urllib2.URLError, e:
-				_moduleLogger.info("%s: %s" % (e, url))
+				_moduleLogger.debug("%s: %s" % (e, url))
 				cnt += 1
 				if (-1 < trycount) and (trycount < cnt):
 					raise
 
 			# Retry :-)
-			_moduleLogger.info("MozillaEmulator: urllib2.URLError, retrying %d" % cnt)
+			_moduleLogger.debug("MozillaEmulator: urllib2.URLError, retrying %d" % cnt)
 
 	def _build_opener(self, url, postdata = None, extraheaders = None, forbidRedirect = False):
 		if extraheaders is None:

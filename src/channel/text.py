@@ -49,13 +49,13 @@ class TextChannel(telepathy.server.ChannelTypeText):
 		try:
 			mergedConversations = self._conn.session.voicemails.get_conversation(self._contactKey)
 		except KeyError:
-			_moduleLogger.info("Nothing in the conversation yet for %r" % (self._contactKey, ))
+			_moduleLogger.debug("Nothing in the conversation yet for %r" % (self._contactKey, ))
 		else:
 			self._report_conversation(mergedConversations)
 		try:
 			mergedConversations = self._conn.session.texts.get_conversation(self._contactKey)
 		except KeyError:
-			_moduleLogger.info("Nothing in the conversation yet for %r" % (self._contactKey, ))
+			_moduleLogger.debug("Nothing in the conversation yet for %r" % (self._contactKey, ))
 		else:
 			self._report_conversation(mergedConversations)
 
@@ -98,7 +98,7 @@ class TextChannel(telepathy.server.ChannelTypeText):
 	def _on_conversations_updated(self, conv, conversationIds):
 		if self._contactKey not in conversationIds:
 			return
-		_moduleLogger.info("Incoming messages from %r for existing conversation" % (self._contactKey, ))
+		_moduleLogger.debug("Incoming messages from %r for existing conversation" % (self._contactKey, ))
 		mergedConversations = conv.get_conversation(self._contactKey)
 		self._report_conversation(mergedConversations)
 
@@ -108,7 +108,7 @@ class TextChannel(telepathy.server.ChannelTypeText):
 		newConversations = self._filter_out_read(newConversations)
 		newConversations = list(newConversations)
 		if not newConversations:
-			_moduleLogger.info(
+			_moduleLogger.debug(
 				"New messages for %r have already been read externally" % (self._contactKey, )
 			)
 			return
@@ -121,7 +121,7 @@ class TextChannel(telepathy.server.ChannelTypeText):
 			if newMessage.whoFrom != "Me:"
 		]
 		if not newConversations:
-			_moduleLogger.info(
+			_moduleLogger.debug(
 				"All incoming messages were really outbound messages for %r" % (self._contactKey, )
 			)
 			return

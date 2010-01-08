@@ -65,16 +65,18 @@ class ConstantStateStrategy(object):
 class GeometricStateStrategy(object):
 
 	def __init__(self, init, min, max):
-		assert 0 < init or init == UpdateStateMachine.INFINITE_PERIOD
-		assert 0 < min or min == UpdateStateMachine.INFINITE_PERIOD
+		assert 0 < init and init < max and init != UpdateStateMachine.INFINITE_PERIOD
+		assert 0 < min and min != UpdateStateMachine.INFINITE_PERIOD
 		assert min < max or max == UpdateStateMachine.INFINITE_PERIOD
 		self._min = min
 		self._max = max
 		self._init = init
-		self._current = min / 2
+		self._actualInit = init
+		self._current = 0
 
 	def initialize_state(self):
 		self._current = self._min / 2
+		self._actualInit = self._init - self._min
 
 	def increment_state(self):
 		if self._max == UpdateStateMachine.INFINITE_PERIOD:
@@ -84,7 +86,7 @@ class GeometricStateStrategy(object):
 
 	@property
 	def timeout(self):
-		return self._init + self._current
+		return self._actualInit + self._current
 
 
 class StateMachine(object):
@@ -234,8 +236,9 @@ class UpdateStateMachine(StateMachine):
 		self._strategy.initialize_state()
 		self._schedule_update()
 
+	@gtk_toolbox.log_exception(_moduleLogger)
 	def _on_timeout(self):
-		_moduleLogger.info("%s Update" % (self._name))
+		_moduleLogger.debug("%s Update" % (self._name))
 		for item in self._updateItems:
 			try:
 				item.update(force=True)

@@ -97,14 +97,14 @@ def main(logToFile):
 		)
 	else:
 		logging.basicConfig(
-			level=logging.DEBUG,
+			level=logging.INFO,
 			format='(%(asctime)s) %(levelname)s:%(name)s:%(message)s',
 			datefmt='%H:%M:%S',
 		)
-	logging.info("telepathy-theonering %s-%s" % (constants.__version__, constants.__build__))
-	logging.info("OS: %s" % (os.uname()[0], ))
-	logging.info("Kernel: %s (%s) for %s" % os.uname()[2:])
-	logging.info("Hostname: %s" % os.uname()[1])
+	logging.debug("telepathy-theonering %s-%s" % (constants.__version__, constants.__build__))
+	logging.debug("OS: %s" % (os.uname()[0], ))
+	logging.debug("Kernel: %s (%s) for %s" % os.uname()[2:])
+	logging.debug("Hostname: %s" % os.uname()[1])
 
 	persist = 'THEONERING_PERSIST' in os.environ
 

@@ -259,7 +259,7 @@ class TheOneRingConnection(
 	@gobject_utils.async
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def _on_conversations_updated(self, conv, conversationIds):
-		_moduleLogger.info("Incoming messages from: %r" % (conversationIds, ))
+		_moduleLogger.debug("Incoming messages from: %r" % (conversationIds, ))
 		for contactId, phoneNumber in conversationIds:
 			h = handle.create_handle(self, 'contact', contactId, phoneNumber)
 			# Just let the TextChannel decide whether it should be reported to the user or not
