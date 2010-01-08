@@ -101,7 +101,7 @@ def main(logToFile):
 			format='(%(asctime)s) %(levelname)s:%(name)s:%(message)s',
 			datefmt='%H:%M:%S',
 		)
-	logging.debug("telepathy-theonering %s-%s" % (constants.__version__, constants.__build__))
+	logging.info("telepathy-theonering %s-%s" % (constants.__version__, constants.__build__))
 	logging.debug("OS: %s" % (os.uname()[0], ))
 	logging.debug("Kernel: %s (%s) for %s" % os.uname()[2:])
 	logging.debug("Hostname: %s" % os.uname()[1])
