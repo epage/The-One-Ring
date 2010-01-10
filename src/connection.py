@@ -20,13 +20,13 @@ except (ImportError, OSError):
 	conic = None
 
 import constants
-import util.go_utils as gobject_utils
 import util.coroutines as coroutines
 import gtk_toolbox
 
 import gvoice
 import handle
 
+import requests
 import contacts
 import aliasing
 import simple_presence
@@ -41,7 +41,7 @@ _moduleLogger = logging.getLogger("connection")
 
 class TheOneRingConnection(
 	telepathy.server.Connection,
-	#telepathy.server.ConnectionInterfaceRequests, # already a mixin
+	requests.RequestsMixin,
 	contacts.ContactsMixin,
 	aliasing.AliasingMixin,
 	simple_presence.SimplePresenceMixin,
@@ -80,6 +80,7 @@ class TheOneRingConnection(
 			constants._telepathy_implementation_name_
 		)
 		#telepathy.server.ConnectionInterfaceRequests.__init__(self)
+		requests.RequestsMixin.__init__(self)
 		contacts.ContactsMixin.__init__(self)
 		aliasing.AliasingMixin.__init__(self)
 		simple_presence.SimplePresenceMixin.__init__(self)
@@ -126,6 +127,10 @@ class TheOneRingConnection(
 	def handle(self, handleType, handleId):
 		self.check_handle(handleType, handleId)
 		return self._handles[handleType, handleId]
+
+	@property
+	def _channel_manager(self):
+		return self.__channelManager
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def Connect(self):
