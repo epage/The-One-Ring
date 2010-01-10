@@ -13,6 +13,12 @@ import logging
 
 import telepathy
 
+try:
+	import conic as _conic
+	conic = _conic
+except (ImportError, OSError):
+	conic = None
+
 import constants
 import util.go_utils as gobject_utils
 import util.coroutines as coroutines
@@ -89,6 +95,12 @@ class TheOneRingConnection(
 		self._channelManager = channel_manager.ChannelManager(self)
 
 		self._session = gvoice.session.Session(None)
+		if conic is not None:
+			self._connection = conic.Connection()
+			self._connectionEventId = None
+		else:
+			self._connection = None
+			self._connectionEventId = None
 
 		self.set_self_handle(handle.create_handle(self, 'connection'))
 
@@ -148,18 +160,22 @@ class TheOneRingConnection(
 				telepathy.CONNECTION_STATUS_DISCONNECTED,
 				telepathy.CONNECTION_STATUS_REASON_NETWORK_ERROR
 			)
+			return
 		except Exception, e:
 			_moduleLogger.exception("Connection Failed")
 			self.StatusChanged(
 				telepathy.CONNECTION_STATUS_DISCONNECTED,
 				telepathy.CONNECTION_STATUS_REASON_AUTHENTICATION_FAILED
 			)
-		else:
-			_moduleLogger.info("Connected")
-			self.StatusChanged(
-				telepathy.CONNECTION_STATUS_CONNECTED,
-				telepathy.CONNECTION_STATUS_REASON_REQUESTED
-			)
+			return
+
+		_moduleLogger.info("Connected")
+		self.StatusChanged(
+			telepathy.CONNECTION_STATUS_CONNECTED,
+			telepathy.CONNECTION_STATUS_REASON_REQUESTED
+		)
+		if self._connection is not None:
+			self._connectionEventId = self._connection.connect("connection-event", self._on_connection_change)
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def Disconnect(self):
@@ -167,27 +183,14 @@ class TheOneRingConnection(
 		For org.freedesktop.telepathy.Connection
 		@bug Not properly logging out.  Cookie files need to be per connection and removed
 		"""
-		_moduleLogger.info("Disconnecting")
-		try:
-			self.session.voicemails.updateSignalHandler.unregister_sink(
-				self._callback
-			)
-			self.session.texts.updateSignalHandler.unregister_sink(
-				self._callback
-			)
-			self._callback = None
-			self._channelManager.close()
-			self.session.logout()
-			self.session.close()
-			self._session = None
-			_moduleLogger.info("Disconnected")
-		except Exception:
-			_moduleLogger.exception("Disconnecting Failed")
 		self.StatusChanged(
 			telepathy.CONNECTION_STATUS_DISCONNECTED,
 			telepathy.CONNECTION_STATUS_REASON_REQUESTED
 		)
-		self.manager.disconnected(self)
+		try:
+			self._disconnect()
+		except Exception:
+			_moduleLogger.exception("Error durring disconnect")
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def RequestChannel(self, type, handleType, handleId, suppressHandler):
@@ -256,6 +259,27 @@ class TheOneRingConnection(
 
 		return props
 
+	def _disconnect(self):
+		_moduleLogger.info("Disconnecting")
+		self.session.voicemails.updateSignalHandler.unregister_sink(
+			self._callback
+		)
+		self.session.texts.updateSignalHandler.unregister_sink(
+			self._callback
+		)
+		self._callback = None
+
+		self._channelManager.close()
+		self.session.logout()
+		self.session.close()
+		self._session = None
+		if self._connection is not None:
+			self._connection.disconnect(self._connectionEventId)
+			self._connectionEventId = None
+
+		self.manager.disconnected(self)
+		_moduleLogger.info("Disconnected")
+
 	@gobject_utils.async
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def _on_conversations_updated(self, conv, conversationIds):
@@ -265,3 +289,24 @@ class TheOneRingConnection(
 			# Just let the TextChannel decide whether it should be reported to the user or not
 			props = self._generate_props(telepathy.CHANNEL_TYPE_TEXT, h, False)
 			channel = self._channelManager.channel_for_props(props, signal=True)
+
+	@gtk_toolbox.log_exception(_moduleLogger)
+	def _on_connection_change(self, connection, event):
+		"""
+		@note Maemo specific
+		"""
+		status = event.get_status()
+		error = event.get_error()
+		iap_id = event.get_iap_id()
+		bearer = event.get_bearer_type()
+
+		if status == conic.STATUS_DISCONNECTED:
+			_moduleLogger.info("Disconnecting due to loss of network connection")
+			self.StatusChanged(
+				telepathy.CONNECTION_STATUS_DISCONNECTED,
+				telepathy.CONNECTION_STATUS_REASON_NETWORK_ERROR
+			)
+			try:
+				self._disconnect()
+			except Exception:
+				_moduleLogger.exception("Error durring disconnect")
