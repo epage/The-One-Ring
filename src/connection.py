@@ -41,8 +41,8 @@ _moduleLogger = logging.getLogger("connection")
 
 class TheOneRingConnection(
 	telepathy.server.Connection,
-	telepathy.server.ConnectionInterfaceRequests, # already a mixin
-	#contacts.ContactsMixin,
+	#telepathy.server.ConnectionInterfaceRequests, # already a mixin
+	contacts.ContactsMixin,
 	aliasing.AliasingMixin,
 	simple_presence.SimplePresenceMixin,
 	presence.PresenceMixin,
@@ -79,8 +79,8 @@ class TheOneRingConnection(
 			account,
 			constants._telepathy_implementation_name_
 		)
-		telepathy.server.ConnectionInterfaceRequests.__init__(self)
-		#contacts.ContactsMixin.__init__(self)
+		#telepathy.server.ConnectionInterfaceRequests.__init__(self)
+		contacts.ContactsMixin.__init__(self)
 		aliasing.AliasingMixin.__init__(self)
 		simple_presence.SimplePresenceMixin.__init__(self)
 		presence.PresenceMixin.__init__(self)
