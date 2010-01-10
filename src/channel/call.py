@@ -41,6 +41,12 @@ class CallChannel(
 			},
 		)
 
+		self.GroupFlagsChanged(0, 0)
+		self.MembersChanged(
+			'', [self._conn.GetSetHandle()], [], [], [contactHandle],
+			0, telepathy.CHANNEL_GROUP_CHANGE_REASON_NONE
+		)
+
 	def initial_audio(self):
 		return False
 
