@@ -238,11 +238,11 @@ class UpdateStateMachine(StateMachine):
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def _on_timeout(self):
 		_moduleLogger.debug("%s Update" % (self._name))
+		self._timeoutId = None
+		self._schedule_update()
 		for item in self._updateItems:
 			try:
 				item.update(force=True)
 			except Exception:
 				_moduleLogger.exception("Update failed for %r" % item)
-		self._timeoutId = None
-		self._schedule_update()
 		return False # do not continue
