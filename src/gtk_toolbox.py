@@ -253,3 +253,23 @@ def log_exception(logger):
 		return wrapper
 
 	return log_exception_decorator
+
+
+def trace(logger):
+
+	def trace_decorator(func):
+
+		@functools.wraps(func)
+		def wrapper(*args, **kwds):
+			try:
+				logger.info("> %s" % (func.__name__, ))
+				return func(*args, **kwds)
+			except Exception:
+				logger.exception(func.__name__)
+				raise
+			finally:
+				logger.info("< %s" % (func.__name__, ))
+
+		return wrapper
+
+	return trace_decorator
