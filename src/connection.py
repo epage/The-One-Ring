@@ -79,7 +79,6 @@ class TheOneRingConnection(
 			account,
 			constants._telepathy_implementation_name_
 		)
-		#telepathy.server.ConnectionInterfaceRequests.__init__(self)
 		requests.RequestsMixin.__init__(self)
 		contacts.ContactsMixin.__init__(self)
 		aliasing.AliasingMixin.__init__(self)
