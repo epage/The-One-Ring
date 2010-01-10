@@ -22,6 +22,11 @@ class CallChannel(
 		try:
 			# HACK Older python-telepathy way
 			telepathy.server.ChannelTypeStreamedMedia.__init__(self, connection, None)
+			self._requested = props[telepathy.interfaces.CHANNEL_INTERFACE + '.Requested']
+			self._implement_property_get(
+				telepathy.interfaces.CHANNEL_INTERFACE,
+				{"Requested": lambda: self._requested}
+			)
 		except TypeError:
 			# HACK Newer python-telepathy way
 			telepathy.server.ChannelTypeStreamedMedia.__init__(self, connection, manager, props)
@@ -41,6 +46,22 @@ class CallChannel(
 
 	def initial_video(self):
 		return False
+
+	def get_props(self):
+		# HACK Older python-telepathy doesn't provide this
+		_immutable_properties = {
+			'ChannelType': telepathy.server.interfaces.CHANNEL_INTERFACE,
+			'TargetHandle': telepathy.server.interfaces.CHANNEL_INTERFACE,
+			'Interfaces': telepathy.server.interfaces.CHANNEL_INTERFACE,
+			'TargetHandleType': telepathy.server.interfaces.CHANNEL_INTERFACE,
+			'TargetID': telepathy.server.interfaces.CHANNEL_INTERFACE,
+			'Requested': telepathy.server.interfaces.CHANNEL_INTERFACE
+		}
+		props = dict()
+		for prop, iface in _immutable_properties.items():
+			props[iface + '.' + prop] = \
+				self._prop_getters[iface][prop]()
+		return props
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def Close(self):

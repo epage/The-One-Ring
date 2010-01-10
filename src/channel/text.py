@@ -4,7 +4,6 @@ import logging
 
 import telepathy
 
-import util.go_utils as gobject_utils
 import util.coroutines as coroutines
 import gtk_toolbox
 
@@ -24,6 +23,11 @@ class TextChannel(telepathy.server.ChannelTypeText):
 		try:
 			# HACK Older python-telepathy way
 			telepathy.server.ChannelTypeText.__init__(self, connection, contactHandle)
+			self._requested = props[telepathy.interfaces.CHANNEL_INTERFACE + '.Requested']
+			self._implement_property_get(
+				telepathy.interfaces.CHANNEL_INTERFACE,
+				{"Requested": lambda: self._requested}
+			)
 		except TypeError:
 			# HACK Newer python-telepathy way
 			telepathy.server.ChannelTypeText.__init__(self, connection, manager, props)
@@ -58,6 +62,22 @@ class TextChannel(telepathy.server.ChannelTypeText):
 			_moduleLogger.debug("Nothing in the conversation yet for %r" % (self._contactKey, ))
 		else:
 			self._report_conversation(mergedConversations)
+
+	def get_props(self):
+		# HACK Older python-telepathy doesn't provide this
+		_immutable_properties = {
+			'ChannelType': telepathy.server.interfaces.CHANNEL_INTERFACE,
+			'TargetHandle': telepathy.server.interfaces.CHANNEL_INTERFACE,
+			'Interfaces': telepathy.server.interfaces.CHANNEL_INTERFACE,
+			'TargetHandleType': telepathy.server.interfaces.CHANNEL_INTERFACE,
+			'TargetID': telepathy.server.interfaces.CHANNEL_INTERFACE,
+			'Requested': telepathy.server.interfaces.CHANNEL_INTERFACE
+		}
+		props = dict()
+		for prop, iface in _immutable_properties.items():
+			props[iface + '.' + prop] = \
+				self._prop_getters[iface][prop]()
+		return props
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def Send(self, messageType, text):
