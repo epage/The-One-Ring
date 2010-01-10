@@ -93,7 +93,6 @@ class TextChannel(telepathy.server.ChannelTypeText):
 		contactKey = self._otherHandle.contactID, self._otherHandle.phoneNumber
 		return contactKey
 
-	@gobject_utils.async
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def _on_conversations_updated(self, conv, conversationIds):
 		if self._contactKey not in conversationIds:

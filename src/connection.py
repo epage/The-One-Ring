@@ -86,38 +86,38 @@ class TheOneRingConnection(
 		presence.PresenceMixin.__init__(self)
 		capabilities.CapabilitiesMixin.__init__(self)
 
-		self._manager = weakref.proxy(manager)
-		self._credentials = (
+		self.__manager = weakref.proxy(manager)
+		self.__credentials = (
 			encodedAccount,
 			encodedPassword,
 		)
-		self._callbackNumber = encodedCallback
-		self._channelManager = channel_manager.ChannelManager(self)
+		self.__callbackNumber = encodedCallback
+		self.__channelManager = channel_manager.ChannelManager(self)
 
-		self._session = gvoice.session.Session(None)
+		self.__session = gvoice.session.Session(None)
 		if conic is not None:
-			self._connection = conic.Connection()
-			self._connectionEventId = None
+			self.__connection = conic.Connection()
+			self.__connectionEventId = None
 		else:
-			self._connection = None
-			self._connectionEventId = None
+			self.__connection = None
+			self.__connectionEventId = None
 
 		self.set_self_handle(handle.create_handle(self, 'connection'))
 
-		self._callback = None
+		self.__callback = None
 		_moduleLogger.info("Connection to the account %s created" % account)
 
 	@property
 	def manager(self):
-		return self._manager
+		return self.__manager
 
 	@property
 	def session(self):
-		return self._session
+		return self.__session
 
 	@property
 	def username(self):
-		return self._credentials[0]
+		return self.__credentials[0]
 
 	@property
 	def userAliasType(self):
@@ -139,21 +139,21 @@ class TheOneRingConnection(
 		)
 		try:
 			cookieFilePath = None
-			self._session = gvoice.session.Session(cookieFilePath)
+			self.__session = gvoice.session.Session(cookieFilePath)
 
-			self._callback = coroutines.func_sink(
+			self.__callback = coroutines.func_sink(
 				coroutines.expand_positional(
 					self._on_conversations_updated
 				)
 			)
 			self.session.voicemails.updateSignalHandler.register_sink(
-				self._callback
+				self.__callback
 			)
 			self.session.texts.updateSignalHandler.register_sink(
-				self._callback
+				self.__callback
 			)
-			self.session.login(*self._credentials)
-			self.session.backend.set_callback_number(self._callbackNumber)
+			self.session.login(*self.__credentials)
+			self.session.backend.set_callback_number(self.__callbackNumber)
 		except gvoice.backend.NetworkError, e:
 			_moduleLogger.exception("Connection Failed")
 			self.StatusChanged(
@@ -174,8 +174,8 @@ class TheOneRingConnection(
 			telepathy.CONNECTION_STATUS_CONNECTED,
 			telepathy.CONNECTION_STATUS_REASON_REQUESTED
 		)
-		if self._connection is not None:
-			self._connectionEventId = self._connection.connect("connection-event", self._on_connection_change)
+		if self.__connection is not None:
+			self.__connectionEventId = self.__connection.connect("connection-event", self._on_connection_change)
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def Disconnect(self):
@@ -211,7 +211,7 @@ class TheOneRingConnection(
 			# HACK Newer python-telepathy
 			self._validate_handle(props)
 
-		chan = self._channelManager.channel_for_props(props, signal=True)
+		chan = self.__channelManager.channel_for_props(props, signal=True)
 		path = chan._object_path
 		_moduleLogger.info("RequestChannel Object Path: %s" % path)
 		return path
@@ -262,25 +262,24 @@ class TheOneRingConnection(
 	def _disconnect(self):
 		_moduleLogger.info("Disconnecting")
 		self.session.voicemails.updateSignalHandler.unregister_sink(
-			self._callback
+			self.__callback
 		)
 		self.session.texts.updateSignalHandler.unregister_sink(
-			self._callback
+			self.__callback
 		)
-		self._callback = None
+		self.__callback = None
 
-		self._channelManager.close()
+		self.__channelManager.close()
 		self.session.logout()
 		self.session.close()
-		self._session = None
-		if self._connection is not None:
-			self._connection.disconnect(self._connectionEventId)
-			self._connectionEventId = None
+		self.__session = None
+		if self.__connection is not None:
+			self.__connection.disconnect(self.__connectionEventId)
+			self.__connectionEventId = None
 
 		self.manager.disconnected(self)
 		_moduleLogger.info("Disconnected")
 
-	@gobject_utils.async
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def _on_conversations_updated(self, conv, conversationIds):
 		_moduleLogger.debug("Incoming messages from: %r" % (conversationIds, ))
@@ -288,7 +287,7 @@ class TheOneRingConnection(
 			h = handle.create_handle(self, 'contact', contactId, phoneNumber)
 			# Just let the TextChannel decide whether it should be reported to the user or not
 			props = self._generate_props(telepathy.CHANNEL_TYPE_TEXT, h, False)
-			channel = self._channelManager.channel_for_props(props, signal=True)
+			channel = self.__channelManager.channel_for_props(props, signal=True)
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def _on_connection_change(self, connection, event):

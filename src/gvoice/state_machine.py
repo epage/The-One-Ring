@@ -207,7 +207,6 @@ class UpdateStateMachine(StateMachine):
 	def _strategy(self):
 		return self._strategies[self._state]
 
-	@gobject_utils.async
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def _request_reset_timers(self, *args):
 		self._reset_timers()
