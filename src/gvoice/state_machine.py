@@ -172,13 +172,15 @@ class UpdateStateMachine(StateMachine):
 		assert self._timeoutId is None
 		for strategy in self._strategies.itervalues():
 			strategy.initialize_state()
-		self._timeoutId = gobject.idle_add(self._on_timeout)
+		if self._strategy.timeout != self.INFINITE_PERIOD:
+			self._timeoutId = gobject.idle_add(self._on_timeout)
 		_moduleLogger.info("%s Starting State Machine" % (self._name, ))
 
 	def stop(self):
 		self._stop_update()
 
 	def close(self):
+		assert self._timeoutId is None
 		self._callback = None
 
 	def set_state(self, newState):
