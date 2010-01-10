@@ -18,8 +18,8 @@ class TextChannel(telepathy.server.ChannelTypeText):
 	"""
 
 	def __init__(self, connection, manager, props, contactHandle):
-		self._manager = manager
-		self._props = props
+		self.__manager = manager
+		self.__props = props
 
 		try:
 			# HACK Older python-telepathy way
@@ -27,21 +27,21 @@ class TextChannel(telepathy.server.ChannelTypeText):
 		except TypeError:
 			# HACK Newer python-telepathy way
 			telepathy.server.ChannelTypeText.__init__(self, connection, manager, props)
-		self._nextRecievedId = 0
-		self._lastMessageTimestamp = datetime.datetime(1, 1, 1)
+		self.__nextRecievedId = 0
+		self.__lastMessageTimestamp = datetime.datetime(1, 1, 1)
 
-		self._otherHandle = contactHandle
+		self.__otherHandle = contactHandle
 
-		self._callback = coroutines.func_sink(
+		self.__callback = coroutines.func_sink(
 			coroutines.expand_positional(
 				self._on_conversations_updated
 			)
 		)
 		self._conn.session.voicemails.updateSignalHandler.register_sink(
-			self._callback
+			self.__callback
 		)
 		self._conn.session.texts.updateSignalHandler.register_sink(
-			self._callback
+			self.__callback
 		)
 
 		# The only reason there should be anything in the conversation is if
@@ -64,7 +64,7 @@ class TextChannel(telepathy.server.ChannelTypeText):
 		if messageType != telepathy.CHANNEL_TEXT_MESSAGE_TYPE_NORMAL:
 			raise telepathy.errors.NotImplemented("Unhandled message type: %r" % messageType)
 
-		self._conn.session.backend.send_sms(self._otherHandle.phoneNumber, text)
+		self._conn.session.backend.send_sms(self.__otherHandle.phoneNumber, text)
 		self._conn.session.textsStateMachine.reset_timers()
 
 		self.Sent(int(time.time()), messageType, text)
@@ -75,22 +75,22 @@ class TextChannel(telepathy.server.ChannelTypeText):
 
 	def close(self):
 		self._conn.session.voicemails.updateSignalHandler.unregister_sink(
-			self._callback
+			self.__callback
 		)
 		self._conn.session.texts.updateSignalHandler.unregister_sink(
-			self._callback
+			self.__callback
 		)
-		self._callback = None
+		self.__callback = None
 
 		telepathy.server.ChannelTypeText.Close(self)
-		if self._manager.channel_exists(self._props):
+		if self.__manager.channel_exists(self.__props):
 			# HACK Older python-telepathy requires doing this manually
-			self._manager.remove_channel(self)
+			self.__manager.remove_channel(self)
 		self.remove_from_connection()
 
 	@property
 	def _contactKey(self):
-		contactKey = self._otherHandle.contactID, self._otherHandle.phoneNumber
+		contactKey = self.__otherHandle.contactID, self.__otherHandle.phoneNumber
 		return contactKey
 
 	@gtk_toolbox.log_exception(_moduleLogger)
@@ -111,7 +111,7 @@ class TextChannel(telepathy.server.ChannelTypeText):
 				"New messages for %r have already been read externally" % (self._contactKey, )
 			)
 			return
-		self._lastMessageTimestamp = newConversations[-1].time
+		self.__lastMessageTimestamp = newConversations[-1].time
 
 		messages = [
 			newMessage
@@ -133,7 +133,7 @@ class TextChannel(telepathy.server.ChannelTypeText):
 		return (
 			conversation
 			for conversation in conversations
-			if self._lastMessageTimestamp < conversation.time
+			if self.__lastMessageTimestamp < conversation.time
 		)
 
 	def _filter_out_read(self, conversations):
@@ -147,11 +147,11 @@ class TextChannel(telepathy.server.ChannelTypeText):
 		return " ".join(part.text.strip() for part in message.body)
 
 	def _report_new_message(self, message):
-		currentReceivedId = self._nextRecievedId
+		currentReceivedId = self.__nextRecievedId
 		timestamp = int(time.time())
 		type = telepathy.CHANNEL_TEXT_MESSAGE_TYPE_NORMAL
 
-		_moduleLogger.info("Received message from User %r" % self._otherHandle)
-		self.Received(currentReceivedId, timestamp, self._otherHandle, type, 0, message)
+		_moduleLogger.info("Received message from User %r" % self.__otherHandle)
+		self.Received(currentReceivedId, timestamp, self.__otherHandle, type, 0, message)
 
-		self._nextRecievedId += 1
+		self.__nextRecievedId += 1

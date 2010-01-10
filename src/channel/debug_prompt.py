@@ -18,8 +18,8 @@ class DebugPromptChannel(telepathy.server.ChannelTypeText, cmd.Cmd):
 	"""
 
 	def __init__(self, connection, manager, props, contactHandle):
-		self._manager = manager
-		self._props = props
+		self.__manager = manager
+		self.__props = props
 
 		cmd.Cmd.__init__(self, "Debug Prompt")
 		self.use_rawinput = False
@@ -29,10 +29,10 @@ class DebugPromptChannel(telepathy.server.ChannelTypeText, cmd.Cmd):
 		except TypeError:
 			# HACK Newer python-telepathy way
 			telepathy.server.ChannelTypeText.__init__(self, connection, manager, props)
-		self._nextRecievedId = 0
-		self._lastMessageTimestamp = datetime.datetime(1, 1, 1)
+		self.__nextRecievedId = 0
+		self.__lastMessageTimestamp = datetime.datetime(1, 1, 1)
 
-		self._otherHandle = contactHandle
+		self.__otherHandle = contactHandle
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def Send(self, messageType, text):
@@ -57,20 +57,20 @@ class DebugPromptChannel(telepathy.server.ChannelTypeText, cmd.Cmd):
 
 	def close(self):
 		telepathy.server.ChannelTypeText.Close(self)
-		if self._manager.channel_exists(self._props):
+		if self.__manager.channel_exists(self.__props):
 			# HACK Older python-telepathy requires doing this manually
-			self._manager.remove_channel(self)
+			self.__manager.remove_channel(self)
 		self.remove_from_connection()
 
 	def _report_new_message(self, message):
-		currentReceivedId = self._nextRecievedId
+		currentReceivedId = self.__nextRecievedId
 
 		timestamp = int(time.time())
 		type = telepathy.CHANNEL_TEXT_MESSAGE_TYPE_NORMAL
 
-		self.Received(currentReceivedId, timestamp, self._otherHandle, type, 0, message.strip())
+		self.Received(currentReceivedId, timestamp, self.__otherHandle, type, 0, message.strip())
 
-		self._nextRecievedId += 1
+		self.__nextRecievedId += 1
 
 	def do_reset_state_machine(self, args):
 		if args:

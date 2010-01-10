@@ -2,7 +2,6 @@ import logging
 
 import telepathy
 
-import util.go_utils as gobject_utils
 import util.coroutines as coroutines
 import gtk_toolbox
 import handle
@@ -11,16 +10,15 @@ import handle
 _moduleLogger = logging.getLogger("channel.contact_list")
 
 
-class AbstractListChannel(
+class AllContactsListChannel(
 		telepathy.server.ChannelTypeContactList,
 		telepathy.server.ChannelInterfaceGroup,
 	):
-	"Abstract Contact List channels"
+	"""
+	The group of contacts for whom you receive presence
+	"""
 
 	def __init__(self, connection, manager, props, h):
-		self._manager = manager
-		self._props = props
-
 		try:
 			# HACK Older python-telepathy way
 			telepathy.server.ChannelTypeContactList.__init__(self, connection, h)
@@ -29,23 +27,16 @@ class AbstractListChannel(
 			telepathy.server.ChannelTypeContactList.__init__(self, connection, manager, props)
 		telepathy.server.ChannelInterfaceGroup.__init__(self)
 
-		self._session = connection.session
-
-
-class AllContactsListChannel(AbstractListChannel):
-	"""
-	The group of contacts for whom you receive presence
-	"""
-
-	def __init__(self, connection, manager, props, h):
-		AbstractListChannel.__init__(self, connection, manager, props, h)
+		self.__manager = manager
+		self.__props = props
+		self.__session = connection.session
 
 		self._callback = coroutines.func_sink(
 			coroutines.expand_positional(
 				self._on_contacts_refreshed
 			)
 		)
-		self._session.addressbook.updateSignalHandler.register_sink(
+		self.__session.addressbook.updateSignalHandler.register_sink(
 			self._callback
 		)
 
@@ -60,15 +51,15 @@ class AllContactsListChannel(AbstractListChannel):
 		self.close()
 
 	def close(self):
-		self._session.addressbook.updateSignalHandler.unregister_sink(
+		self.__session.addressbook.updateSignalHandler.unregister_sink(
 			self._callback
 		)
 		self._callback = None
 
 		telepathy.server.ChannelTypeContactList.Close(self)
-		if self._manager.channel_exists(self._props):
+		if self.__manager.channel_exists(self.__props):
 			# HACK Older python-telepathy requires doing this manually
-			self._manager.remove_channel(self)
+			self.__manager.remove_channel(self)
 		self.remove_from_connection()
 
 	@gtk_toolbox.log_exception(_moduleLogger)

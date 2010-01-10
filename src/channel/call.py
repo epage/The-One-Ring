@@ -16,8 +16,8 @@ class CallChannel(
 	):
 
 	def __init__(self, connection, manager, props, contactHandle):
-		self._manager = manager
-		self._props = props
+		self.__manager = manager
+		self.__props = props
 
 		try:
 			# HACK Older python-telepathy way
@@ -27,7 +27,7 @@ class CallChannel(
 			telepathy.server.ChannelTypeStreamedMedia.__init__(self, connection, manager, props)
 		telepathy.server.ChannelInterfaceCallState.__init__(self)
 		telepathy.server.ChannelInterfaceGroup.__init__(self)
-		self._contactHandle = contactHandle
+		self.__contactHandle = contactHandle
 		self._implement_property_get(
 			telepathy.interfaces.CHANNEL_TYPE_STREAMED_MEDIA,
 			{
@@ -48,9 +48,9 @@ class CallChannel(
 
 	def close(self):
 		telepathy.server.ChannelTypeStreamedMedia.Close(self)
-		if self._manager.channel_exists(self._props):
+		if self.__manager.channel_exists(self.__props):
 			# HACK Older python-telepathy requires doing this manually
-			self._manager.remove_channel(self)
+			self.__manager.remove_channel(self)
 		self.remove_from_connection()
 
 	@gtk_toolbox.log_exception(_moduleLogger)
@@ -85,12 +85,12 @@ class CallChannel(
 		@returns [(Stream ID, contact, stream type, stream state, stream direction, pending send flags)]
 		"""
 		contact = self._conn.handle(telepathy.constants.HANDLE_TYPE_CONTACT, contactId)
-		assert self._contactHandle == contact, "%r != %r" % (self._contactHandle, contact)
+		assert self.__contactHandle == contact, "%r != %r" % (self.__contactHandle, contact)
 		contactId, contactNumber = handle.ContactHandle.from_handle_name(contact.name)
 
-		self.CallStateChanged(self._contactHandle, telepathy.constants.CHANNEL_CALL_STATE_RINGING)
+		self.CallStateChanged(self.__contactHandle, telepathy.constants.CHANNEL_CALL_STATE_RINGING)
 		self._conn.session.backend.call(contactNumber)
-		self.CallStateChanged(self._contactHandle, telepathy.constants.CHANNEL_CALL_STATE_FORWARDED)
+		self.CallStateChanged(self.__contactHandle, telepathy.constants.CHANNEL_CALL_STATE_FORWARDED)
 
 		streamId = 0
 		streamState = telepathy.constants.MEDIA_STREAM_STATE_DISCONNECTED
@@ -106,4 +106,4 @@ class CallChannel(
 		Get the current call states for all contacts involved in this call. 
 		@returns {Contact: telepathy.constants.CHANNEL_CALL_STATE_*}
 		"""
-		return {self._contactHandle: telepathy.constants.CHANNEL_CALL_STATE_FORWARDED}
+		return {self.__contactHandle: telepathy.constants.CHANNEL_CALL_STATE_FORWARDED}
