@@ -220,7 +220,7 @@ class UpdateStateMachine(StateMachine):
 		nextTimeout = self._strategy.timeout
 		if nextTimeout != self.INFINITE_PERIOD:
 			self._timeoutId = gobject.timeout_add(nextTimeout, self._on_timeout)
-		_moduleLogger.info("%s Next update in %s ms" % (self._name, nextTimeout, ))
+		_moduleLogger.debug("%s Next update in %s ms" % (self._name, nextTimeout, ))
 
 	def _stop_update(self):
 		if self._timeoutId is None:
@@ -237,7 +237,7 @@ class UpdateStateMachine(StateMachine):
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def _on_timeout(self):
-		_moduleLogger.debug("%s Update" % (self._name))
+		_moduleLogger.info("%s Update" % (self._name))
 		self._timeoutId = None
 		self._schedule_update()
 		for item in self._updateItems:

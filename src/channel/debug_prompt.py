@@ -39,9 +39,8 @@ class DebugPromptChannel(telepathy.server.ChannelTypeText, cmd.Cmd):
 
 		self.__otherHandle = contactHandle
 
-	def get_props(self):
 		# HACK Older python-telepathy doesn't provide this
-		_immutable_properties = {
+		self._immutable_properties = {
 			'ChannelType': telepathy.server.interfaces.CHANNEL_INTERFACE,
 			'TargetHandle': telepathy.server.interfaces.CHANNEL_INTERFACE,
 			'Interfaces': telepathy.server.interfaces.CHANNEL_INTERFACE,
@@ -49,8 +48,11 @@ class DebugPromptChannel(telepathy.server.ChannelTypeText, cmd.Cmd):
 			'TargetID': telepathy.server.interfaces.CHANNEL_INTERFACE,
 			'Requested': telepathy.server.interfaces.CHANNEL_INTERFACE
 		}
+
+	def get_props(self):
+		# HACK Older python-telepathy doesn't provide this
 		props = dict()
-		for prop, iface in _immutable_properties.items():
+		for prop, iface in self._immutable_properties.items():
 			props[iface + '.' + prop] = \
 				self._prop_getters[iface][prop]()
 		return props

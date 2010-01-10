@@ -36,6 +36,16 @@ class AllContactsListChannel(
 		self.__props = props
 		self.__session = connection.session
 
+		# HACK Older python-telepathy doesn't provide this
+		self._immutable_properties = {
+			'ChannelType': telepathy.server.interfaces.CHANNEL_INTERFACE,
+			'TargetHandle': telepathy.server.interfaces.CHANNEL_INTERFACE,
+			'Interfaces': telepathy.server.interfaces.CHANNEL_INTERFACE,
+			'TargetHandleType': telepathy.server.interfaces.CHANNEL_INTERFACE,
+			'TargetID': telepathy.server.interfaces.CHANNEL_INTERFACE,
+			'Requested': telepathy.server.interfaces.CHANNEL_INTERFACE
+		}
+
 		self._callback = coroutines.func_sink(
 			coroutines.expand_positional(
 				self._on_contacts_refreshed
@@ -53,16 +63,8 @@ class AllContactsListChannel(
 
 	def get_props(self):
 		# HACK Older python-telepathy doesn't provide this
-		_immutable_properties = {
-			'ChannelType': telepathy.server.interfaces.CHANNEL_INTERFACE,
-			'TargetHandle': telepathy.server.interfaces.CHANNEL_INTERFACE,
-			'Interfaces': telepathy.server.interfaces.CHANNEL_INTERFACE,
-			'TargetHandleType': telepathy.server.interfaces.CHANNEL_INTERFACE,
-			'TargetID': telepathy.server.interfaces.CHANNEL_INTERFACE,
-			'Requested': telepathy.server.interfaces.CHANNEL_INTERFACE
-		}
 		props = dict()
-		for prop, iface in _immutable_properties.items():
+		for prop, iface in self._immutable_properties.items():
 			props[iface + '.' + prop] = \
 				self._prop_getters[iface][prop]()
 		return props
