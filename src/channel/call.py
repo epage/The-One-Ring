@@ -1,5 +1,6 @@
 import logging
 
+import gobject
 import telepathy
 
 import gtk_toolbox
@@ -18,6 +19,7 @@ class CallChannel(
 	def __init__(self, connection, manager, props, contactHandle):
 		self.__manager = manager
 		self.__props = props
+		self.__cancelId = None
 
 		try:
 			# HACK Older python-telepathy way
@@ -81,6 +83,9 @@ class CallChannel(
 			# HACK Older python-telepathy requires doing this manually
 			self.__manager.remove_channel(self)
 		self.remove_from_connection()
+		if self.__cancelId is not None:
+			gobject.source_remove(self.__cancelId)
+			self.__cancelId = None
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def ListStreams(self):
@@ -118,8 +123,8 @@ class CallChannel(
 		contactId, contactNumber = handle.ContactHandle.from_handle_name(contact.name)
 
 		self.CallStateChanged(self.__contactHandle, telepathy.constants.CHANNEL_CALL_STATE_RINGING)
+		self.__cancelId = gobject.idle_add(self._on_cancel)
 		self._conn.session.backend.call(contactNumber)
-		self.CallStateChanged(self.__contactHandle, telepathy.constants.CHANNEL_CALL_STATE_FORWARDED)
 
 		streamId = 0
 		streamState = telepathy.constants.MEDIA_STREAM_STATE_DISCONNECTED
@@ -136,3 +141,10 @@ class CallChannel(
 		@returns {Contact: telepathy.constants.CHANNEL_CALL_STATE_*}
 		"""
 		return {self.__contactHandle: telepathy.constants.CHANNEL_CALL_STATE_FORWARDED}
+
+	@gtk_toolbox.log_exception(_moduleLogger)
+	def _on_cancel(self, *args):
+		self.CallStateChanged(self.__contactHandle, telepathy.constants.CHANNEL_CALL_STATE_FORWARDED)
+		self.close()
+		self.__cancelId = None
+		return False
