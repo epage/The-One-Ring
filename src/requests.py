@@ -163,6 +163,7 @@ class RequestsMixin(
 		_success(channel._object_path, props)
 
 		# CreateChannel MUST return *before* NewChannels is emitted.
+		# @bug On older python-telepathy, it doesn't exist
 		self.signal_new_channels([channel])
 
 	@dbus.service.method(telepathy.interfaces.CONNECTION_INTERFACE_REQUESTS,
@@ -180,4 +181,5 @@ class RequestsMixin(
 
 		_success(yours, channel._object_path, props)
 
+		# @bug On older python-telepathy, it doesn't exist
 		self.signal_new_channels([channel])

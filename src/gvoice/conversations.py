@@ -1,5 +1,9 @@
 #!/usr/bin/python
 
+# @bug Its inconsistent as to whether messages from contacts come as from the
+# contact or just a raw number
+# @bug False positives on startup.  Luckily the object path for the channel is
+# unique, so can use that to cache some of the data out to file
 
 import logging
 
@@ -115,7 +119,7 @@ class MergedConversations(object):
 			for newMessage in newConversationMessages
 			if newMessage not in relatedConversation.messages
 		]
-		_moduleLogger.info("Found %d new messages in conversation %s (%d/%d)" % (
+		_moduleLogger.debug("Found %d new messages in conversation %s (%d/%d)" % (
 			len(newConversationMessages) - len(newConversation.messages),
 			newConversation.id,
 			len(newConversation.messages),

@@ -31,7 +31,7 @@ class Session(object):
 		)
 		self._addressbookStateMachine.set_state_strategy(
 			state_machine.StateMachine.STATE_ACTIVE,
-			state_machine.ConstantStateStrategy(state_machine.to_milliseconds(hours=1))
+			state_machine.ConstantStateStrategy(state_machine.to_milliseconds(hours=2))
 		)
 
 		self._voicemails = conversations.Conversations(self._backend.get_voicemails)
@@ -42,11 +42,11 @@ class Session(object):
 		)
 		self._voicemailsStateMachine.set_state_strategy(
 			state_machine.StateMachine.STATE_IDLE,
-			state_machine.ConstantStateStrategy(state_machine.to_milliseconds(minutes=30))
+			state_machine.ConstantStateStrategy(state_machine.to_milliseconds(minutes=60))
 		)
 		self._voicemailsStateMachine.set_state_strategy(
 			state_machine.StateMachine.STATE_ACTIVE,
-			state_machine.ConstantStateStrategy(state_machine.to_milliseconds(minutes=5))
+			state_machine.ConstantStateStrategy(state_machine.to_milliseconds(minutes=10))
 		)
 		self._voicemails.updateSignalHandler.register_sink(
 			self._voicemailsStateMachine.request_reset_timers
@@ -65,8 +65,8 @@ class Session(object):
 		self._textsStateMachine.set_state_strategy(
 			state_machine.StateMachine.STATE_ACTIVE,
 			state_machine.GeometricStateStrategy(
-				state_machine.to_milliseconds(seconds=10),
-				state_machine.to_milliseconds(seconds=1),
+				state_machine.to_milliseconds(seconds=20),
+				state_machine.to_milliseconds(milliseconds=500),
 				state_machine.to_milliseconds(minutes=10),
 			)
 		)

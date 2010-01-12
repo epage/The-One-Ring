@@ -177,6 +177,7 @@ class UpdateStateMachine(StateMachine):
 		_moduleLogger.info("%s Starting State Machine" % (self._name, ))
 
 	def stop(self):
+		_moduleLogger.info("%s Stopping State Machine" % (self._name, ))
 		self._stop_update()
 
 	def close(self):
@@ -197,6 +198,7 @@ class UpdateStateMachine(StateMachine):
 		return self._state
 
 	def reset_timers(self):
+		_moduleLogger.info("%s Resetting State Machine" % (self._name, ))
 		self._reset_timers()
 
 	@property
@@ -220,7 +222,7 @@ class UpdateStateMachine(StateMachine):
 		nextTimeout = self._strategy.timeout
 		if nextTimeout != self.INFINITE_PERIOD:
 			self._timeoutId = gobject.timeout_add(nextTimeout, self._on_timeout)
-		_moduleLogger.debug("%s Next update in %s ms" % (self._name, nextTimeout, ))
+		_moduleLogger.info("%s Next update in %s ms" % (self._name, nextTimeout, ))
 
 	def _stop_update(self):
 		if self._timeoutId is None:

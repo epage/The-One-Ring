@@ -86,6 +86,7 @@ class TextChannel(telepathy.server.ChannelTypeText):
 		if messageType != telepathy.CHANNEL_TEXT_MESSAGE_TYPE_NORMAL:
 			raise telepathy.errors.NotImplemented("Unhandled message type: %r" % messageType)
 
+		_moduleLogger.info("Sending message to %r" % (self.__otherHandle, ))
 		self._conn.session.backend.send_sms(self.__otherHandle.phoneNumber, text)
 		self._conn.session.textsStateMachine.reset_timers()
 
@@ -124,6 +125,9 @@ class TextChannel(telepathy.server.ChannelTypeText):
 		self._report_conversation(mergedConversations)
 
 	def _report_conversation(self, mergedConversations):
+		# Can't filter out messages in a texting conversation that came in
+		# before the last one sent because that creates a race condition of two
+		# people sending at about the same time, which happens quite a bit
 		newConversations = mergedConversations.conversations
 		newConversations = self._filter_out_reported(newConversations)
 		newConversations = self._filter_out_read(newConversations)
