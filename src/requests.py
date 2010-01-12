@@ -119,7 +119,7 @@ class RequestsMixin(
 						target_handle = handle.get_id()
 				if not target_handle:
 					raise telepathy.errors.InvalidHandle('TargetID %s not valid for type %d' %
-						target_id, target_handle_type)
+						(target_id, target_handle_type))
 
 				altered_properties[telepathy.interfaces.CHANNEL_INTERFACE + '.TargetHandle'] = \
 					target_handle
