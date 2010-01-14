@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 # @bug Its inconsistent as to whether messages from contacts come as from the
-# contact or just a raw number
+# contact or just a raw number.  It seems GV is inconsistent about populating the contact id, so we might have to pull from the addressbook
 # @bug False positives on startup.  Luckily the object path for the channel is
 # unique, so can use that to cache some of the data out to file
 
