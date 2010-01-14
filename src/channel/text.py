@@ -63,13 +63,13 @@ class TextChannel(telepathy.server.ChannelTypeText):
 		try:
 			mergedConversations = self._conn.session.voicemails.get_conversation(self._contactKey)
 		except KeyError:
-			_moduleLogger.debug("Nothing in the conversation yet for %r" % (self._contactKey, ))
+			_moduleLogger.debug("No voicemails in the conversation yet for %r" % (self._contactKey, ))
 		else:
 			self._report_conversation(mergedConversations)
 		try:
 			mergedConversations = self._conn.session.texts.get_conversation(self._contactKey)
 		except KeyError:
-			_moduleLogger.debug("Nothing in the conversation yet for %r" % (self._contactKey, ))
+			_moduleLogger.debug("No texts conversation yet for %r" % (self._contactKey, ))
 		else:
 			self._report_conversation(mergedConversations)
 
@@ -129,6 +129,11 @@ class TextChannel(telepathy.server.ChannelTypeText):
 		# before the last one sent because that creates a race condition of two
 		# people sending at about the same time, which happens quite a bit
 		newConversations = mergedConversations.conversations
+		if not newConversations:
+			_moduleLogger.debug(
+				"No messages ended up existing for %r" % (self._contactKey, )
+			)
+			return
 		newConversations = self._filter_out_reported(newConversations)
 		newConversations = self._filter_out_read(newConversations)
 		newConversations = list(newConversations)

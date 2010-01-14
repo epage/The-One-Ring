@@ -90,6 +90,7 @@ class AllContactsListChannel(
 		self._process_refresh(addressbook, added, removed)
 
 	def _process_refresh(self, addressbook, added, removed):
+		_moduleLogger.info("Added: %r, Removed: %r" % (len(added), len(removed)))
 		connection = self._conn
 		handlesAdded = [
 			handle.create_handle(connection, "contact", contactId, phoneNumber)
