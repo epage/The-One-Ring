@@ -23,6 +23,9 @@ class TheOneRingHandle(telepathy.server.Handle):
 			type(self).__name__, self.id, self.name
 		)
 
+	def is_same(self, handleType, handleName):
+		return self.get_name() == handleName and self.get_type() == handleType
+
 	id = property(telepathy.server.Handle.get_id)
 	type = property(telepathy.server.Handle.get_type)
 	name = property(telepathy.server.Handle.get_name)
@@ -65,6 +68,20 @@ class ContactHandle(TheOneRingHandle):
 	def to_handle_name(contactId, contactNumber):
 		handleName = "#".join((contactId, util_misc.strip_number(contactNumber)))
 		return handleName
+
+	@classmethod
+	def normalize_handle_name(cls, name):
+		if "#" in name:
+			# Already a properly formatted name, run through the ringer just in case
+			return cls.to_handle_name(*cls.from_handle_name(name))
+			return name
+		else:
+			return cls.to_handle_name("", name)
+
+	def is_same(self, handleType, handleName):
+		handleName = self.normalize_handle_name(handleName)
+		_moduleLogger.info("%r == %r %r?" % (self, handleType, handleName))
+		return self.get_name() == handleName and self.get_type() == handleType
 
 	@property
 	def contactID(self):

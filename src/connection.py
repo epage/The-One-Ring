@@ -127,6 +127,22 @@ class TheOneRingConnection(
 		self.check_handle(handleType, handleId)
 		return self._handles[handleType, handleId]
 
+	def handle_by_name(self, handleType, handleName):
+		requestedHandleName = handleName.encode('utf-8')
+		if handleType == telepathy.HANDLE_TYPE_CONTACT:
+			_moduleLogger.info("RequestHandles Contact: %s" % requestedHandleName)
+			requestedContactId, requestedContactNumber = handle.ContactHandle.from_handle_name(
+				requestedHandleName
+			)
+			h = handle.create_handle(self, 'contact', requestedContactId, requestedContactNumber)
+		elif handleType == telepathy.HANDLE_TYPE_LIST:
+			# Support only server side (immutable) lists
+			_moduleLogger.info("RequestHandles List: %s" % requestedHandleName)
+			h = handle.create_handle(self, 'list', requestedHandleName)
+		else:
+			raise telepathy.errors.NotAvailable('Handle type unsupported %d' % handleType)
+		return h
+
 	@property
 	def _channel_manager(self):
 		return self.__channelManager
@@ -185,7 +201,6 @@ class TheOneRingConnection(
 	def Disconnect(self):
 		"""
 		For org.freedesktop.telepathy.Connection
-		@bug Not properly logging out.  Cookie files need to be per connection and removed
 		"""
 		self.StatusChanged(
 			telepathy.CONNECTION_STATUS_DISCONNECTED,
@@ -231,20 +246,8 @@ class TheOneRingConnection(
 
 		handles = []
 		for name in names:
-			requestedHandleName = name.encode('utf-8')
-			if handleType == telepathy.HANDLE_TYPE_CONTACT:
-				_moduleLogger.info("RequestHandles Contact: %s" % requestedHandleName)
-				requestedContactId, requestedContactNumber = handle.ContactHandle.from_handle_name(
-					requestedHandleName
-				)
-				h = handle.create_handle(self, 'contact', requestedContactId, requestedContactNumber)
-			elif handleType == telepathy.HANDLE_TYPE_LIST:
-				# Support only server side (immutable) lists
-				_moduleLogger.info("RequestHandles List: %s" % requestedHandleName)
-				h = handle.create_handle(self, 'list', requestedHandleName)
-			else:
-				raise telepathy.errors.NotAvailable('Handle type unsupported %d' % handleType)
-			handles.append(h.id)
+			h = self.handle_by_name(handleType, name)
+			handles.append(h)
 			self.add_client_handle(h, sender)
 		return handles
 

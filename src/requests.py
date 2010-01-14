@@ -34,6 +34,13 @@ class RequestsMixin(
 		"""
 		raise NotImplementedError("Abstract property called")
 
+	@property
+	def handle_by_name(self, handleType, handleName):
+		"""
+		@abstract
+		"""
+		raise NotImplementedError("Abstract property called")
+
 	def _get_channels(self):
 		return [(c._object_path, c.get_props()) for c in self._channels]
 
@@ -114,13 +121,7 @@ class RequestsMixin(
 		if target_handle_type != telepathy.constants.HANDLE_TYPE_NONE:
 			if target_handle == None:
 				# Turn TargetID into TargetHandle.
-				for handle in self._handles.itervalues():
-					if handle.get_name() == target_id and handle.get_type() == target_handle_type:
-						target_handle = handle.get_id()
-				if not target_handle:
-					raise telepathy.errors.InvalidHandle('TargetID %s not valid for type %d' %
-						(target_id, target_handle_type))
-
+				target_handle = self.handle_by_name(target_handle_type, target_id)
 				altered_properties[telepathy.interfaces.CHANNEL_INTERFACE + '.TargetHandle'] = \
 					target_handle
 			else:
