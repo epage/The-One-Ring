@@ -15,9 +15,6 @@ class Addressbook(object):
 	def __init__(self, backend):
 		self._backend = backend
 		self._contacts = {}
-		self._addedContacts = set()
-		self._removedContacts = set()
-		self._changedContacts = set()
 
 		self.updateSignalHandler = coroutines.CoTee()
 
@@ -31,16 +28,16 @@ class Addressbook(object):
 		self._populate_contacts()
 		newContactIds = set(self.get_contacts())
 
-		self._addedContacts = newContactIds - oldContactIds
-		self._removedContacts = oldContactIds - newContactIds
-		self._changedContacts = set(
+		addedContacts = newContactIds - oldContactIds
+		removedContacts = oldContactIds - newContactIds
+		changedContacts = set(
 			contactId
 			for contactId in newContactIds.intersection(oldContactIds)
 			if self._has_contact_changed(contactId, oldContacts)
 		)
 
-		if self._addedContacts or self._removedContacts or self._changedContacts:
-			message = self, self._addedContacts, self._removedContacts, self._changedContacts
+		if addedContacts or removedContacts or changedContacts:
+			message = self, addedContacts, removedContacts, changedContacts
 			self.updateSignalHandler.stage.send(message)
 
 	def get_contacts(self):
@@ -50,8 +47,7 @@ class Addressbook(object):
 		return self._contacts[contactId][0]
 
 	def get_contact_details(self, contactId):
-		self._populate_contact_details(contactId)
-		return self._get_contact_details(contactId)
+		return iter(self._contacts[contactId][1])
 
 	def find_contacts_with_number(self, queryNumber):
 		strippedQueryNumber = util_misc.strip_number(queryNumber)
@@ -74,16 +70,6 @@ class Addressbook(object):
 				for numberDetails in contactDetails["numbers"]
 			]
 			self._contacts[contactId] = (contactName, contactNumbers)
-
-	def _populate_contact_details(self, contactId):
-		if self._get_contact_details(contactId):
-			return
-		self._get_contact_details(contactId).extend(
-			self._backend.get_contact_details(contactId)
-		)
-
-	def _get_contact_details(self, contactId):
-		return self._contacts[contactId][1]
 
 	def _has_contact_changed(self, contactId, oldContacts):
 		oldContact = oldContacts[contactId]
