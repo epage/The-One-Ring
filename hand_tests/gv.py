@@ -49,8 +49,13 @@ def main():
 			pprint.pprint(contact)
 
 	if False:
-		print "Messages: ",
-		for message in b.get_conversations():
+		print "Texts: ",
+		for message in b.get_texts():
+			pprint.pprint(message.to_dict())
+
+	if False:
+		print "Voicemails: ",
+		for message in b.get_voicemails():
 			pprint.pprint(message.to_dict())
 
 	return b
