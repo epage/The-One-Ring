@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 
 """
-@todo Look into switching from POLL_TIME = min(F * 2^n, MAX) to POLL_TIME = min(CONST + F * 2^n, MAX)
-@todo Look into supporting more states that have a different F and MAX
+@todo Look into supporting more states
 """
 
 import logging
@@ -239,7 +238,6 @@ class UpdateStateMachine(StateMachine):
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def _on_timeout(self):
-		_moduleLogger.info("%s Update" % (self._name))
 		self._timeoutId = None
 		self._schedule_update()
 		for item in self._updateItems:
