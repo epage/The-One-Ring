@@ -3,6 +3,7 @@
 from __future__ import with_statement
 
 import sys
+import re
 import cPickle
 
 import functools
@@ -650,6 +651,5 @@ def strip_number(prettynumber):
 	>>> strip_number("+012-(345)-678-90")
 	'01234567890'
 	"""
-	import re
-	uglynumber = re.sub('\D', '', prettynumber)
+	uglynumber = re.sub('[^0-9+]', '', prettynumber)
 	return uglynumber
