@@ -4,7 +4,6 @@
 @todo Add option to use screen name as callback
 @todo Get a callback for missed calls to force an update of the voicemail state machine
 @todo Get a callback on an incoming call and if its from GV, auto-pickup
-@todo Observe when connected/disconnected to disconnect CM
 """
 
 
