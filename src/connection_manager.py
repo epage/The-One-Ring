@@ -12,6 +12,7 @@ import gobject
 import telepathy
 
 import constants
+import tp
 import gtk_toolbox
 import connection
 
@@ -19,10 +20,10 @@ import connection
 _moduleLogger = logging.getLogger("connection_manager")
 
 
-class TheOneRingConnectionManager(telepathy.server.ConnectionManager):
+class TheOneRingConnectionManager(tp.ConnectionManager):
 
 	def __init__(self, shutdown_func=None):
-		telepathy.server.ConnectionManager.__init__(self, constants._telepathy_implementation_name_)
+		tp.ConnectionManager.__init__(self, constants._telepathy_implementation_name_)
 
 		# self._protos is from super
 		self._protos[constants._telepathy_protocol_name_] = connection.TheOneRingConnection
@@ -78,9 +79,9 @@ class TheOneRingConnectionManager(telepathy.server.ConnectionManager):
 
 	def disconnected(self, conn):
 		"""
-		Overrides telepathy.server.ConnectionManager
+		Overrides tp.ConnectionManager
 		"""
-		result = telepathy.server.ConnectionManager.disconnected(self, conn)
+		result = tp.ConnectionManager.disconnected(self, conn)
 		gobject.timeout_add(5000, self._shutdown)
 
 	def quit(self):

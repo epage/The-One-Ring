@@ -1,7 +1,7 @@
-import telepathy
+import tp
 
 
-class Debug(telepathy.server.Debug):
+class Debug(tp.Debug):
 
 	def __init__(self, connManager):
-		telepathy.server.Debug.__init__(self, connManager)
+		tp.Debug.__init__(self, connManager)

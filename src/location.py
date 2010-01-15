@@ -8,11 +8,11 @@ import gtk_toolbox
 _moduleLogger = logging.getLogger('location')
 
 
-#class LocationMixin(telepathy.server.ConnectionInterfaceLocation):
+#class LocationMixin(tp.ConnectionInterfaceLocation):
 class LocationMixin(object):
 
 	def __init__(self):
-		#telepathy.server.ConnectionInterfaceLocation.__init__(self)
+		#tp.ConnectionInterfaceLocation.__init__(self)
 		pass
 
 	@property

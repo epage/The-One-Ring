@@ -6,13 +6,14 @@ import logging
 
 import telepathy
 
+import tp
 import gtk_toolbox
 
 
 _moduleLogger = logging.getLogger("channel.text")
 
 
-class DebugPromptChannel(telepathy.server.ChannelTypeText, cmd.Cmd):
+class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 	"""
 	Look into implementing ChannelInterfaceMessages for rich text formatting
 	"""
@@ -23,39 +24,11 @@ class DebugPromptChannel(telepathy.server.ChannelTypeText, cmd.Cmd):
 
 		cmd.Cmd.__init__(self, "Debug Prompt")
 		self.use_rawinput = False
-		try:
-			# HACK Older python-telepathy way
-			telepathy.server.ChannelTypeText.__init__(self, connection, contactHandle)
-			self._requested = props[telepathy.interfaces.CHANNEL_INTERFACE + '.Requested']
-			self._implement_property_get(
-				telepathy.interfaces.CHANNEL_INTERFACE,
-				{"Requested": lambda: self._requested}
-			)
-		except TypeError:
-			# HACK Newer python-telepathy way
-			telepathy.server.ChannelTypeText.__init__(self, connection, manager, props)
+		tp.ChannelTypeText.__init__(self, connection, manager, props)
 		self.__nextRecievedId = 0
 		self.__lastMessageTimestamp = datetime.datetime(1, 1, 1)
 
 		self.__otherHandle = contactHandle
-
-		# HACK Older python-telepathy doesn't provide this
-		self._immutable_properties = {
-			'ChannelType': telepathy.server.interfaces.CHANNEL_INTERFACE,
-			'TargetHandle': telepathy.server.interfaces.CHANNEL_INTERFACE,
-			'Interfaces': telepathy.server.interfaces.CHANNEL_INTERFACE,
-			'TargetHandleType': telepathy.server.interfaces.CHANNEL_INTERFACE,
-			'TargetID': telepathy.server.interfaces.CHANNEL_INTERFACE,
-			'Requested': telepathy.server.interfaces.CHANNEL_INTERFACE
-		}
-
-	def get_props(self):
-		# HACK Older python-telepathy doesn't provide this
-		props = dict()
-		for prop, iface in self._immutable_properties.items():
-			props[iface + '.' + prop] = \
-				self._prop_getters[iface][prop]()
-		return props
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def Send(self, messageType, text):
@@ -79,10 +52,7 @@ class DebugPromptChannel(telepathy.server.ChannelTypeText, cmd.Cmd):
 		self.close()
 
 	def close(self):
-		telepathy.server.ChannelTypeText.Close(self)
-		if self.__manager.channel_exists(self.__props):
-			# HACK Older python-telepathy requires doing this manually
-			self.__manager.remove_channel(self)
+		tp.ChannelTypeText.Close(self)
 		self.remove_from_connection()
 
 	def _report_new_message(self, message):

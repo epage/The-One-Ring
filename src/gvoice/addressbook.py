@@ -22,11 +22,11 @@ class Addressbook(object):
 		if not force and self._contacts:
 			return
 		oldContacts = self._contacts
-		oldContactIds = set(self.get_contacts())
+		oldContactIds = set(self.get_contact_ids())
 
 		self._contacts = {}
 		self._populate_contacts()
-		newContactIds = set(self.get_contacts())
+		newContactIds = set(self.get_contact_ids())
 
 		addedContacts = newContactIds - oldContactIds
 		removedContacts = oldContactIds - newContactIds
@@ -40,7 +40,7 @@ class Addressbook(object):
 			message = self, addedContacts, removedContacts, changedContacts
 			self.updateSignalHandler.stage.send(message)
 
-	def get_contacts(self):
+	def get_contact_ids(self):
 		return self._contacts.iterkeys()
 
 	def get_contact_name(self, contactId):
@@ -51,7 +51,7 @@ class Addressbook(object):
 
 	def find_contacts_with_number(self, queryNumber):
 		strippedQueryNumber = util_misc.strip_number(queryNumber)
-		for contactId, (contactName, contactDetails) in self.get_contacts():
+		for contactId, (contactName, contactDetails) in self.get_contact_ids():
 			for phoneType, number in contactDetails:
 				if number == strippedQueryNumber:
 					yield contactId

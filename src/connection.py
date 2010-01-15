@@ -19,6 +19,7 @@ except (ImportError, OSError):
 	conic = None
 
 import constants
+import tp
 import util.coroutines as coroutines
 import gtk_toolbox
 
@@ -39,7 +40,7 @@ _moduleLogger = logging.getLogger("connection")
 
 
 class TheOneRingConnection(
-	telepathy.server.Connection,
+	tp.Connection,
 	requests.RequestsMixin,
 	contacts.ContactsMixin,
 	aliasing.AliasingMixin,
@@ -72,7 +73,7 @@ class TheOneRingConnection(
 			raise telepathy.errors.InvalidArgument("User must specify what number GV forwards calls to")
 
 		# Connection init must come first
-		telepathy.server.Connection.__init__(
+		tp.Connection.__init__(
 			self,
 			constants._telepathy_protocol_name_,
 			account,
@@ -121,10 +122,6 @@ class TheOneRingConnection(
 	@property
 	def userAliasType(self):
 		return self.USER_ALIAS_ACCOUNT
-
-	def handle(self, handleType, handleId):
-		self.check_handle(handleType, handleId)
-		return self._handles[handleType, handleId]
 
 	def handle_by_name(self, handleType, handleName):
 		requestedHandleName = handleName.encode('utf-8')
@@ -223,32 +220,14 @@ class TheOneRingConnection(
 		self.check_connected()
 		self.check_handle(handleType, handleId)
 
-		h = self.handle(handleType, handleId) if handleId != 0 else None
+		h = self.get_handle_by_id(handleType, handleId) if handleId != 0 else None
 		props = self._generate_props(type, h, suppressHandler)
-		if hasattr(self, "_validate_handle"):
-			# HACK Newer python-telepathy
-			self._validate_handle(props)
+		self._validate_handle(props)
 
 		chan = self.__channelManager.channel_for_props(props, signal=True)
 		path = chan._object_path
 		_moduleLogger.info("RequestChannel Object Path: %s" % path)
 		return path
-
-	@gtk_toolbox.log_exception(_moduleLogger)
-	def RequestHandles(self, handleType, names, sender):
-		"""
-		For org.freedesktop.telepathy.Connection
-		Overiding telepathy.server.Connecton to allow custom handles
-		"""
-		self.check_connected()
-		self.check_handle_type(handleType)
-
-		handles = []
-		for name in names:
-			h = self.handle_by_name(handleType, name)
-			handles.append(h)
-			self.add_client_handle(h, sender)
-		return handles
 
 	def _generate_props(self, channelType, handle, suppressHandler, initiatorHandle=None):
 		targetHandle = 0 if handle is None else handle.get_id()

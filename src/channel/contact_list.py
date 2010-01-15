@@ -2,6 +2,7 @@ import logging
 
 import telepathy
 
+import tp
 import util.coroutines as coroutines
 import gtk_toolbox
 import handle
@@ -11,40 +12,20 @@ _moduleLogger = logging.getLogger("channel.contact_list")
 
 
 class AllContactsListChannel(
-		telepathy.server.ChannelTypeContactList,
-		telepathy.server.ChannelInterfaceGroup,
+		tp.ChannelTypeContactList,
+		tp.ChannelInterfaceGroup,
 	):
 	"""
 	The group of contacts for whom you receive presence
 	"""
 
 	def __init__(self, connection, manager, props, h):
-		try:
-			# HACK Older python-telepathy way
-			telepathy.server.ChannelTypeContactList.__init__(self, connection, h)
-			self._requested = props[telepathy.interfaces.CHANNEL_INTERFACE + '.Requested']
-			self._implement_property_get(
-				telepathy.interfaces.CHANNEL_INTERFACE,
-				{"Requested": lambda: self._requested}
-			)
-		except TypeError:
-			# HACK Newer python-telepathy way
-			telepathy.server.ChannelTypeContactList.__init__(self, connection, manager, props)
-		telepathy.server.ChannelInterfaceGroup.__init__(self)
+		tp.ChannelTypeContactList.__init__(self, connection, manager, props)
+		tp.ChannelInterfaceGroup.__init__(self)
 
 		self.__manager = manager
 		self.__props = props
 		self.__session = connection.session
-
-		# HACK Older python-telepathy doesn't provide this
-		self._immutable_properties = {
-			'ChannelType': telepathy.server.interfaces.CHANNEL_INTERFACE,
-			'TargetHandle': telepathy.server.interfaces.CHANNEL_INTERFACE,
-			'Interfaces': telepathy.server.interfaces.CHANNEL_INTERFACE,
-			'TargetHandleType': telepathy.server.interfaces.CHANNEL_INTERFACE,
-			'TargetID': telepathy.server.interfaces.CHANNEL_INTERFACE,
-			'Requested': telepathy.server.interfaces.CHANNEL_INTERFACE
-		}
 
 		self._callback = coroutines.func_sink(
 			coroutines.expand_positional(
@@ -58,16 +39,9 @@ class AllContactsListChannel(
 		self.GroupFlagsChanged(0, 0)
 
 		addressbook = connection.session.addressbook
-		contacts = addressbook.get_contacts()
-		self._process_refresh(addressbook, contacts, [])
+		contacts = addressbook.get_contact_ids()
+		self._process_refresh(addressbook, set(contacts), set())
 
-	def get_props(self):
-		# HACK Older python-telepathy doesn't provide this
-		props = dict()
-		for prop, iface in self._immutable_properties.items():
-			props[iface + '.' + prop] = \
-				self._prop_getters[iface][prop]()
-		return props
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def Close(self):
@@ -79,10 +53,7 @@ class AllContactsListChannel(
 		)
 		self._callback = None
 
-		telepathy.server.ChannelTypeContactList.Close(self)
-		if self.__manager.channel_exists(self.__props):
-			# HACK Older python-telepathy requires doing this manually
-			self.__manager.remove_channel(self)
+		tp.ChannelTypeContactList.Close(self)
 		self.remove_from_connection()
 
 	@gtk_toolbox.log_exception(_moduleLogger)

@@ -3,19 +3,20 @@ import weakref
 
 import telepathy
 
+import tp
 import util.misc as util_misc
 
 
 _moduleLogger = logging.getLogger("handle")
 
 
-class TheOneRingHandle(telepathy.server.Handle):
+class TheOneRingHandle(tp.Handle):
 	"""
 	Instances are memoized
 	"""
 
 	def __init__(self, connection, id, handleType, name):
-		telepathy.server.Handle.__init__(self, id, handleType, name)
+		tp.Handle.__init__(self, id, handleType, name)
 		self._conn = weakref.proxy(connection)
 
 	def __repr__(self):
@@ -26,9 +27,9 @@ class TheOneRingHandle(telepathy.server.Handle):
 	def is_same(self, handleType, handleName):
 		return self.get_name() == handleName and self.get_type() == handleType
 
-	id = property(telepathy.server.Handle.get_id)
-	type = property(telepathy.server.Handle.get_type)
-	name = property(telepathy.server.Handle.get_name)
+	id = property(tp.Handle.get_id)
+	type = property(tp.Handle.get_type)
+	name = property(tp.Handle.get_name)
 
 
 class ConnectionHandle(TheOneRingHandle):

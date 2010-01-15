@@ -1,7 +1,6 @@
 import logging
 
-import telepathy
-
+import tp
 import gtk_toolbox
 import simple_presence
 
@@ -9,10 +8,10 @@ import simple_presence
 _moduleLogger = logging.getLogger('presence')
 
 
-class PresenceMixin(telepathy.server.ConnectionInterfacePresence, simple_presence.TheOneRingPresence):
+class PresenceMixin(tp.ConnectionInterfacePresence, simple_presence.TheOneRingPresence):
 
 	def __init__(self):
-		telepathy.server.ConnectionInterfacePresence.__init__(self)
+		tp.ConnectionInterfacePresence.__init__(self)
 		simple_presence.TheOneRingPresence.__init__(self)
 
 	@gtk_toolbox.log_exception(_moduleLogger)

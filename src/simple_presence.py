@@ -3,6 +3,7 @@ import logging
 import telepathy
 
 import gtk_toolbox
+import tp
 import handle
 import gvoice.state_machine as state_machine
 
@@ -50,7 +51,7 @@ class TheOneRingPresence(object):
 		"""
 		presences = {}
 		for handleId in contactIds:
-			h = self.handle(telepathy.HANDLE_TYPE_CONTACT, handleId)
+			h = self.get_handle_by_id(telepathy.HANDLE_TYPE_CONTACT, handleId)
 			if isinstance(h, handle.ConnectionHandle):
 				isDnd = self.session.backend.is_dnd()
 				if isDnd:
@@ -86,14 +87,14 @@ class TheOneRingPresence(object):
 		_moduleLogger.info("Setting Presence to '%s'" % status)
 
 
-class SimplePresenceMixin(telepathy.server.ConnectionInterfaceSimplePresence, TheOneRingPresence):
+class SimplePresenceMixin(tp.ConnectionInterfaceSimplePresence, TheOneRingPresence):
 
 	def __init__(self):
-		telepathy.server.ConnectionInterfaceSimplePresence.__init__(self)
+		tp.ConnectionInterfaceSimplePresence.__init__(self)
 		TheOneRingPresence.__init__(self)
 
 		self._implement_property_get(
-			telepathy.server.CONNECTION_INTERFACE_SIMPLE_PRESENCE,
+			tp.CONNECTION_INTERFACE_SIMPLE_PRESENCE,
 			{'Statuses' : self._get_statuses}
 		)
 

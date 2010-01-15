@@ -2,6 +2,7 @@ import logging
 
 import telepathy
 
+import tp
 import gtk_toolbox
 import util.misc as util_misc
 import handle
@@ -88,13 +89,13 @@ def make_pretty(phonenumber):
 	return prettynumber.strip()
 
 
-class AliasingMixin(telepathy.server.ConnectionInterfaceAliasing):
+class AliasingMixin(tp.ConnectionInterfaceAliasing):
 
 	USER_ALIAS_ACCOUNT = "account"
 	USER_ALIAS_CALLBACK = "callback"
 
 	def __init__(self):
-		telepathy.server.ConnectionInterfaceAliasing.__init__(self)
+		tp.ConnectionInterfaceAliasing.__init__(self)
 
 	@property
 	def session(self):
@@ -146,7 +147,7 @@ class AliasingMixin(telepathy.server.ConnectionInterfaceAliasing):
 		# first validate that no other handle types are included
 		userHandleAndAlias = None
 		for handleId, alias in aliases.iteritems():
-			h = self.handle(telepathy.HANDLE_TYPE_CONTACT, handleId)
+			h = self.get_handle_by_id(telepathy.HANDLE_TYPE_CONTACT, handleId)
 			if not isinstance(h, handle.ConnectionHandle):
 				raise telepathy.errors.PermissionDenied("No user customizable aliases")
 			userHandleAndAlias = h, alias
@@ -163,7 +164,7 @@ class AliasingMixin(telepathy.server.ConnectionInterfaceAliasing):
 		self.AliasesChanged(changedAliases)
 
 	def _get_alias(self, handleId):
-		h = self.handle(telepathy.HANDLE_TYPE_CONTACT, handleId)
+		h = self.get_handle_by_id(telepathy.HANDLE_TYPE_CONTACT, handleId)
 		if isinstance(h, handle.ConnectionHandle):
 			if self.userAliasType == self.USER_ALIAS_CALLBACK:
 				aliasNumber = self.session.backend.get_callback_number()

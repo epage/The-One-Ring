@@ -3,6 +3,7 @@ import logging
 import gobject
 import telepathy
 
+import tp
 import gtk_toolbox
 import handle
 
@@ -11,9 +12,9 @@ _moduleLogger = logging.getLogger("channel.call")
 
 
 class CallChannel(
-		telepathy.server.ChannelTypeStreamedMedia,
-		telepathy.server.ChannelInterfaceCallState,
-		telepathy.server.ChannelInterfaceGroup,
+		tp.ChannelTypeStreamedMedia,
+		tp.ChannelInterfaceCallState,
+		tp.ChannelInterfaceGroup,
 	):
 
 	def __init__(self, connection, manager, props, contactHandle):
@@ -21,19 +22,9 @@ class CallChannel(
 		self.__props = props
 		self.__cancelId = None
 
-		try:
-			# HACK Older python-telepathy way
-			telepathy.server.ChannelTypeStreamedMedia.__init__(self, connection, contactHandle)
-			self._requested = props[telepathy.interfaces.CHANNEL_INTERFACE + '.Requested']
-			self._implement_property_get(
-				telepathy.interfaces.CHANNEL_INTERFACE,
-				{"Requested": lambda: self._requested}
-			)
-		except TypeError:
-			# HACK Newer python-telepathy way
-			telepathy.server.ChannelTypeStreamedMedia.__init__(self, connection, manager, props)
-		telepathy.server.ChannelInterfaceCallState.__init__(self)
-		telepathy.server.ChannelInterfaceGroup.__init__(self)
+		tp.ChannelTypeStreamedMedia.__init__(self, connection, manager, props)
+		tp.ChannelInterfaceCallState.__init__(self)
+		tp.ChannelInterfaceGroup.__init__(self)
 		self.__contactHandle = contactHandle
 		self._implement_property_get(
 			telepathy.interfaces.CHANNEL_TYPE_STREAMED_MEDIA,
@@ -42,16 +33,6 @@ class CallChannel(
 				"InitialVideo": self.initial_video,
 			},
 		)
-
-		# HACK Older python-telepathy doesn't provide this
-		self._immutable_properties = {
-			'ChannelType': telepathy.server.interfaces.CHANNEL_INTERFACE,
-			'TargetHandle': telepathy.server.interfaces.CHANNEL_INTERFACE,
-			'Interfaces': telepathy.server.interfaces.CHANNEL_INTERFACE,
-			'TargetHandleType': telepathy.server.interfaces.CHANNEL_INTERFACE,
-			'TargetID': telepathy.server.interfaces.CHANNEL_INTERFACE,
-			'Requested': telepathy.server.interfaces.CHANNEL_INTERFACE
-		}
 
 		self.GroupFlagsChanged(0, 0)
 		self.MembersChanged(
@@ -65,23 +46,12 @@ class CallChannel(
 	def initial_video(self):
 		return False
 
-	def get_props(self):
-		# HACK Older python-telepathy doesn't provide this
-		props = dict()
-		for prop, iface in self._immutable_properties.items():
-			props[iface + '.' + prop] = \
-				self._prop_getters[iface][prop]()
-		return props
-
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def Close(self):
 		self.close()
 
 	def close(self):
-		telepathy.server.ChannelTypeStreamedMedia.Close(self)
-		if self.__manager.channel_exists(self.__props):
-			# HACK Older python-telepathy requires doing this manually
-			self.__manager.remove_channel(self)
+		tp.ChannelTypeStreamedMedia.Close(self)
 		self.remove_from_connection()
 		if self.__cancelId is not None:
 			gobject.source_remove(self.__cancelId)
@@ -118,7 +88,7 @@ class CallChannel(
 
 		@returns [(Stream ID, contact, stream type, stream state, stream direction, pending send flags)]
 		"""
-		contact = self._conn.handle(telepathy.constants.HANDLE_TYPE_CONTACT, contactId)
+		contact = self._conn.get_handle_by_id(telepathy.constants.HANDLE_TYPE_CONTACT, contactId)
 		assert self.__contactHandle == contact, "%r != %r" % (self.__contactHandle, contact)
 		contactId, contactNumber = handle.ContactHandle.from_handle_name(contact.name)
 
