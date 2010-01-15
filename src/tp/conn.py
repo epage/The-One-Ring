@@ -482,9 +482,9 @@ class ConnectionInterfaceRequests(
             HANDLE_TYPE_NONE)
         target_handle = props.get(CHANNEL_INTERFACE + '.TargetHandle', None)
         target_id = props.get(CHANNEL_INTERFACE + '.TargetID', None)
-		# Note: what the spec calls a handle, we call an ID
-		# What the spec calls an ID, we call a name
-		# What we call a handle is a handle object
+        # Note: what the spec calls a handle, we call an ID
+        # What the spec calls an ID, we call a name
+        # What we call a handle is a handle object
 
         altered_properties = props.copy()
 
