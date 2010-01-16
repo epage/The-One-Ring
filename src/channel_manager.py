@@ -58,7 +58,7 @@ class ChannelManager(tp.ChannelManager):
 	def _get_text_channel(self, props):
 		_, surpress_handler, h = self._get_type_requested_handle(props)
 
-		accountNumber = util_misc.strip_number(self._conn.session.backend.get_account_number())
+		accountNumber = util_misc.normalize_number(self._conn.session.backend.get_account_number())
 		if h.phoneNumber == accountNumber:
 			_moduleLogger.debug('New Debug channel')
 			chan = channel.debug_prompt.DebugPromptChannel(self._conn, self, props, h)

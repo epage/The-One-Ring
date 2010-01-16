@@ -50,8 +50,8 @@ class Addressbook(object):
 		return iter(self._contacts[contactId][1])
 
 	def find_contacts_with_number(self, queryNumber):
-		strippedQueryNumber = util_misc.strip_number(queryNumber)
-		for contactId, (contactName, contactDetails) in self.get_contact_ids():
+		strippedQueryNumber = util_misc.normalize_number(queryNumber)
+		for contactId, (contactName, contactDetails) in self._contacts.iteritems():
 			for phoneType, number in contactDetails:
 				if number == strippedQueryNumber:
 					yield contactId
@@ -65,7 +65,7 @@ class Addressbook(object):
 			contactNumbers = [
 				(
 					numberDetails.get("phoneType", "Mobile"),
-					util_misc.strip_number(numberDetails["phoneNumber"]),
+					util_misc.normalize_number(numberDetails["phoneNumber"]),
 				)
 				for numberDetails in contactDetails["numbers"]
 			]

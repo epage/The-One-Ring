@@ -5,7 +5,6 @@ import telepathy
 
 import tp
 import gtk_toolbox
-import handle
 
 
 _moduleLogger = logging.getLogger("channel.call")
@@ -91,7 +90,7 @@ class CallChannel(
 		"""
 		contact = self._conn.get_handle_by_id(telepathy.constants.HANDLE_TYPE_CONTACT, contactId)
 		assert self.__contactHandle == contact, "%r != %r" % (self.__contactHandle, contact)
-		contactId, contactNumber = handle.ContactHandle.from_handle_name(contact.name)
+		contactNumber = contact.phoneNumber
 
 		self.CallStateChanged(self.__contactHandle, telepathy.constants.CHANNEL_CALL_STATE_RINGING)
 		self.__cancelId = gobject.idle_add(self._on_cancel)

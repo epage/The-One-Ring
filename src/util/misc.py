@@ -643,13 +643,25 @@ def lexical_scope(*args):
 		del frame
 
 
-def strip_number(prettynumber):
+def normalize_number(prettynumber):
 	"""
 	function to take a phone number and strip out all non-numeric
 	characters
 
-	>>> strip_number("+012-(345)-678-90")
-	'01234567890'
+	>>> normalize_number("+012-(345)-678-90")
+	'+01234567890'
+	>>> normalize_number("1-(345)-678-9000")
+	'+13456789000'
+	>>> normalize_number("+1-(345)-678-9000")
+	'+13456789000'
 	"""
 	uglynumber = re.sub('[^0-9+]', '', prettynumber)
+	if uglynumber.startswith("1") and len(uglynumber) == 11:
+		uglynumber = "+"+uglynumber
+	elif len(uglynumber) == 10:
+		uglynumber = "+1"+uglynumber
+
+	#validateRe = re.compile("^\+?[0-9]{10,}$")
+	#assert validateRe.match(uglynumber) is not None
+
 	return uglynumber

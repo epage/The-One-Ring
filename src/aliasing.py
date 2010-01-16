@@ -55,9 +55,9 @@ def make_pretty(phonenumber):
 	>>> make_pretty("1234567")
 	'123-4567'
 	>>> make_pretty("2345678901")
-	'(234) 567-8901'
+	'+1 (234) 567-8901'
 	>>> make_pretty("12345678901")
-	'1 (234) 567-8901'
+	'+1 (234) 567-8901'
 	>>> make_pretty("01234567890")
 	'+012 (345) 678-90'
 	>>> make_pretty("+01234567890")
@@ -72,7 +72,7 @@ def make_pretty(phonenumber):
 	if phonenumber is None or phonenumber is "":
 		return ""
 
-	phonenumber = util_misc.strip_number(phonenumber)
+	phonenumber = util_misc.normalize_number(phonenumber)
 
 	if phonenumber[0] == "+":
 		prettynumber = _make_pretty_international(phonenumber[1:])
@@ -156,7 +156,7 @@ class AliasingMixin(tp.ConnectionInterfaceAliasing):
 			return
 
 		# Update callback
-		uglyNumber = util_misc.strip_number(userHandleAndAlias[1])
+		uglyNumber = util_misc.normalize_number(userHandleAndAlias[1])
 		self.session.backend.set_callback_number(uglyNumber)
 
 		# Inform of change

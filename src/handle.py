@@ -24,9 +24,6 @@ class TheOneRingHandle(tp.Handle):
 			type(self).__name__, self.id, self.name
 		)
 
-	def is_same(self, handleType, handleName):
-		return self.get_name() == handleName and self.get_type() == handleType
-
 	id = property(tp.Handle.get_id)
 	type = property(tp.Handle.get_type)
 	name = property(tp.Handle.get_name)
@@ -44,17 +41,27 @@ class ConnectionHandle(TheOneRingHandle):
 
 class ContactHandle(TheOneRingHandle):
 
+	_DELIMETER = "|"
+
 	def __init__(self, connection, id, contactId, phoneNumber):
 		handleType = telepathy.HANDLE_TYPE_CONTACT
 		handleName = self.to_handle_name(contactId, phoneNumber)
 		TheOneRingHandle.__init__(self, connection, id, handleType, handleName)
 
 		self._contactId = contactId
-		self._phoneNumber = util_misc.strip_number(phoneNumber)
+		self._phoneNumber = util_misc.normalize_number(phoneNumber)
 
-	@staticmethod
-	def from_handle_name(handleName):
-		parts = handleName.split("#", 1)
+	@classmethod
+	def from_handle_name(cls, handleName):
+		"""
+		>>> ContactHandle.from_handle_name("+1 555 123-1234")
+		('', '+15551231234')
+		>>> ContactHandle.from_handle_name("+15551231234")
+		('', '+15551231234')
+		>>> ContactHandle.from_handle_name("123456|+15551231234")
+		('123456', '+15551231234')
+		"""
+		parts = handleName.split(cls._DELIMETER, 1)
 		if len(parts) == 2:
 			contactId, contactNumber = parts[0:2]
 		elif len(parts) == 1:
@@ -62,27 +69,25 @@ class ContactHandle(TheOneRingHandle):
 		else:
 			raise RuntimeError("Invalid handle: %s" % handleName)
 
-		contactNumber = util_misc.strip_number(contactNumber)
+		contactNumber = util_misc.normalize_number(contactNumber)
 		return contactId, contactNumber
 
-	@staticmethod
-	def to_handle_name(contactId, contactNumber):
-		handleName = "#".join((contactId, util_misc.strip_number(contactNumber)))
-		return handleName
-
 	@classmethod
-	def normalize_handle_name(cls, name):
-		if "#" in name:
-			# Already a properly formatted name, run through the ringer just in case
-			return cls.to_handle_name(*cls.from_handle_name(name))
-			return name
+	def to_handle_name(cls, contactId, contactNumber):
+		"""
+		>>> ContactHandle.to_handle_name('', "+1 555 123-1234")
+		'+15551231234'
+		>>> ContactHandle.to_handle_name('', "+15551231234")
+		'+15551231234'
+		>>> ContactHandle.to_handle_name('123456', "+15551231234")
+		'123456|+15551231234'
+		"""
+		contactNumber = util_misc.normalize_number(contactNumber)
+		if contactId:
+			handleName = cls._DELIMETER.join((contactId, contactNumber))
 		else:
-			return cls.to_handle_name("", name)
-
-	def is_same(self, handleType, handleName):
-		handleName = self.normalize_handle_name(handleName)
-		_moduleLogger.info("%r == %r %r?" % (self, handleType, handleName))
-		return self.get_name() == handleName and self.get_type() == handleType
+			handleName = contactNumber
+		return handleName
 
 	@property
 	def contactID(self):

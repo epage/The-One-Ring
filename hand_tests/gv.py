@@ -43,12 +43,12 @@ def main():
 		for data in b.get_recent():
 			pprint.pprint(data)
 
-	if True:
+	if False:
 		print "Contacts: ",
 		for contact in b.get_contacts():
 			pprint.pprint(contact)
 
-	if False:
+	if True:
 		print "Texts: ",
 		for message in b.get_texts():
 			pprint.pprint(message.to_dict())
