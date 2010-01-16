@@ -21,13 +21,14 @@ class AllContactsListChannel(
 	@bug On Maemo 5 this isn't even being created, I think
 	"""
 
-	def __init__(self, connection, manager, props, h):
+	def __init__(self, connection, manager, props, listHandle):
 		tp.ChannelTypeContactList.__init__(self, connection, manager, props)
 		tp.ChannelInterfaceGroup.__init__(self)
 
 		self.__manager = manager
 		self.__props = props
 		self.__session = connection.session
+		self.__listHandle = listHandle
 
 		self._callback = coroutines.func_sink(
 			coroutines.expand_positional(
@@ -63,7 +64,9 @@ class AllContactsListChannel(
 		self._process_refresh(addressbook, added, removed)
 
 	def _process_refresh(self, addressbook, added, removed):
-		_moduleLogger.info("Added: %r, Removed: %r" % (len(added), len(removed)))
+		_moduleLogger.info(
+			"%s Added: %r, Removed: %r" % (self.__listHandle.get_name(), len(added), len(removed))
+		)
 		connection = self._conn
 		handlesAdded = [
 			handle.create_handle(connection, "contact", contactId, phoneNumber)
@@ -87,32 +90,40 @@ class AllContactsListChannel(
 		)
 
 
+_LIST_TO_FACTORY = {
+	# The group of contacts for whom you receive presence
+	'subscribe': AllContactsListChannel,
+	# The group of contacts who may receive your presence
+	'publish': AllContactsListChannel,
+	# A group of contacts who are on the publish list but are temporarily
+	# disallowed from receiving your presence
+	# This doesn't make sense to support
+	'hide': None,
+	# A group of contacts who may send you messages
+	# @todo Allow-List would be cool to support
+	'allow': None,
+	# A group of contacts who may not send you messages
+	# @todo Deny-List would be cool to support
+	'deny': None,
+	# On protocols where the user's contacts are stored, this contact list
+	# contains all stored contacts regardless of subscription status.
+	'stored': AllContactsListChannel,
+}
+
+
+_SUPPORTED_LISTS = frozenset(
+	name
+	for name in _LIST_TO_FACTORY.iterkeys()
+	if name is not None
+)
+
+
 def create_contact_list_channel(connection, manager, props, h):
-	if h.get_name() == 'subscribe':
-		# The group of contacts for whom you receive presence
-		ChannelClass = AllContactsListChannel
-	elif h.get_name() == 'publish':
-		# The group of contacts who may receive your presence
-		ChannelClass = AllContactsListChannel
-	elif h.get_name() == 'hide':
-		# A group of contacts who are on the publish list but are temporarily
-		# disallowed from receiving your presence
-		# This doesn't make sense to support
-		_moduleLogger.warn("Unsuported type %s" % h.get_name())
-	elif h.get_name() == 'allow':
-		# A group of contacts who may send you messages
-		# @todo Allow-List would be cool to support
-		_moduleLogger.warn("Unsuported type %s" % h.get_name())
-	elif h.get_name() == 'deny':
-		# A group of contacts who may not send you messages
-		# @todo Deny-List would be cool to support
-		_moduleLogger.warn("Unsuported type %s" % h.get_name())
-	elif h.get_name() == 'stored':
-		# On protocols where the user's contacts are stored, this contact list
-		# contains all stored contacts regardless of subscription status.
-		ChannelClass = AllContactsListChannel
-	else:
-		raise TypeError("Unknown list type : " + h.get_name())
-	return ChannelClass(connection, manager, props, h)
+	factory = _LIST_TO_FACTORY.get(h.get_name(), None)
+	if factory is None:
+		raise telepathy.errors.NotCapable("Unsuported type %s" % h.get_name())
+	return factory(connection, manager, props, h)
 
 
+def get_spported_lists():
+	return _SUPPORTED_LISTS

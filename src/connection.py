@@ -289,7 +289,7 @@ class TheOneRingConnection(
 			h = self.get_handle_by_name(telepathy.HANDLE_TYPE_CONTACT, handleName)
 			# Just let the TextChannel decide whether it should be reported to the user or not
 			props = self._generate_props(telepathy.CHANNEL_TYPE_TEXT, h, False)
-			channel = self.__channelManager.channel_for_props(props, signal=True)
+			chan = self.__channelManager.channel_for_props(props, signal=True)
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def _on_connection_change(self, connection, event):
