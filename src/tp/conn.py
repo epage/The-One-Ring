@@ -169,6 +169,9 @@ class Connection(_Connection, DBusProperties):
             self._client_handles[sender] = set([(handle.get_type(), handle)])
 
     def get_handle_by_id(self, handle_type, handle_id):
+        # Strip off dbus stuff so we can be consistent
+        handle_type, handle_id = int(handle_type), int(handle_id)
+
         self.check_handle(handle_type, handle_id)
         return self._handles[handle_type, handle_id]
 
@@ -489,8 +492,10 @@ class ConnectionInterfaceRequests(
         altered_properties = props.copy()
 
         if target_handle_type != HANDLE_TYPE_NONE:
-            if target_handle == None:
-                target_handle = self.get_handle_by_name(target_handle_type, target_id).get_id()
+            if target_handle is None:
+                handle = self.get_handle_by_name(target_handle_type, target_id)
+                self.add_client_handle(handle, None)
+                target_handle = handle.get_id()
                 altered_properties[CHANNEL_INTERFACE + '.TargetHandle'] = \
                     target_handle
             else:

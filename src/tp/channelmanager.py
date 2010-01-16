@@ -49,8 +49,8 @@ class ChannelManager(object):
     def _get_type_requested_handle(self, props):
         type = props[CHANNEL_INTERFACE + '.ChannelType']
         requested = props[CHANNEL_INTERFACE + '.Requested']
-        target_handle = props[CHANNEL_INTERFACE + '.TargetHandle']
-        target_handle_type = props[CHANNEL_INTERFACE + '.TargetHandleType']
+        target_handle = int(props[CHANNEL_INTERFACE + '.TargetHandle'])
+        target_handle_type = int(props[CHANNEL_INTERFACE + '.TargetHandleType'])
 
         handle = self._conn._handles[target_handle_type, target_handle]
 

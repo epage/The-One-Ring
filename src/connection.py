@@ -123,7 +123,7 @@ class TheOneRingConnection(
 	def userAliasType(self):
 		return self.USER_ALIAS_ACCOUNT
 
-	def handle_by_name(self, handleType, handleName):
+	def get_handle_by_name(self, handleType, handleName):
 		requestedHandleName = handleName.encode('utf-8')
 		if handleType == telepathy.HANDLE_TYPE_CONTACT:
 			_moduleLogger.info("RequestHandles Contact: %s" % requestedHandleName)

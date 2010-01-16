@@ -47,6 +47,8 @@ class TheOneRingPresence(object):
 
 	def get_presences(self, contactIds):
 		"""
+		@bug On Maemo 5, the connection handle is being passed in a lot, forcing lots of downloads is the webpage for dnd
+
 		@return {ContactHandle: (Status, Presence Type, Message)}
 		"""
 		presences = {}
