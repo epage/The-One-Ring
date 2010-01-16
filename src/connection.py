@@ -7,6 +7,7 @@
 """
 
 
+import os
 import weakref
 import logging
 
@@ -101,6 +102,12 @@ class TheOneRingConnection(
 		else:
 			self.__connection = None
 			self.__connectionEventId = None
+		self.__cachePath = os.sep.join((constants._data_path_, "cache", self.username))
+		try:
+			os.makedirs(self.__cachePath)
+		except OSError, e:
+			if e.errno != 17:
+				raise
 
 		self.set_self_handle(handle.create_handle(self, 'connection'))
 
@@ -126,7 +133,7 @@ class TheOneRingConnection(
 	def get_handle_by_name(self, handleType, handleName):
 		requestedHandleName = handleName.encode('utf-8')
 		if handleType == telepathy.HANDLE_TYPE_CONTACT:
-			_moduleLogger.info("RequestHandles Contact: %s" % requestedHandleName)
+			_moduleLogger.info("get_handle_by_name Contact: %s" % requestedHandleName)
 			requestedContactId, requestedContactNumber = handle.ContactHandle.from_handle_name(
 				requestedHandleName
 			)
@@ -140,7 +147,7 @@ class TheOneRingConnection(
 			h = handle.create_handle(self, 'contact', requestedContactId, requestedContactNumber)
 		elif handleType == telepathy.HANDLE_TYPE_LIST:
 			# Support only server side (immutable) lists
-			_moduleLogger.info("RequestHandles List: %s" % requestedHandleName)
+			_moduleLogger.info("get_handle_by_name List: %s" % requestedHandleName)
 			h = handle.create_handle(self, 'list', requestedHandleName)
 		else:
 			raise telepathy.errors.NotAvailable('Handle type unsupported %d' % handleType)
@@ -163,6 +170,7 @@ class TheOneRingConnection(
 		try:
 			cookieFilePath = None
 			self.__session = gvoice.session.Session(cookieFilePath)
+			self.__session.load(self.__cachePath)
 
 			self.__callback = coroutines.func_sink(
 				coroutines.expand_positional(
@@ -262,6 +270,7 @@ class TheOneRingConnection(
 		self.__callback = None
 
 		self.__channelManager.close()
+		self.session.save(self.__cachePath)
 		self.session.logout()
 		self.session.close()
 		self.__session = None

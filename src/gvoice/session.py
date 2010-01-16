@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import logging
 
 import backend
@@ -78,6 +79,14 @@ class Session(object):
 		self._masterStateMachine.append_machine(self._addressbookStateMachine)
 		self._masterStateMachine.append_machine(self._voicemailsStateMachine)
 		self._masterStateMachine.append_machine(self._textsStateMachine)
+
+	def load(self, path):
+		self._texts.load(os.sep.join((path, "texts.cache")))
+		self._voicemails.load(os.sep.join((path, "voicemails.cache")))
+
+	def save(self, path):
+		self._texts.save(os.sep.join((path, "texts.cache")))
+		self._voicemails.save(os.sep.join((path, "voicemails.cache")))
 
 	def close(self):
 		self._voicemails.updateSignalHandler.unregister_sink(

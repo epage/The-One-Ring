@@ -1,11 +1,14 @@
 #!/usr/bin/python
 
-# @bug False positives on startup.  Luckily the object path for the channel is
-# unique, so can use that to cache some of the data out to file
-
 from __future__ import with_statement
 
 import logging
+
+try:
+	import cPickle
+	pickle = cPickle
+except ImportError:
+	import pickle
 
 import util.coroutines as coroutines
 import util.misc as util_misc
@@ -21,6 +24,25 @@ class Conversations(object):
 		self._conversations = {}
 
 		self.updateSignalHandler = coroutines.CoTee()
+
+	@property
+	def _name(self):
+		return repr(self._get_raw_conversations.__name__)
+
+	def load(self, path):
+		assert not self._conversations
+		try:
+			with open(path, "rb") as f:
+				self._conversations = pickle.load(f)
+		except (pickle.PickleError, IOError):
+			_moduleLogger.exception("While loading for %s" % self._name)
+
+	def save(self, path):
+		try:
+			with open(path, "wb") as f:
+				pickle.dump(self._conversations, f, pickle.HIGHEST_PROTOCOL)
+		except (pickle.PickleError, IOError):
+			_moduleLogger.exception("While saving for %s" % self._name)
 
 	def update(self, force=False):
 		if not force and self._conversations:
@@ -44,7 +66,7 @@ class Conversations(object):
 				isConversationUpdated = True
 			except RuntimeError, e:
 				if False:
-					_moduleLogger.info("Skipping conversation for %r because '%s'" % (key, e))
+					_moduleLogger.info("%s Skipping conversation for %r because '%s'" % (self._name, key, e))
 				isConversationUpdated = False
 
 			if isConversationUpdated:
@@ -64,7 +86,7 @@ class Conversations(object):
 		try:
 			del self._conversations[key]
 		except KeyError:
-			_moduleLogger.info("Conversation never existed for %r" % (key,))
+			_moduleLogger.info("%s Conversation never existed for %r" % (self._name, key, ))
 
 	def clear_all(self):
 		self._conversations.clear()
@@ -119,7 +141,8 @@ class MergedConversations(object):
 			for newMessage in newConversationMessages
 			if newMessage not in relatedConversation.messages
 		]
-		_moduleLogger.debug("Found %d new messages in conversation %s (%d/%d)" % (
+		_moduleLogger.debug("%s Found %d new messages in conversation %s (%d/%d)" % (
+			self._name,
 			len(newConversationMessages) - len(newConversation.messages),
 			newConversation.id,
 			len(newConversation.messages),
