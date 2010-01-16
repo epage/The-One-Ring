@@ -16,6 +16,7 @@ class CallChannel(
 		tp.ChannelInterfaceCallState,
 		tp.ChannelInterfaceGroup,
 	):
+	# @bug On Maemo 5 this is having some kind of "General" error, possibly due to an issue with "GetAll" DBusProperties stuff
 
 	def __init__(self, connection, manager, props, contactHandle):
 		self.__manager = manager

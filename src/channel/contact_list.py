@@ -17,6 +17,8 @@ class AllContactsListChannel(
 	):
 	"""
 	The group of contacts for whom you receive presence
+
+	@bug On Maemo 5 this isn't even being created, I think
 	"""
 
 	def __init__(self, connection, manager, props, h):
