@@ -4,6 +4,7 @@
 @todo Add option to use screen name as callback
 @todo Get a callback for missed calls to force an update of the voicemail state machine
 @todo Get a callback on an incoming call and if its from GV, auto-pickup
+@todo Decide if we should do what the spec suggests and hold onto a singleton contactlist
 """
 
 
