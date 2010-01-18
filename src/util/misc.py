@@ -665,3 +665,13 @@ def normalize_number(prettynumber):
 	#assert validateRe.match(uglynumber) is not None
 
 	return uglynumber
+
+
+_VALIDATE_RE = re.compile("^\+?[0-9]{10,}$")
+
+
+def is_valid_number(number):
+	"""
+	@returns If This number be called ( syntax validation only )
+	"""
+	return _VALIDATE_RE.match(number) is not None

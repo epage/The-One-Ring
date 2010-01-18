@@ -807,7 +807,7 @@ def guess_phone_type(number):
 		return GVoiceBackend.PHONE_TYPE_MOBILE
 
 
-def set_sane_callback(backend):
+def get_sane_callback(backend):
 	"""
 	Try to set a sane default callback number on these preferences
 	1) 1747 numbers ( Gizmo )
@@ -831,8 +831,19 @@ def set_sane_callback(backend):
 				continue
 			if descriptionCriteria is not None and re.compile(descriptionCriteria).match(description) is None:
 				continue
-			backend.set_callback_number(number)
-			return
+			return number
+
+
+def set_sane_callback(backend):
+	"""
+	Try to set a sane default callback number on these preferences
+	1) 1747 numbers ( Gizmo )
+	2) anything with gizmo in the name
+	3) anything with computer in the name
+	4) the first value
+	"""
+	number = get_sane_callback(backend)
+	backend.set_callback_number(number)
 
 
 def _is_not_special(name):

@@ -23,6 +23,7 @@ except (ImportError, OSError):
 import constants
 import tp
 import util.coroutines as coroutines
+import util.misc as util_misc
 import gtk_toolbox
 
 import gvoice
@@ -56,12 +57,13 @@ class TheOneRingConnection(
 	_mandatory_parameters = {
 		'account' : 's',
 		'password' : 's',
-		'forward' : 's',
 	}
 	# Overriding a base class variable
 	_optional_parameters = {
+		'forward' : 's',
 	}
 	_parameter_defaults = {
+		'forward' : '',
 	}
 
 	@gtk_toolbox.log_exception(_moduleLogger)
@@ -70,9 +72,9 @@ class TheOneRingConnection(
 		account = unicode(parameters['account'])
 		encodedAccount = parameters['account'].encode('utf-8')
 		encodedPassword = parameters['password'].encode('utf-8')
-		encodedCallback = parameters['forward'].encode('utf-8')
-		if not encodedCallback:
-			raise telepathy.errors.InvalidArgument("User must specify what number GV forwards calls to")
+		encodedCallback = util_misc.normalize_number(parameters['forward'].encode('utf-8'))
+		if encodedCallback and not util_misc.is_valid_number(encodedCallback):
+			raise telepathy.errors.InvalidArgument("Invalid forwarding number")
 
 		# Connection init must come first
 		tp.Connection.__init__(
@@ -93,7 +95,7 @@ class TheOneRingConnection(
 			encodedAccount,
 			encodedPassword,
 		)
-		self.__callbackNumber = encodedCallback
+		self.__callbackNumberParameter = encodedCallback
 		self.__channelManager = channel_manager.ChannelManager(self)
 
 		self.__session = gvoice.session.Session(None)
@@ -128,8 +130,8 @@ class TheOneRingConnection(
 		return self.__credentials[0]
 
 	@property
-	def userAliasType(self):
-		return self.USER_ALIAS_ACCOUNT
+	def callbackNumberParameter(self):
+		return self.__callbackNumberParameter
 
 	def get_handle_by_name(self, handleType, handleName):
 		requestedHandleName = handleName.encode('utf-8')
@@ -185,7 +187,12 @@ class TheOneRingConnection(
 				self.__callback
 			)
 			self.session.login(*self.__credentials)
-			self.session.backend.set_callback_number(self.__callbackNumber)
+			if not self.__callbackNumberParameter:
+				callback = gvoice.backend.get_sane_callback(
+					self.session.backend
+				)
+				self.__callbackNumberParameter = util_misc.normalize_number(callback)
+			self.session.backend.set_callback_number(self.__callbackNumberParameter)
 		except gvoice.backend.NetworkError, e:
 			_moduleLogger.exception("Connection Failed")
 			self.StatusChanged(

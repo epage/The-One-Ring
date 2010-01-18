@@ -91,21 +91,11 @@ def make_pretty(phonenumber):
 
 class AliasingMixin(tp.ConnectionInterfaceAliasing):
 
-	USER_ALIAS_ACCOUNT = "account"
-	USER_ALIAS_CALLBACK = "callback"
-
 	def __init__(self):
 		tp.ConnectionInterfaceAliasing.__init__(self)
 
 	@property
 	def session(self):
-		"""
-		@abstract
-		"""
-		raise NotImplementedError("Abstract property called")
-
-	@property
-	def userAliasType(self):
 		"""
 		@abstract
 		"""
@@ -139,39 +129,33 @@ class AliasingMixin(tp.ConnectionInterfaceAliasing):
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def SetAliases(self, aliases):
 		_moduleLogger.debug("Called SetAliases")
-		if self.userAliasType == self.USER_ALIAS_ACCOUNT:
-			raise telepathy.errors.PermissionDenied("No user customizable aliases")
-		elif self.userAliasType != self.USER_ALIAS_CALLBACK:
-			raise RuntimeError("Invalid alias type: %r" % self.userAliasType)
-
 		# first validate that no other handle types are included
-		userHandleAndAlias = None
 		for handleId, alias in aliases.iteritems():
 			h = self.get_handle_by_id(telepathy.HANDLE_TYPE_CONTACT, handleId)
-			if not isinstance(h, handle.ConnectionHandle):
-				raise telepathy.errors.PermissionDenied("No user customizable aliases")
-			userHandleAndAlias = h, alias
-		if userHandleAndAlias is None:
-			_moduleLogger.debug("No user handle")
-			return
+			if isinstance(h, handle.ConnectionHandle):
+				break
+		else:
+			raise telepathy.errors.PermissionDenied("No user customizable aliases")
+
+		if len(alias) == 0:
+			# Reset to the original from login if one was provided
+			alias = self.callbackNumberParameter
+		if not util_misc.is_valid_number(alias):
+			raise telepathy.errors.InvalidArgument("Invalid phone number %r" % (alias, ))
 
 		# Update callback
-		uglyNumber = util_misc.normalize_number(userHandleAndAlias[1])
+		uglyNumber = util_misc.normalize_number(alias)
 		self.session.backend.set_callback_number(uglyNumber)
 
 		# Inform of change
-		changedAliases = (userHandleAndAlias, )
+		userAlias = make_pretty(alias)
+		changedAliases = ((handleId, userAlias), )
 		self.AliasesChanged(changedAliases)
 
 	def _get_alias(self, handleId):
 		h = self.get_handle_by_id(telepathy.HANDLE_TYPE_CONTACT, handleId)
 		if isinstance(h, handle.ConnectionHandle):
-			if self.userAliasType == self.USER_ALIAS_CALLBACK:
-				aliasNumber = self.session.backend.get_callback_number()
-			elif self.userAliasType == self.USER_ALIAS_ACCOUNT:
-				aliasNumber = self.session.backend.get_account_number()
-			else:
-				raise RuntimeError("Invalid alias type: %r" % self.userAliasType)
+			aliasNumber = self.session.backend.get_callback_number()
 			userAlias = make_pretty(aliasNumber)
 			return userAlias
 		else:

@@ -6,4 +6,5 @@ ObjectPath = /org/freedesktop/Telepathy/ConnectionManager/theonering
 [Protocol sip]
 param-account = s required
 param-password = s required secret
-param-forward = s required
+param-forward = s
+default-forward =
