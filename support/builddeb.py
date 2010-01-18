@@ -12,7 +12,10 @@ import constants
 
 
 __appname__ = constants.__app_name__
-__description__ = """Google Voice Communication Plugin
+__description__ = """Note: This is pre-alpha software.  It will eat your kittens.  Please do not turn to the author if its broken unless you bring patches.
+.
+Google Voice Communication Plugin
+.
 Features:
 .
 * Send Texts and Receive both Texts and Voicemail through your chat window
@@ -69,7 +72,10 @@ def build_package(distribution):
 
 	py2deb.Py2deb.SECTIONS = py2deb.SECTIONS_BY_POLICY[distribution]
 	p = py2deb.Py2deb(__appname__)
-	p.prettyName = constants.__pretty_app_name__
+	if distribution == "debian":
+		p.prettyName = constants.__pretty_app_name__
+	else:
+		p.prettyName = "Google Voice protocol plugin for Conversations and Contacts"
 	p.description = __description__
 	p.bugTracker = "https://bugs.maemo.org/enter_bug.cgi?product=theonering"
 	#p.upgradeDescription = __changelog__.split("\n\n", 1)[0]
