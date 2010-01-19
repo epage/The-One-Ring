@@ -101,6 +101,13 @@ class AliasingMixin(tp.ConnectionInterfaceAliasing):
 		"""
 		raise NotImplementedError("Abstract property called")
 
+	@property
+	def callbackNumberParameter(self):
+		"""
+		@abstract
+		"""
+		raise NotImplementedError("Abstract property called")
+
 	def handle(self, handleType, handleId):
 		"""
 		@abstract
