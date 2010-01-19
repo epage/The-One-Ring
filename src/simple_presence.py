@@ -39,7 +39,7 @@ class TheOneRingPresence(object):
 		"""
 		raise NotImplementedError("Abstract function called")
 
-	def handle(self, handleType, handleId):
+	def get_handle_by_id(self, handleType, handleId):
 		"""
 		@abstract
 		"""
