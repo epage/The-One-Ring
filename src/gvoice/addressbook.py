@@ -14,70 +14,55 @@ class Addressbook(object):
 
 	def __init__(self, backend):
 		self._backend = backend
-		self._contacts = {}
+		self._numbers = {}
 
 		self.updateSignalHandler = coroutines.CoTee()
 
 	def update(self, force=False):
-		if not force and self._contacts:
+		if not force and self._numbers:
 			return
-		oldContacts = self._contacts
-		oldContactIds = set(self.get_contact_ids())
+		oldContacts = self._numbers
+		oldContactNumbers = set(self.get_numbers())
 
-		self._contacts = {}
+		self._numbers = {}
 		self._populate_contacts()
-		newContactIds = set(self.get_contact_ids())
+		newContactNumbers = set(self.get_numbers())
 
-		addedContacts = newContactIds - oldContactIds
-		removedContacts = oldContactIds - newContactIds
+		addedContacts = newContactNumbers - oldContactNumbers
+		removedContacts = oldContactNumbers - newContactNumbers
 		changedContacts = set(
-			contactId
-			for contactId in newContactIds.intersection(oldContactIds)
-			if self._has_contact_changed(contactId, oldContacts)
+			contactNumber
+			for contactNumber in newContactNumbers.intersection(oldContactNumbers)
+			if self._numbers[contactNumber] != oldContacts[contactNumber]
 		)
 
 		if addedContacts or removedContacts or changedContacts:
 			message = self, addedContacts, removedContacts, changedContacts
 			self.updateSignalHandler.stage.send(message)
 
-	def get_contact_ids(self):
-		return self._contacts.iterkeys()
+	def get_numbers(self):
+		return self._numbers.iterkeys()
 
-	def get_contact_name(self, contactId):
-		return self._contacts[contactId][0]
+	def get_contact_name(self, strippedNumber):
+		return self._numbers[strippedNumber][0]
 
-	def get_contact_details(self, contactId):
-		return iter(self._contacts[contactId][1])
-
-	def find_contacts_with_number(self, queryNumber):
-		strippedQueryNumber = util_misc.normalize_number(queryNumber)
-		for contactId, (contactName, contactDetails) in self._contacts.iteritems():
-			for phoneType, number in contactDetails:
-				if number == strippedQueryNumber:
-					yield contactId
+	def get_phone_type(self, strippedNumber):
+		return self._numbers[strippedNumber][1]
 
 	def _populate_contacts(self):
-		if self._contacts:
+		if self._numbers:
 			return
 		contacts = self._backend.get_contacts()
 		for contactId, contactDetails in contacts:
 			contactName = contactDetails["name"]
-			contactNumbers = [
+			contactNumbers = (
 				(
 					numberDetails.get("phoneType", "Mobile"),
 					util_misc.normalize_number(numberDetails["phoneNumber"]),
 				)
 				for numberDetails in contactDetails["numbers"]
-			]
-			self._contacts[contactId] = (contactName, contactNumbers)
-
-	def _has_contact_changed(self, contactId, oldContacts):
-		oldContact = oldContacts[contactId]
-		oldContactName = oldContact[0]
-		oldContactDetails = oldContact[1]
-		if oldContactName != self.get_contact_name(contactId):
-			return True
-		if not oldContactDetails:
-			return False
-		# if its already in the old cache, purposefully add it into the new cache
-		return oldContactDetails != self.get_contact_details(contactId)
+			)
+			self._numbers.update(
+				(number, (contactName, phoneType))
+				for (phoneType, number) in contactNumbers
+			)

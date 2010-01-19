@@ -137,17 +137,7 @@ class TheOneRingConnection(
 		requestedHandleName = handleName.encode('utf-8')
 		if handleType == telepathy.HANDLE_TYPE_CONTACT:
 			_moduleLogger.info("get_handle_by_name Contact: %s" % requestedHandleName)
-			requestedContactId, requestedContactNumber = handle.ContactHandle.from_handle_name(
-				requestedHandleName
-			)
-			if not requestedContactId:
-				# Sometimes GV doesn't give us a contactid for contacts, so
-				# let's slow things down just a tad for better consistency for
-				# the user
-				ids = list(self.session.addressbook.find_contacts_with_number(requestedContactNumber))
-				if ids:
-					requestedContactId = ids[0]
-			h = handle.create_handle(self, 'contact', requestedContactId, requestedContactNumber)
+			h = handle.create_handle(self, 'contact', requestedHandleName)
 		elif handleType == telepathy.HANDLE_TYPE_LIST:
 			# Support only server side (immutable) lists
 			_moduleLogger.info("get_handle_by_name List: %s" % requestedHandleName)
@@ -292,9 +282,8 @@ class TheOneRingConnection(
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def _on_conversations_updated(self, conv, conversationIds):
 		_moduleLogger.debug("Incoming messages from: %r" % (conversationIds, ))
-		for contactId, phoneNumber in conversationIds:
-			handleName = handle.ContactHandle.to_handle_name(contactId, phoneNumber)
-			h = self.get_handle_by_name(telepathy.HANDLE_TYPE_CONTACT, handleName)
+		for phoneNumber in conversationIds:
+			h = self.get_handle_by_name(telepathy.HANDLE_TYPE_CONTACT, phoneNumber)
 			# Just let the TextChannel decide whether it should be reported to the user or not
 			props = self._generate_props(telepathy.CHANNEL_TYPE_TEXT, h, False)
 			chan = self.__channelManager.channel_for_props(props, signal=True)
@@ -303,6 +292,8 @@ class TheOneRingConnection(
 	def _on_connection_change(self, connection, event):
 		"""
 		@note Maemo specific
+
+		@todo Make this delayed to handle background switching of networks
 		"""
 		status = event.get_status()
 		error = event.get_error()

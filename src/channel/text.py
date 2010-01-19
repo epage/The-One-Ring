@@ -41,7 +41,6 @@ class TextChannel(tp.ChannelTypeText):
 
 		# The only reason there should be anything in the conversation is if
 		# its new, so report it all
-		# @bug When a channel is supposed to have some with and without a contact id, this will return weird results.  I might have to just drop the whole contactid thing
 		try:
 			mergedConversations = self._conn.session.voicemails.get_conversation(self._contactKey)
 		except KeyError:
@@ -84,7 +83,7 @@ class TextChannel(tp.ChannelTypeText):
 
 	@property
 	def _contactKey(self):
-		contactKey = self.__otherHandle.contactID, self.__otherHandle.phoneNumber
+		contactKey = self.__otherHandle.phoneNumber
 		return contactKey
 
 	@gtk_toolbox.log_exception(_moduleLogger)

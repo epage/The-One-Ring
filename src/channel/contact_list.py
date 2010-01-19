@@ -42,7 +42,7 @@ class AllContactsListChannel(
 		self.GroupFlagsChanged(0, 0)
 
 		addressbook = connection.session.addressbook
-		contacts = addressbook.get_contact_ids()
+		contacts = addressbook.get_numbers()
 		self._process_refresh(addressbook, set(contacts), set())
 
 
@@ -69,14 +69,12 @@ class AllContactsListChannel(
 		)
 		connection = self._conn
 		handlesAdded = [
-			handle.create_handle(connection, "contact", contactId, phoneNumber)
-			for contactId in added
-			for (phoneType, phoneNumber) in addressbook.get_contact_details(contactId)
+			handle.create_handle(connection, "contact", contactNumber)
+			for contactNumber in added
 		]
 		handlesRemoved = [
-			handle.create_handle(connection, "contact", contactId, phoneNumber)
-			for contactId in removed
-			for (phoneType, phoneNumber) in addressbook.get_contact_details(contactId)
+			handle.create_handle(connection, "contact", contactNumber)
+			for contactNumber in removed
 		]
 		message = ""
 		actor = 0

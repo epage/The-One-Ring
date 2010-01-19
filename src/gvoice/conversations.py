@@ -54,7 +54,7 @@ class Conversations(object):
 		conversations = list(self._get_raw_conversations())
 		conversations.sort()
 		for conversation in conversations:
-			key = conversation.contactId, util_misc.normalize_number(conversation.number)
+			key = util_misc.normalize_number(conversation.number)
 			try:
 				mergedConversations = self._conversations[key]
 			except KeyError:
@@ -112,7 +112,7 @@ class MergedConversations(object):
 		if not self._conversations:
 			return
 
-		for constantField in ("contactId", "number"):
+		for constantField in ("number", ):
 			assert getattr(self._conversations[0], constantField) == getattr(newConversation, constantField), "Constant field changed, soemthing is seriously messed up: %r v %r" % (
 				getattr(self._conversations[0], constantField),
 				getattr(newConversation, constantField),

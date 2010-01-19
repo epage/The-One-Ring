@@ -137,18 +137,18 @@ class AliasingMixin(tp.ConnectionInterfaceAliasing):
 		else:
 			raise telepathy.errors.PermissionDenied("No user customizable aliases")
 
-		if len(alias) == 0:
+		uglyNumber = util_misc.normalize_number(alias)
+		if len(uglyNumber) == 0:
 			# Reset to the original from login if one was provided
-			alias = self.callbackNumberParameter
-		if not util_misc.is_valid_number(alias):
-			raise telepathy.errors.InvalidArgument("Invalid phone number %r" % (alias, ))
+			uglyNumber = self.callbackNumberParameter
+		if not util_misc.is_valid_number(uglyNumber):
+			raise telepathy.errors.InvalidArgument("Invalid phone number %r" % (uglyNumber, ))
 
 		# Update callback
-		uglyNumber = util_misc.normalize_number(alias)
 		self.session.backend.set_callback_number(uglyNumber)
 
 		# Inform of change
-		userAlias = make_pretty(alias)
+		userAlias = make_pretty(uglyNumber)
 		changedAliases = ((handleId, userAlias), )
 		self.AliasesChanged(changedAliases)
 
@@ -159,9 +159,9 @@ class AliasingMixin(tp.ConnectionInterfaceAliasing):
 			userAlias = make_pretty(aliasNumber)
 			return userAlias
 		else:
-			contactId = h.contactID
-			if contactId:
-				contactAlias = self.session.addressbook.get_contact_name(contactId)
+			number = h.phoneNumber
+			if number:
+				contactAlias = self.session.addressbook.get_contact_name(number)
 			else:
-				contactAlias = make_pretty(h.phoneNumber)
+				contactAlias = make_pretty(number)
 			return contactAlias
