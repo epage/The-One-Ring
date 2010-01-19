@@ -108,7 +108,7 @@ class AliasingMixin(tp.ConnectionInterfaceAliasing):
 		"""
 		raise NotImplementedError("Abstract property called")
 
-	def handle(self, handleType, handleId):
+	def get_handle_by_id(self, handleType, handleId):
 		"""
 		@abstract
 		"""
@@ -167,8 +167,8 @@ class AliasingMixin(tp.ConnectionInterfaceAliasing):
 			return userAlias
 		else:
 			number = h.phoneNumber
-			if number:
+			try:
 				contactAlias = self.session.addressbook.get_contact_name(number)
-			else:
+			except KeyError:
 				contactAlias = make_pretty(number)
 			return contactAlias
