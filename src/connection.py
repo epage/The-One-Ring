@@ -77,6 +77,7 @@ class TheOneRingConnection(
 			raise telepathy.errors.InvalidArgument("Invalid forwarding number")
 
 		# Connection init must come first
+		self.__session = gvoice.session.Session(None)
 		tp.Connection.__init__(
 			self,
 			constants._telepathy_protocol_name_,
@@ -98,7 +99,6 @@ class TheOneRingConnection(
 		self.__callbackNumberParameter = encodedCallback
 		self.__channelManager = channel_manager.ChannelManager(self)
 
-		self.__session = gvoice.session.Session(None)
 		if conic is not None:
 			self.__connection = conic.Connection()
 			self.__connectionEventId = None
@@ -161,8 +161,6 @@ class TheOneRingConnection(
 			telepathy.CONNECTION_STATUS_REASON_REQUESTED
 		)
 		try:
-			cookieFilePath = None
-			self.__session = gvoice.session.Session(cookieFilePath)
 			self.__session.load(self.__cachePath)
 
 			self.__callback = coroutines.func_sink(
