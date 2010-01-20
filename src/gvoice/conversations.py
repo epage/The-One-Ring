@@ -66,7 +66,7 @@ class Conversations(object):
 				isConversationUpdated = True
 			except RuntimeError, e:
 				if False:
-					_moduleLogger.info("%s Skipping conversation for %r because '%s'" % (self._name, key, e))
+					_moduleLogger.debug("%s Skipping conversation for %r because '%s'" % (self._name, key, e))
 				isConversationUpdated = False
 
 			if isConversationUpdated:
@@ -103,6 +103,11 @@ class MergedConversations(object):
 			self._update_previous_related_conversation(similarConversation, newConversation)
 			self._remove_repeats(similarConversation, newConversation)
 		self._conversations.append(newConversation)
+
+	def to_dict(self):
+		selfDict = {}
+		selfDict["conversations"] = [conv.to_dict() for conv in self._conversations]
+		return selfDict
 
 	@property
 	def conversations(self):
