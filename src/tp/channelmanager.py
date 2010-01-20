@@ -19,8 +19,7 @@
 from telepathy.errors import NotImplemented
 
 from telepathy.interfaces import (CHANNEL_INTERFACE,
-                                 CHANNEL_TYPE_CONTACT_LIST,
-                                 CHANNEL_TYPE_TEXT)
+                                 CHANNEL_TYPE_CONTACT_LIST)
 
 class ChannelManager(object):
 
@@ -33,20 +32,25 @@ class ChannelManager(object):
         self._available_properties = dict()
 
     def close(self):
+        """Close channel manager and all the existing channels."""
         for channel_type in self._requestable_channel_classes:
-            for channel in self._channels[channel_type].values():
-                if channel._type == CHANNEL_TYPE_CONTACT_LIST:
-                    channel.remove_from_connection()
-                else:
-                    channel.Close()
+            for channels in self._channels[channel_type].values():
+                for channel in channels:
+                    if channel._type == CHANNEL_TYPE_CONTACT_LIST:
+                        channel.remove_from_connection()
+                    else:
+                        channel.Close()
 
     def remove_channel(self, channel):
+        "Remove channel from the channel manager"
         for channel_type in self._requestable_channel_classes:
-            for handle, chan in self._channels[channel_type].items():
-                if channel == chan:
-                    del self._channels[channel_type][handle]
+            for handle, channels in self._channels[channel_type].items():
+                if channel in channels :
+                    channels.remove(channel)
 
     def _get_type_requested_handle(self, props):
+        """Return the type, request and target handle from the requested
+        properties"""
         type = props[CHANNEL_INTERFACE + '.ChannelType']
         requested = props[CHANNEL_INTERFACE + '.Requested']
         target_handle = int(props[CHANNEL_INTERFACE + '.TargetHandle'])
@@ -56,33 +60,55 @@ class ChannelManager(object):
 
         return (type, requested, handle)
 
-    def channel_exists(self, props):
+    def existing_channel(self, props):
+        """ Return a channel corresponding to theses properties if such
+        one exists, otherwhise return None. Default implementation will
+        return the last created channel of the same kind identified by
+        handle and type.
+        Connection Manager should subclass this function
+        to implement more appropriate behaviour. """
+
         type, _, handle = self._get_type_requested_handle(props)
 
         if type in self._channels:
             if handle in self._channels[type]:
-                return True
+                if len(self._channels[type][handle]) > 0:
+                    return self._channels[type][handle][-1]
 
-        return False
+        return None
 
-    def channel_for_props(self, props, signal=True, **args):
+    def channel_exists(self, props):
+        """ Return True if channel exist with theses props, False otherwhise"""
+        return self.existing_channel(props) != None
+
+    def create_channel_for_props(self, props, signal=True, **args):
+        """Create a new channel with theses properties"""
         type, _, handle = self._get_type_requested_handle(props)
 
         if type not in self._requestable_channel_classes:
             raise NotImplemented('Unknown channel type "%s"' % type)
 
-        if self.channel_exists(props):
-            return self._channels[type][handle]
-
         channel = self._requestable_channel_classes[type](
             props, **args)
 
         self._conn.add_channels([channel], signal=signal)
-        self._channels[type][handle] = channel
+        if type in self._channels:
+            if handle in self._channels[type]:
+                self._channels[type].setdefault(handle, []).append(channel)
 
         return channel
 
+    def channel_for_props(self, props, signal=True, **args):
+        channel = self.existing_channel(props)
+        """Return an existing channel with theses properties if it already
+        exists, otherwhise return a new one"""
+        if channel:
+            return channel
+        else:
+            return self.create_channel_for_props(props, signal, **args)
+
     def _implement_channel_class(self, type, make_channel, fixed, available):
+        """Notify channel manager a channel with these properties can be created"""
         self._requestable_channel_classes[type] = make_channel
         self._channels.setdefault(type, {})
 
