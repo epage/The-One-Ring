@@ -3,7 +3,6 @@
 @todo Add params for different state machines update times
 @todo Get a callback for missed calls to force an update of the voicemail state machine
 @todo Get a callback on an incoming call and if its from GV, auto-pickup
-@todo Decide if we should do what the spec suggests and hold onto a singleton contactlist
 """
 
 
@@ -182,6 +181,13 @@ class TheOneRingConnection(
 				)
 				self.__callbackNumberParameter = util_misc.normalize_number(callback)
 			self.session.backend.set_callback_number(self.__callbackNumberParameter)
+
+			subscribeHandle = self.get_handle_by_name(telepathy.HANDLE_TYPE_LIST, "subscribe")
+			subscribeProps = self._generate_props(telepathy.CHANNEL_TYPE_CONTACT_LIST, subscribeHandle, False)
+			self.__channelManager.channel_for_props(subscribeProps, signal=True)
+			publishHandle = self.get_handle_by_name(telepathy.HANDLE_TYPE_LIST, "publish")
+			publishProps = self._generate_props(telepathy.CHANNEL_TYPE_CONTACT_LIST, publishHandle, False)
+			self.__channelManager.channel_for_props(publishProps, signal=True)
 		except gvoice.backend.NetworkError, e:
 			_moduleLogger.exception("Connection Failed")
 			self.StatusChanged(
@@ -238,7 +244,7 @@ class TheOneRingConnection(
 
 		chan = self.__channelManager.channel_for_props(props, signal=True)
 		path = chan._object_path
-		_moduleLogger.info("RequestChannel Object Path: %s" % path)
+		_moduleLogger.info("RequestChannel Object Path (%s): %s" % (type.rsplit(".", 1)[-1], path))
 		return path
 
 	def _generate_props(self, channelType, handle, suppressHandler, initiatorHandle=None):
