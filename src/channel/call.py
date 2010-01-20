@@ -51,7 +51,7 @@ class CallChannel(
 		self.close()
 
 	def close(self):
-		_moduleLogger.info("Closing call")
+		_moduleLogger.debug("Closing call")
 		tp.ChannelTypeStreamedMedia.Close(self)
 		self.remove_from_connection()
 		if self.__cancelId is not None:

@@ -51,7 +51,7 @@ class AllContactsListChannel(
 		self.close()
 
 	def close(self):
-		_moduleLogger.info("Closing contact list")
+		_moduleLogger.debug("Closing contact list")
 		self.__session.addressbook.updateSignalHandler.unregister_sink(
 			self._callback
 		)
