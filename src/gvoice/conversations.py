@@ -141,8 +141,7 @@ class MergedConversations(object):
 			for newMessage in newConversationMessages
 			if newMessage not in relatedConversation.messages
 		]
-		_moduleLogger.debug("%s Found %d new messages in conversation %s (%d/%d)" % (
-			self._name,
+		_moduleLogger.debug("Found %d new messages in conversation %s (%d/%d)" % (
 			len(newConversationMessages) - len(newConversation.messages),
 			newConversation.id,
 			len(newConversation.messages),
