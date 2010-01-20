@@ -51,19 +51,21 @@ class TheOneRingConnection(
 	capabilities.CapabilitiesMixin,
 ):
 
-	# Overriding a base class variable
-	# Should the forwarding number be handled by the alias or by an option?
+	# overiding base class variable
 	_mandatory_parameters = {
 		'account' : 's',
 		'password' : 's',
 	}
-	# Overriding a base class variable
+	# overiding base class variable
 	_optional_parameters = {
 		'forward' : 's',
 	}
 	_parameter_defaults = {
 		'forward' : '',
 	}
+	_secret_parameters = set((
+		"password",
+	))
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def __init__(self, manager, parameters):
