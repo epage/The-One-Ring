@@ -292,7 +292,7 @@ class TheOneRingConnection(
 		"""
 		@note Maemo specific
 
-		@todo Make this delayed to handle background switching of networks
+		@todo Make this delayed to handle background switching of networks.  First I need to verify I receive connected
 		"""
 		status = event.get_status()
 		error = event.get_error()
@@ -309,3 +309,5 @@ class TheOneRingConnection(
 				self._disconnect()
 			except Exception:
 				_moduleLogger.exception("Error durring disconnect")
+		else:
+			_moduleLogger.info("Other status: %r" % (status, ))
