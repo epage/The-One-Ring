@@ -70,6 +70,7 @@ class TextChannel(tp.ChannelTypeText):
 		self.close()
 
 	def close(self):
+		_moduleLogger.info("Closing text")
 		self._conn.session.voicemails.updateSignalHandler.unregister_sink(
 			self.__callback
 		)

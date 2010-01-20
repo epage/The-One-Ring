@@ -52,6 +52,7 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 		self.close()
 
 	def close(self):
+		_moduleLogger.info("Closing debug")
 		tp.ChannelTypeText.Close(self)
 		self.remove_from_connection()
 
