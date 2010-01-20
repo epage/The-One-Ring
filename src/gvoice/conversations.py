@@ -10,6 +10,7 @@ try:
 except ImportError:
 	import pickle
 
+import constants
 import util.coroutines as coroutines
 import util.misc as util_misc
 
@@ -33,14 +34,23 @@ class Conversations(object):
 		assert not self._conversations
 		try:
 			with open(path, "rb") as f:
-				self._conversations = pickle.load(f)
+				fileVersion, fileBuild, convs = pickle.load(f)
 		except (pickle.PickleError, IOError):
 			_moduleLogger.exception("While loading for %s" % self._name)
+			return
+
+		if fileVersion == constants.__version__ and fileBuild == constants.__build__:
+			self._conversations = convs
+		else:
+			_moduleLogger.debug(
+				"%s Skipping cache due to version mismatch (%s-%s)" % (self._name, fileVersion, fileBuild)
+			)
 
 	def save(self, path):
 		try:
+			dataToDump = (constants.__version__, constants.__build__, self._conversations)
 			with open(path, "wb") as f:
-				pickle.dump(self._conversations, f, pickle.HIGHEST_PROTOCOL)
+				pickle.dump(dataToDump, f, pickle.HIGHEST_PROTOCOL)
 		except (pickle.PickleError, IOError):
 			_moduleLogger.exception("While saving for %s" % self._name)
 

@@ -41,7 +41,6 @@ __changelog__ = """
 __postinstall__ = """#!/bin/sh -e
 
 gtk-update-icon-cache -f /usr/share/icons/hicolor
-rm -Rf ~/.telepathy-theonering/cache
 rm -f ~/.telepathy-theonering/theonering.log
 """
 
