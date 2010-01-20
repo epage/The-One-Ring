@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import time
 import logging
 
 import backend
@@ -80,6 +81,9 @@ class Session(object):
 		self._masterStateMachine.append_machine(self._voicemailsStateMachine)
 		self._masterStateMachine.append_machine(self._textsStateMachine)
 
+		self._lastDndCheck = 0
+		self._cachedIsDnd = False
+
 	def load(self, path):
 		self._texts.load(os.sep.join((path, "texts.cache")))
 		self._voicemails.load(os.sep.join((path, "voicemails.cache")))
@@ -129,6 +133,18 @@ class Session(object):
 				_moduleLogger.info("Login failed")
 				self.logout()
 				return False
+
+	def set_dnd(self, doNotDisturb):
+		self._backend.set_dnd(doNotDisturb)
+		self._cachedIsDnd = doNotDisturb
+
+	def is_dnd(self):
+		# To throttle checking with the server, use a 30s cache
+		newTime = time.time()
+		if self._lastDndCheck + 30 < newTime:
+			self._lasDndCheck = newTime
+			self._cachedIsDnd = self._backend.is_dnd()
+		return self._cachedIsDnd
 
 	@property
 	def backend(self):

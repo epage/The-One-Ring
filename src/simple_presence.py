@@ -47,15 +47,13 @@ class TheOneRingPresence(object):
 
 	def get_presences(self, contactIds):
 		"""
-		@bug On Maemo 5, the connection handle is being passed in a lot, forcing lots of downloads is the webpage for dnd
-
 		@return {ContactHandle: (Status, Presence Type, Message)}
 		"""
 		presences = {}
 		for handleId in contactIds:
 			h = self.get_handle_by_id(telepathy.HANDLE_TYPE_CONTACT, handleId)
 			if isinstance(h, handle.ConnectionHandle):
-				isDnd = self.session.backend.is_dnd()
+				isDnd = self.session.is_dnd()
 				if isDnd:
 					presence = TheOneRingPresence.HIDDEN
 				else:
@@ -76,12 +74,12 @@ class TheOneRingPresence(object):
 
 	def set_presence(self, status):
 		if status == self.ONLINE:
-			self.session.backend.set_dnd(False)
+			self.session.set_dnd(False)
 			self.session.stateMachine.set_state(state_machine.StateMachine.STATE_ACTIVE)
 		elif status == self.AWAY:
 			self.session.stateMachine.set_state(state_machine.StateMachine.STATE_IDLE)
 		elif status == self.HIDDEN:
-			self.session.backend.set_dnd(True)
+			self.session.set_dnd(True)
 		elif status == self.OFFLINE:
 			self.Disconnect()
 		else:
