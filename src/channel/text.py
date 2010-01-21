@@ -138,7 +138,8 @@ class TextChannel(tp.ChannelTypeText):
 			if self.__lastMessageTimestamp < conversation.time
 		)
 
-	def _filter_out_read(self, conversations):
+	@staticmethod
+	def _filter_out_read(conversations):
 		return (
 			conversation
 			for conversation in conversations

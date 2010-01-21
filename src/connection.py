@@ -101,10 +101,8 @@ class TheOneRingConnection(
 
 		if conic is not None:
 			self.__connection = conic.Connection()
-			self.__connectionEventId = None
 		else:
 			self.__connection = None
-			self.__connectionEventId = None
 		self.__cachePath = os.sep.join((constants._data_path_, "cache", self.username))
 		try:
 			os.makedirs(self.__cachePath)
@@ -276,10 +274,6 @@ class TheOneRingConnection(
 		self.session.save(self.__cachePath)
 		self.session.logout()
 		self.session.close()
-		self.__session = None
-		if self.__connection is not None:
-			self.__connection.disconnect(self.__connectionEventId)
-			self.__connectionEventId = None
 
 		self.manager.disconnected(self)
 		_moduleLogger.info("Disconnected")
@@ -291,6 +285,20 @@ class TheOneRingConnection(
 			h = self.get_handle_by_name(telepathy.HANDLE_TYPE_CONTACT, phoneNumber)
 			# Just let the TextChannel decide whether it should be reported to the user or not
 			props = self._generate_props(telepathy.CHANNEL_TYPE_TEXT, h, False)
+			if self.__channelManager.channel_exists(props):
+				continue
+
+			# Maemo 4.1's RTComm opens a window for a chat regardless if a
+			# message is received or not, so we need to do some filtering here
+			mergedConv = conv.get_conversation(phoneNumber)
+			unreadConvs = [
+				conversation
+				for conversation in mergedConv.conversations
+				if not conversation.isRead and not conversation.isArchived
+			]
+			if not unreadConvs:
+				continue
+
 			chan = self.__channelManager.channel_for_props(props, signal=True)
 
 	@gtk_toolbox.log_exception(_moduleLogger)
@@ -300,6 +308,9 @@ class TheOneRingConnection(
 
 		@todo Make this delayed to handle background switching of networks.  First I need to verify I receive connected
 		"""
+		if not self.session.is_logged_in():
+			_moduleLogger.info("Received connection change event when not logged in")
+			return
 		status = event.get_status()
 		error = event.get_error()
 		iap_id = event.get_iap_id()
