@@ -12,7 +12,7 @@ import constants
 
 
 __appname__ = constants.__app_name__
-__description__ = """Note: This is pre-alpha software.  It will eat your kittens.  Please do not turn to the author if its broken unless you bring patches.
+__description__ = """Note: This is jealous of new technology and will eat the kittens of n900 owners.
 .
 Google Voice Communication Plugin
 .
@@ -20,11 +20,15 @@ Features:
 .
 * Send Texts and Receive both Texts and Voicemail through your chat window
 .
-* Save battery life by setting your status to "Away"
+* Initiate Google Voice callbacks from the dialpad or your contacts (Maemo 4.1 only)
+.
+* Access to all of your Google Voice contacts (Maemo 4.1 only)
+.
+* Reduce battery drain by setting your status to "Away"
 .
 * Block incoming calls by switching your status to "Hidden"
 .
-* Access to all of your Google Voice contacts
+Note: Google and Google Voice are probably trademarks of Google.  This software nor the author has ny affiliation with Google
 .
 Homepage: http://theonering.garage.maemo.org
 """
@@ -75,7 +79,7 @@ def build_package(distribution):
 	if distribution == "debian":
 		p.prettyName = constants.__pretty_app_name__
 	else:
-		p.prettyName = "Google Voice protocol plugin for Conversations and Contacts"
+		p.prettyName = "Google Voice protocol plugin for Conversations and Calls"
 	p.description = __description__
 	p.bugTracker = "https://bugs.maemo.org/enter_bug.cgi?product=theonering"
 	#p.upgradeDescription = __changelog__.split("\n\n", 1)[0]
