@@ -13,7 +13,6 @@ import constants
 
 __appname__ = constants.__app_name__
 __description__ = """Note: This is jealous of new technology and will eat the kittens of n900 owners.
-.
 Google Voice Communication Plugin
 .
 Features:
@@ -28,7 +27,7 @@ Features:
 .
 * Block incoming calls by switching your status to "Hidden"
 .
-Note: Google and Google Voice are probably trademarks of Google.  This software nor the author has ny affiliation with Google
+Note: Google and Google Voice are probably trademarks of Google.  This software nor the author has any affiliation with Google
 .
 Homepage: http://theonering.garage.maemo.org
 """
@@ -79,7 +78,7 @@ def build_package(distribution):
 	if distribution == "debian":
 		p.prettyName = constants.__pretty_app_name__
 	else:
-		p.prettyName = "Google Voice protocol plugin for Conversations and Calls"
+		p.prettyName = "Google Voice plugin for Conversations and Calls"
 	p.description = __description__
 	p.bugTracker = "https://bugs.maemo.org/enter_bug.cgi?product=theonering"
 	#p.upgradeDescription = __changelog__.split("\n\n", 1)[0]
@@ -101,7 +100,7 @@ def build_package(distribution):
 	p.depends += {
 		"debian": "",
 		"chinook": "",
-		"diablo": "python2.5-conic, account-plugin-haze",
+		"diablo": ", python2.5-conic, account-plugin-haze",
 		"fremantle": ", account-plugin-haze",
 		"mer": "",
 	}[distribution]
