@@ -1,5 +1,6 @@
 import logging
 
+import dbus
 import gobject
 import telepathy
 
@@ -22,6 +23,20 @@ class CallChannel(
 		self.__props = props
 		self.__cancelId = None
 
+		if telepathy.interfaces.CHANNEL_INTERFACE + '.InitiatorHandle' in props:
+			self._initiator = connection.get_handle_by_id(
+				telepathy.HANDLE_TYPE_CONTACT,
+				props[telepathy.interfaces.CHANNEL_INTERFACE + '.InitiatorHandle'],
+			)
+		elif telepathy.interfaces.CHANNEL_INTERFACE + '.InitiatorID' in props:
+			self._initiator = connection.get_handle_by_name(
+				telepathy.HANDLE_TYPE_CONTACT,
+				props[telepathy.interfaces.CHANNEL_INTERFACE + '.InitiatorHandle'],
+			)
+		else:
+			_moduleLogger.warning('InitiatorID or InitiatorHandle not set on new channel')
+			self._initiator = None
+
 		tp.ChannelTypeStreamedMedia.__init__(self, connection, manager, props)
 		tp.ChannelInterfaceCallState.__init__(self)
 		tp.ChannelInterfaceGroup.__init__(self)
@@ -31,6 +46,13 @@ class CallChannel(
 			{
 				"InitialAudio": self.initial_audio,
 				"InitialVideo": self.initial_video,
+			},
+		)
+		self._implement_property_get(
+			telepathy.interfaces.CHANNEL_INTERFACE,
+			{
+				'InitiatorHandle': lambda: dbus.UInt32(self._initiator.id),
+				'InitiatorID': lambda: self._initiator.name,
 			},
 		)
 
@@ -57,6 +79,10 @@ class CallChannel(
 		if self.__cancelId is not None:
 			gobject.source_remove(self.__cancelId)
 			self.__cancelId = None
+
+	@gtk_toolbox.log_exception(_moduleLogger)
+	def GetLocalPendingMembersWithInfo(self):
+		return []
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def ListStreams(self):
