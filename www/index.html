@@ -19,35 +19,34 @@
 		</p>
 
 
-		<h4>Status: Pre Alpha</h4>
+		<h4>Status: Alpha (Maemo 4.1), Beta (Maemo 5, Empathy)</h4>
 
 		<ul>
-			<li>Support for GV Contacts w/ names (ti, ht, e)</li>
-			<li>Support for System contacts (ti, ht)</li>
-			<li>Setting of presence: Available, Away (check for messages less often), and Do Not Disturb (disables in-bound phone calls) (ht, e)</li>
-			<li>Sending a text (ti, ht, e)</li>
-			<li>Receiving a text (ht, e)</li>
-			<li>Making a phone call (ti, ht)</li>
+			<li>Support for GV Contacts w/ names (not supported on Maemo 5)</li>
+			<li>Support for non-contacts</li>
+			<li>Support for system contacts (Maemo 5)</li>
+			<li>Setting of presence: Available, Away (check for messages less often), and Do Not Disturb (disables in-bound phone calls)</li>
+			<li>Sending a text (not supported on Maemo 4.1)</li>
+			<li>Receiving a text (not supported on Maemo 4.1)</li>
+			<li>Making a phone call</li>
 		</ul>
 
 		<p>Clients:</p>
 		<ul>
-			<li>ti = telepathy-inspector (hand testing through a UI)</li>
-			<li>ht = programmatic hand-tests</li>
-			<li>e = empathy</li>
-			<li>m4 = Maemo 4.1</li>
-			<li>m5 = Maemo 5</li>
+			<li>telepathy-inspector (hand testing through a UI)</li>
+			<li>programmatic hand-tests</li>
+			<li>Empathy (Tested with version included with Ubuntu 9.04)</li>
+			<li>Maemo 4.1</li>
+			<li>Maemo 5</li>
 		</ul>
 
-		<h4>What's Left</h4>
+		<h3>Troubleshooting</h3>
+		<p>Attempt to text with yourself and you will get an interactive prompt.  Type "help" for a list of commands.  Results of various commands can be a big help when debugging an issue</p>
 
-		<ul>
-			<li>Validate system contacts and the dialpad work</li>
-			<li>Improve the server polling heuristics to reduce battery drain while keeping average latency for seeing a message low</li>
-			<li>Support for Empathy (Ubuntu client)</li>
-			<li>Support for Maemo 5 client</li>
-			<li>Support for Maemo 4.1 client</li>
-		</ul>
+		<p>When filing a bug, please include the log.  Sadly it can only be accessed by the command line.  It is located at "~/.telepathy-theonering/theonering.log"</p>
 
+		<p>If things are in really bad shape, I might ask you to run "/usr/lib/theonering/gvoice/backend.py USERNAME PASSWORD".  This will give the raw output for the "API" I use with Google.  This can help determine if something broke between Google and I.</p>
+
+		<p></p>
 	</body>
 </html>

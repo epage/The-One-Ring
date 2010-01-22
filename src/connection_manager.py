@@ -1,11 +1,3 @@
-"""
-Empathy Experience:
-	Can't call
-	When first started, reports all read conversations when some might have been read
-	When first started, reports all of an SMS conversation even though some has been reported previously
-	Still leaking one of two contact lists
-"""
-
 import logging
 
 import gobject
@@ -21,6 +13,7 @@ _moduleLogger = logging.getLogger("connection_manager")
 
 
 class TheOneRingConnectionManager(tp.ConnectionManager):
+	# @bug Crashing Maemo 4.1's RTComm on occasion
 
 	def __init__(self, shutdown_func=None):
 		tp.ConnectionManager.__init__(self, constants._telepathy_implementation_name_)

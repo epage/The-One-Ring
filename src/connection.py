@@ -3,6 +3,8 @@
 @todo Add params for different state machines update times
 @todo Get a callback for missed calls to force an update of the voicemail state machine
 @todo Get a callback on an incoming call and if its from GV, auto-pickup
+@bug Reporting of network errors on login (I think its because two CM's are attempting to be created for some odd reason)
+@bug Integration with system contacts, like what Sofia does, isn't working
 """
 
 

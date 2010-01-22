@@ -15,6 +15,8 @@ _moduleLogger = logging.getLogger("channel.text")
 class TextChannel(tp.ChannelTypeText):
 	"""
 	Look into implementing ChannelInterfaceMessages for rich text formatting
+
+	@bug Stopped working on Maemo 4.1
 	"""
 
 	def __init__(self, connection, manager, props, contactHandle):

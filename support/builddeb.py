@@ -12,16 +12,14 @@ import constants
 
 
 __appname__ = constants.__app_name__
-__description__ = """Note: This is jealous of new technology and will eat the kittens of n900 owners.
-Google Voice Communication Plugin
-.
+__description__ = """Send/receive texts and initiate GV callbacks all through Conversations and Phone
 Features:
 .
-* Send Texts and Receive both Texts and Voicemail through your chat window
+* Send Texts and Receive both Texts and Voicemail through your chat window (buggy on Maemo 4.1)
 .
-* Initiate Google Voice callbacks from the dialpad or your contacts (Maemo 4.1 only)
+* Initiate Google Voice callbacks from the dialpad or your contacts
 .
-* Access to all of your Google Voice contacts (Maemo 4.1 only)
+* Access to all of your Google Voice contacts (Maemo 4.1 only for now)
 .
 * Reduce battery drain by setting your status to "Away"
 .
@@ -36,8 +34,12 @@ __email__ = "eopage@byu.net"
 __version__ = constants.__version__
 __build__ = constants.__build__
 __changelog__ = """
+0.7.0
+* Initial beta release for Maemo 5
+* Late Alpha for Maemo 4.1 with horrible consequences like crashing RTComm
+
 0.1.0
-* Initial release
+* Pre-Alpha Development Release
 """
 
 
