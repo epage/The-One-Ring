@@ -28,6 +28,18 @@ def to_milliseconds(**kwd):
 	raise KeyError("Unknown arg: %r" % kwd)
 
 
+def to_seconds(**kwd):
+	if "milliseconds" in kwd:
+		return kwd["milliseconds"] / 1000
+	elif "seconds" in kwd:
+		return kwd["seconds"]
+	elif "minutes" in kwd:
+		return kwd["minutes"] * 60
+	elif "hours" in kwd:
+		return kwd["hours"] * 60 * 60
+	raise KeyError("Unknown arg: %r" % kwd)
+
+
 class NopStateStrategy(object):
 
 	def __init__(self):
@@ -212,15 +224,12 @@ class UpdateStateMachine(StateMachine):
 	def _request_reset_timers(self, *args):
 		self._reset_timers()
 
-	def _set_initial_period(self):
-		self._currentPeriod = self._INITIAL_ACTIVE_PERIOD / 2 # We will double it later
-
 	def _schedule_update(self):
 		assert self._timeoutId is None
 		self._strategy.increment_state()
 		nextTimeout = self._strategy.timeout
 		if nextTimeout != self.INFINITE_PERIOD:
-			self._timeoutId = gobject.timeout_add(nextTimeout, self._on_timeout)
+			self._timeoutId = gobject_utils.timeout_add_seconds(nextTimeout, self._on_timeout)
 		_moduleLogger.info("%s Next update in %s ms" % (self._name, nextTimeout, ))
 
 	def _stop_update(self):

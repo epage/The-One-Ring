@@ -29,11 +29,11 @@ class Session(object):
 		)
 		self._addressbookStateMachine.set_state_strategy(
 			state_machine.StateMachine.STATE_IDLE,
-			state_machine.ConstantStateStrategy(state_machine.to_milliseconds(hours=6))
+			state_machine.NopStateStrategy()
 		)
 		self._addressbookStateMachine.set_state_strategy(
 			state_machine.StateMachine.STATE_ACTIVE,
-			state_machine.ConstantStateStrategy(state_machine.to_milliseconds(hours=2))
+			state_machine.ConstantStateStrategy(state_machine.to_seconds(hours=3))
 		)
 
 		self._voicemails = conversations.Conversations(self._backend.get_voicemails)
@@ -44,11 +44,11 @@ class Session(object):
 		)
 		self._voicemailsStateMachine.set_state_strategy(
 			state_machine.StateMachine.STATE_IDLE,
-			state_machine.ConstantStateStrategy(state_machine.to_milliseconds(minutes=60))
+			state_machine.ConstantStateStrategy(state_machine.to_seconds(hours=2))
 		)
 		self._voicemailsStateMachine.set_state_strategy(
 			state_machine.StateMachine.STATE_ACTIVE,
-			state_machine.ConstantStateStrategy(state_machine.to_milliseconds(minutes=10))
+			state_machine.ConstantStateStrategy(state_machine.to_seconds(minutes=30))
 		)
 		self._voicemails.updateSignalHandler.register_sink(
 			self._voicemailsStateMachine.request_reset_timers
@@ -62,14 +62,14 @@ class Session(object):
 		)
 		self._textsStateMachine.set_state_strategy(
 			state_machine.StateMachine.STATE_IDLE,
-			state_machine.ConstantStateStrategy(state_machine.to_milliseconds(minutes=30))
+			state_machine.ConstantStateStrategy(state_machine.to_seconds(minutes=30))
 		)
 		self._textsStateMachine.set_state_strategy(
 			state_machine.StateMachine.STATE_ACTIVE,
 			state_machine.GeometricStateStrategy(
-				state_machine.to_milliseconds(seconds=20),
-				state_machine.to_milliseconds(milliseconds=500),
-				state_machine.to_milliseconds(minutes=10),
+				state_machine.to_seconds(seconds=20),
+				state_machine.to_seconds(seconds=1),
+				state_machine.to_seconds(minutes=30),
 			)
 		)
 		self._texts.updateSignalHandler.register_sink(

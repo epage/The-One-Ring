@@ -68,3 +68,18 @@ def throttled(minDelay, queue):
 		return new_function
 
 	return actual_decorator
+
+
+def _old_timeout_add_seconds(timeout, callback):
+	return gobject.timeout_add(timeout * 1000, callback)
+
+
+def _timeout_add_seconds(timeout, callback):
+	return gobject.timeout_add_seconds(timeout, callback)
+
+
+try:
+	gobject.timeout_add_seconds
+	timeout_add_seconds = _timeout_add_seconds
+except AttributeError:
+	timeout_add_seconds = _old_timeout_add_seconds
