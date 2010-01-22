@@ -77,6 +77,9 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 		except Exception, e:
 			self._report_new_message(str(e))
 
+	def help_reset_state_machine(self):
+		self._report_new_message("Reset the refreshing state machine")
+
 	def do_get_state(self, args):
 		if args:
 			self._report_new_message("No arguments supported")
@@ -87,6 +90,9 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 			self._report_new_message(str(state))
 		except Exception, e:
 			self._report_new_message(str(e))
+
+	def help_get_state(self):
+		self._report_new_message("Print the current state the refreshing state machine is in")
 
 	def do_is_authed(self, args):
 		if args:
@@ -99,6 +105,9 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 		except Exception, e:
 			self._report_new_message(str(e))
 
+	def help_is_authed(self):
+		self._report_new_message("Print whether logged in to Google Voice")
+
 	def do_is_dnd(self, args):
 		if args:
 			self._report_new_message("No arguments supported")
@@ -110,6 +119,9 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 		except Exception, e:
 			self._report_new_message(str(e))
 
+	def help_is_dnd(self):
+		self._report_new_message("Print whether Do-Not-Disturb mode enabled on the Google Voice account")
+
 	def do_get_account_number(self, args):
 		if args:
 			self._report_new_message("No arguments supported")
@@ -120,6 +132,9 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 			self._report_new_message(number)
 		except Exception, e:
 			self._report_new_message(str(e))
+
+	def help_get_account_number(self):
+		self._report_new_message("Print the Google Voice account number")
 
 	def do_get_callback_numbers(self, args):
 		if args:
@@ -136,6 +151,9 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 		except Exception, e:
 			self._report_new_message(str(e))
 
+	def help_get_callback_numbers(self):
+		self._report_new_message("Print a list of all configured callback numbers")
+
 	def do_get_callback_number(self, args):
 		if args:
 			self._report_new_message("No arguments supported")
@@ -146,6 +164,9 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 			self._report_new_message(number)
 		except Exception, e:
 			self._report_new_message(str(e))
+
+	def help_get_callback_number(self):
+		self._report_new_message("Print the callback number currently enabled")
 
 	def do_call(self, args):
 		if len(args) != 1:
@@ -158,6 +179,9 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 		except Exception, e:
 			self._report_new_message(str(e))
 
+	def help_call(self):
+		self._report_new_message("\n".join(["call NUMBER", "Initiate a callback, Google forwarding the call to the callback number"]))
+
 	def do_send_sms(self, args):
 		if 1 < len(args):
 			self._report_new_message("Must specify the phone number and then message")
@@ -169,3 +193,6 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 			self._conn.session.backend.send_sms(number, message)
 		except Exception, e:
 			self._report_new_message(str(e))
+
+	def help_send_sms(self):
+		self._report_new_message("\n".join(["send_sms NUMBER MESSAGE0 MESSAGE1 ...", "Send an sms to number NUMBER"]))
