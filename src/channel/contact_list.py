@@ -61,6 +61,10 @@ class AllContactsListChannel(
 		self.remove_from_connection()
 
 	@gtk_toolbox.log_exception(_moduleLogger)
+	def GetLocalPendingMembersWithInfo(self):
+		return []
+
+	@gtk_toolbox.log_exception(_moduleLogger)
 	def _on_contacts_refreshed(self, addressbook, added, removed, changed):
 		self._process_refresh(addressbook, added, removed)
 
