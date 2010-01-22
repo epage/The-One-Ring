@@ -34,8 +34,13 @@ class CallChannel(
 				props[telepathy.interfaces.CHANNEL_INTERFACE + '.InitiatorHandle'],
 			)
 		else:
-			_moduleLogger.warning('InitiatorID or InitiatorHandle not set on new channel')
-			self._initiator = None
+			# Maemo 5 seems to require InitiatorHandle/InitiatorID to be set
+			# even though I can't find them in the dbus spec.  I think its
+			# generally safe to assume that its locally initiated if not
+			# specified.  Specially for The One Ring, its always locally
+			# initiated
+			_moduleLogger.warning('InitiatorID or InitiatorHandle not set on new channel, assuming locally initiated')
+			self._initiator = connection.GetSelfHandle()
 
 		tp.ChannelTypeStreamedMedia.__init__(self, connection, manager, props)
 		tp.ChannelInterfaceCallState.__init__(self)
