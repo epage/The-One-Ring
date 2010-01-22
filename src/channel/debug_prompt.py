@@ -15,7 +15,8 @@ _moduleLogger = logging.getLogger("channel.text")
 
 class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 	"""
-	Look into implementing ChannelInterfaceMessages for rich text formatting
+	@todo Look into implementing ChannelInterfaceMessages for rich text formatting
+	@todo Add a command that initiates a file transfer, giving the log file to the user
 	"""
 
 	def __init__(self, connection, manager, props, contactHandle):
