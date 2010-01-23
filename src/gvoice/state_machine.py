@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 """
-@todo Look into supporting more states
+@todo Look into supporting more states for more granular selection of updates
+@todo Could make another state that depends on whether there are open channels or not
 """
 
 import logging
