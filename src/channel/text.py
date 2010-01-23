@@ -132,6 +132,8 @@ class TextChannel(tp.ChannelTypeText):
 		for newMessage in messages:
 			formattedMessage = self._format_message(newMessage)
 			self._report_new_message(formattedMessage)
+		for conv in newConversations:
+			conv.isRead = True
 
 	def _filter_out_reported(self, conversations):
 		return (

@@ -145,7 +145,7 @@ class MergedConversations(object):
 		return similarConversations
 
 	def _update_previous_related_conversation(self, relatedConversation, newConversation):
-		for commonField in ("isRead", "isSpam", "isTrash", "isArchived"):
+		for commonField in ("isSpam", "isTrash", "isArchived"):
 			newValue = getattr(newConversation, commonField)
 			setattr(relatedConversation, commonField, newValue)
 
