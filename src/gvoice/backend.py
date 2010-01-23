@@ -801,7 +801,7 @@ def validate_response(response):
 
 
 def guess_phone_type(number):
-	if number.startswith("747") or number.startswith("1747"):
+	if number.startswith("747") or number.startswith("1747") or number.startswith("+1747"):
 		return GVoiceBackend.PHONE_TYPE_GIZMO
 	else:
 		return GVoiceBackend.PHONE_TYPE_MOBILE
@@ -818,7 +818,9 @@ def get_sane_callback(backend):
 	numbers = backend.get_callback_numbers()
 
 	priorityOrderedCriteria = [
+		("+1747", None),
 		("1747", None),
+		("747", None),
 		(None, "gizmo"),
 		(None, "computer"),
 		(None, "sip"),
