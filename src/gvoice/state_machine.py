@@ -85,7 +85,7 @@ class GeometricStateStrategy(object):
 		self._current = 0
 
 	def initialize_state(self):
-		self._current = self._min / 2
+		self._current = self._min
 
 	def increment_state(self):
 		if self._max == UpdateStateMachine.INFINITE_PERIOD:
@@ -95,7 +95,8 @@ class GeometricStateStrategy(object):
 
 	@property
 	def timeout(self):
-		return self._init + self._current
+		timeout = self._init + self._current
+		return timeout
 
 
 class StateMachine(object):
@@ -230,7 +231,7 @@ class UpdateStateMachine(StateMachine):
 		nextTimeout = self._strategy.timeout
 		if nextTimeout != self.INFINITE_PERIOD:
 			self._timeoutId = gobject_utils.timeout_add_seconds(nextTimeout, self._on_timeout)
-		_moduleLogger.info("%s Next update in %s ms" % (self._name, nextTimeout, ))
+		_moduleLogger.info("%s Next update in %s seconds" % (self._name, nextTimeout, ))
 
 	def _stop_update(self):
 		if self._timeoutId is None:
