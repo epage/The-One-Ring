@@ -8,6 +8,7 @@ import telepathy
 
 import tp
 import gtk_toolbox
+import gvoice
 
 
 _moduleLogger = logging.getLogger("channel.text")
@@ -154,6 +155,20 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 
 	def help_get_callback_numbers(self):
 		self._report_new_message("Print a list of all configured callback numbers")
+
+	def do_get_sane_callback_number(self, args):
+		if args:
+			self._report_new_message("No arguments supported")
+			return
+
+		try:
+			number = gvoice.backend.get_sane_callback(self._conn.session.backend)
+			self._report_new_message(number)
+		except Exception, e:
+			self._report_new_message(str(e))
+
+	def help_get_sane_callback_number(self):
+		self._report_new_message("Print the best guess of callback numbers to use")
 
 	def do_get_callback_number(self, args):
 		if args:
