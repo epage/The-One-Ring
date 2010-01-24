@@ -818,7 +818,7 @@ def get_sane_callback(backend):
 	numbers = backend.get_callback_numbers()
 
 	priorityOrderedCriteria = [
-		("+1747", None),
+		("\+1747", None),
 		("1747", None),
 		("747", None),
 		(None, "gizmo"),
@@ -828,10 +828,17 @@ def get_sane_callback(backend):
 	]
 
 	for numberCriteria, descriptionCriteria in priorityOrderedCriteria:
+		numberMatcher = None
+		descriptionMatcher = None
+		if numberCriteria is not None:
+			numberMatcher = re.compile(numberCriteria)
+		elif descriptionCriteria is not None:
+			descriptionMatcher = re.compile(descriptionCriteria, re.I)
+
 		for number, description in numbers.iteritems():
-			if numberCriteria is not None and re.compile(numberCriteria).match(number) is None:
+			if numberMatcher is not None and numberMatcher.match(number) is None:
 				continue
-			if descriptionCriteria is not None and re.compile(descriptionCriteria).match(description) is None:
+			if descriptionMatcher is not None and descriptionMatcher.match(description) is None:
 				continue
 			return number
 
