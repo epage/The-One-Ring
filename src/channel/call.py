@@ -52,6 +52,10 @@ class CallChannel(
 				"InitialVideo": self.initial_video,
 			},
 		)
+		self._add_immutables({
+			'InitialAudio': telepathy.interfaces.CHANNEL_TYPE_STREAMED_MEDIA,
+			'InitialVideo': telepathy.interfaces.CHANNEL_TYPE_STREAMED_MEDIA,
+		})
 		self._implement_property_get(
 			telepathy.interfaces.CHANNEL_INTERFACE,
 			{
@@ -59,6 +63,10 @@ class CallChannel(
 				'InitiatorID': lambda: self._initiator.name,
 			},
 		)
+		self._add_immutables({
+			'InitiatorHandle': telepathy.interfaces.CHANNEL_INTERFACE,
+			'InitiatorID': telepathy.interfaces.CHANNEL_INTERFACE,
+		})
 
 		self.GroupFlagsChanged(0, 0)
 		self.MembersChanged(
