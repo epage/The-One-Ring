@@ -13,7 +13,6 @@ _moduleLogger = logging.getLogger("connection_manager")
 
 
 class TheOneRingConnectionManager(tp.ConnectionManager):
-	# @bug Crashing Maemo 4.1's RTComm on occasion
 
 	def __init__(self, shutdown_func=None):
 		tp.ConnectionManager.__init__(self, constants._telepathy_implementation_name_)

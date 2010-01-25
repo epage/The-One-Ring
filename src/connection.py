@@ -1,13 +1,3 @@
-
-"""
-@todo Add params for different state machines update times
-@todo Get a callback for missed calls to force an update of the voicemail state machine
-@todo Get a callback on an incoming call and if its from GV, auto-pickup
-@bug Reporting of network errors on login (I think its because two CM's are attempting to be created for some odd reason)
-@bug Integration with system contacts, like what Sofia does, isn't working
-"""
-
-
 import os
 import weakref
 import logging
@@ -307,8 +297,6 @@ class TheOneRingConnection(
 	def _on_connection_change(self, connection, event):
 		"""
 		@note Maemo specific
-
-		@todo Make this delayed to handle background switching of networks.  First I need to verify I receive connected
 		"""
 		if not self.session.is_logged_in():
 			_moduleLogger.info("Received connection change event when not logged in")

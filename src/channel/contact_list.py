@@ -17,8 +17,6 @@ class AllContactsListChannel(
 	):
 	"""
 	The group of contacts for whom you receive presence
-
-	@bug On Maemo 5 this is being ignored
 	"""
 
 	def __init__(self, connection, manager, props, listHandle):
@@ -103,10 +101,8 @@ _LIST_TO_FACTORY = {
 	# This doesn't make sense to support
 	'hide': None,
 	# A group of contacts who may send you messages
-	# @todo Allow-List would be cool to support
 	'allow': None,
 	# A group of contacts who may not send you messages
-	# @todo Deny-List would be cool to support
 	'deny': None,
 	# On protocols where the user's contacts are stored, this contact list
 	# contains all stored contacts regardless of subscription status.
