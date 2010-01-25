@@ -31,7 +31,7 @@ Name = Hidden
 IconName = general_presence_invisible
 Type = 5
 
-[Action sms]
+[Action chat]
 Name = GV SMS
 IconName = general_sms
 VCardFields = X-GV,TEL
