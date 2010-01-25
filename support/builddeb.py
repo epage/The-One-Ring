@@ -82,7 +82,7 @@ def build_package(distribution):
 	else:
 		p.prettyName = "Google Voice plugin for Conversations and Calls"
 	p.description = __description__
-	p.bugTracker = "https://bugs.maemo.org/enter_bug.cgi?product=theonering"
+	p.bugTracker = "https://bugs.maemo.org/enter_bug.cgi?product=The%20One%20Ring"
 	#p.upgradeDescription = __changelog__.split("\n\n", 1)[0]
 	p.author = __author__
 	p.mail = __email__
