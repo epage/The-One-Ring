@@ -11,27 +11,35 @@ VCardField = X-GV
 SupportedPresences = offline,available,away,hidden
 SupportsPresenceMessage = false
 
-[Action sms_gv]
-Name = addr_bd_cont_starter_chat
-IconName = general_sms
-VCardFields = X-GV
-prop-org.freedesktop.Telepathy.Channel.ChannelType-s = org.freedesktop.Telepathy.Channel.Type.Text
+[Presence offline]
+Name = Offline
+IconName = general_presence_offline
+Type = 1
 
-[Action call_gv]
-Name = addr_bd_cont_starter_call
-IconName = general_call
-VCardFields = X-GV
-prop-org.freedesktop.Telepathy.Channel.ChannelType-s = org.freedesktop.Telepathy.Channel.Type.StreamedMedia
+[Presence available]
+Name = Available
+IconName = general_presence_online
+Type = 2
+
+[Presence away]
+Name = Away
+IconName = general_presence_away
+Type = 3
+
+[Presence hidden]
+Name = Hidden
+IconName = general_presence_invisible
+Type = 5
 
 [Action sms]
-Name = addr_bd_cont_starter_chat
+Name = GV SMS
 IconName = general_sms
-VCardFields = TEL
+VCardFields = X-GV,TEL
 prop-org.freedesktop.Telepathy.Channel.ChannelType-s = org.freedesktop.Telepathy.Channel.Type.Text
 
 [Action call]
-Name = addr_bd_cont_starter_skypeout
+Name = GV Callback
 IconName = general_call
-VCardFields = TEL
+VCardFields = X-GV,TEL
 prop-org.freedesktop.Telepathy.Channel.ChannelType-s = org.freedesktop.Telepathy.Channel.Type.StreamedMedia
 
