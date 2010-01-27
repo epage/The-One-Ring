@@ -14,13 +14,15 @@ _moduleLogger = logging.getLogger("channel.text")
 
 class TextChannel(tp.ChannelTypeText):
 
+	NULL_TIMESTAMP = datetime.datetime(1, 1, 1)
+
 	def __init__(self, connection, manager, props, contactHandle):
 		self.__manager = manager
 		self.__props = props
 
 		tp.ChannelTypeText.__init__(self, connection, manager, props)
 		self.__nextRecievedId = 0
-		self.__lastMessageTimestamp = datetime.datetime(1, 1, 1)
+		self.__lastMessageTimestamp = self.NULL_TIMESTAMP
 
 		self.__otherHandle = contactHandle
 
@@ -55,6 +57,21 @@ class TextChannel(tp.ChannelTypeText):
 	def Send(self, messageType, text):
 		if messageType != telepathy.CHANNEL_TEXT_MESSAGE_TYPE_NORMAL:
 			raise telepathy.errors.NotImplemented("Unhandled message type: %r" % messageType)
+
+		if self.__lastMessageTimestamp == self.NULL_TIMESTAMP:
+			# Hack: GV marks messages as read when they are replied to.  If GV
+			# marks them as read than we ignore them.  So reduce the window for
+			# them being marked as read.  Oh and Conversations already handles
+			# it if the message was already part of a thread, so we can limit
+			# this to if we are trying to start a thread.  You might say a
+			# voicemail could be what is being replied to and that doesn't mean
+			# anything.  Oh well.
+			try:
+				self._conn.session.texts.update(force=True)
+			except Exception:
+				_moduleLogger.exception(
+					"Update failed when proactively checking for texts"
+				)
 
 		_moduleLogger.info("Sending message to %r" % (self.__otherHandle, ))
 		self._conn.session.backend.send_sms(self.__otherHandle.phoneNumber, text)
