@@ -546,10 +546,6 @@ class GVoiceBackend(object):
 			raise ValueError('Number is not valid: "%s"' % number)
 		elif not self.is_authed():
 			raise RuntimeError("Not Authenticated")
-
-		if len(number) == 11 and number[0] == 1:
-			# Strip leading 1 from 11 digit dialing
-			number = number[1:]
 		return number
 
 	def _parse_history(self, historyHtml):
