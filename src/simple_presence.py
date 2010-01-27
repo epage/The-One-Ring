@@ -66,7 +66,7 @@ class TheOneRingPresence(object):
 						raise telepathy.errors.InvalidArgument("Unsupported state on the state machine: %s" % state)
 				presenceType = TheOneRingPresence.TO_PRESENCE_TYPE[presence]
 			else:
-				presence = TheOneRingPresence.ONLINE
+				presence = TheOneRingPresence.AWAY
 				presenceType = TheOneRingPresence.TO_PRESENCE_TYPE[presence]
 
 			presences[h] = (presenceType, presence)
