@@ -136,7 +136,7 @@ class CallChannel(
 		self._conn.session.backend.call(contactNumber)
 
 		streamId = 0
-		streamState = telepathy.constants.MEDIA_STREAM_STATE_DISCONNECTED
+		streamState = telepathy.constants.MEDIA_STREAM_STATE_CONNECTED
 		streamDirection = telepathy.constants.MEDIA_STREAM_DIRECTION_BIDIRECTIONAL
 		pendingSendFlags = telepathy.constants.MEDIA_STREAM_PENDING_REMOTE_SEND
 		return [(streamId, contact, streamTypes[0], streamState, streamDirection, pendingSendFlags)]
