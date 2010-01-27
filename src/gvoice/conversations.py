@@ -115,6 +115,11 @@ class MergedConversations(object):
 			self._remove_repeats(similarConversation, newConversation)
 			similarExist = True
 		if similarExist:
+			# Hack to reduce a race window with GV marking messages as read
+			# because it thinks we replied when really we replied to the
+			# previous message.  Clients of this code are expected to handle
+			# this gracefully.  Other race conditions may exist but clients are
+			# responsible for them
 			if newConversation.messages:
 				newConversation.isRead = False
 			else:
