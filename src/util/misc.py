@@ -656,10 +656,14 @@ def normalize_number(prettynumber):
 	'+13456789000'
 	"""
 	uglynumber = re.sub('[^0-9+]', '', prettynumber)
-	if uglynumber.startswith("1") and len(uglynumber) == 11:
+	if uglynumber.startswith("+"):
+		pass
+	elif uglynumber.startswith("1") and len(uglynumber) == 11:
 		uglynumber = "+"+uglynumber
 	elif len(uglynumber) == 10:
 		uglynumber = "+1"+uglynumber
+	else:
+		pass
 
 	#validateRe = re.compile("^\+?[0-9]{10,}$")
 	#assert validateRe.match(uglynumber) is not None
