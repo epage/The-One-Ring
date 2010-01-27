@@ -34,6 +34,16 @@ __email__ = "eopage@byu.net"
 __version__ = constants.__version__
 __build__ = constants.__build__
 __changelog__ = """
+0.7.1
+* Reducing the race window where GV will mark messages as read accidently
+* Modified some things blindly "because thats what Butterfly does"
+* Modified some support files to mimic other plugins on Maemo 5 PR1.1
+* Added link to bug tracker and moved all bugs and enhancements to it
+* Switched contacts to being away by default upon user feedback
+* Adjusting handling of call states to at least allow the option of clients to provide clearer information to the user
+* Fixing some bugs with handling a variety of phone number formats
+* Removed a hack that changed the number being called, most likely put in place in a bygone era
+
 0.7.0
 * Initial beta release for Maemo 5
 * Late Alpha for Maemo 4.1 with horrible consequences like crashing RTComm
