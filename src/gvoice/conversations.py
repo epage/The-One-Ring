@@ -109,9 +109,16 @@ class MergedConversations(object):
 
 	def append_conversation(self, newConversation):
 		self._validate(newConversation)
+		similarExist = False
 		for similarConversation in self._find_related_conversation(newConversation.id):
 			self._update_previous_related_conversation(similarConversation, newConversation)
 			self._remove_repeats(similarConversation, newConversation)
+			similarExist = True
+		if similarExist:
+			if newConversation.messages:
+				newConversation.isRead = False
+			else:
+				newConversation.isRead = True
 		self._conversations.append(newConversation)
 
 	def to_dict(self):
