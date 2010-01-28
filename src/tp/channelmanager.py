@@ -1,6 +1,6 @@
 # telepathy-python - Base classes defining the interfaces of the Telepathy framework
 #
-# Copyright (C) 2009 Collabora Limited
+# Copyright (C) 2009-2010 Collabora Limited
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -22,7 +22,6 @@ from telepathy.interfaces import (CHANNEL_INTERFACE,
                                  CHANNEL_TYPE_CONTACT_LIST)
 
 class ChannelManager(object):
-
     def __init__(self, connection):
         self._conn = connection
 
@@ -115,6 +114,7 @@ class ChannelManager(object):
         self._available_properties[type] = available
 
     def get_requestable_channel_classes(self):
+        """Return all the channel types that can be created"""
         retval = []
 
         for channel_type in self._requestable_channel_classes:
