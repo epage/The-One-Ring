@@ -156,12 +156,14 @@ class UpdateStateMachine(StateMachine):
 	# Making sure the it is initialized is finicky, be careful
 
 	INFINITE_PERIOD = -1
+	DEFAULT_MAX_TIMEOUT = to_seconds(hours=24)
 
 	_IS_DAEMON = True
 
-	def __init__(self, updateItems, name=""):
+	def __init__(self, updateItems, name="", maxTime = DEFAULT_MAX_TIMEOUT):
 		self._name = name
 		self._updateItems = updateItems
+		self._maxTime = maxTime
 
 		self._state = self.STATE_ACTIVE
 		self._timeoutId = None
@@ -221,13 +223,12 @@ class UpdateStateMachine(StateMachine):
 	def _request_reset_timers(self, *args):
 		self._reset_timers()
 
-	def _schedule_update(self):
-		assert self._timeoutId is None
-		self._strategy.increment_state()
-		nextTimeout = self._strategy.timeout
-		if nextTimeout != self.INFINITE_PERIOD:
-			self._timeoutId = gobject_utils.timeout_add_seconds(nextTimeout, self._on_timeout)
-		_moduleLogger.info("%s Next update in %s seconds" % (self._name, nextTimeout, ))
+	def _reset_timers(self):
+		if self._timeoutId is None:
+			return # not started yet
+		self._stop_update()
+		self._strategy.initialize_state()
+		self._schedule_update()
 
 	def _stop_update(self):
 		if self._timeoutId is None:
@@ -235,12 +236,13 @@ class UpdateStateMachine(StateMachine):
 		gobject.source_remove(self._timeoutId)
 		self._timeoutId = None
 
-	def _reset_timers(self):
-		if self._timeoutId is None:
-			return # not started yet
-		self._stop_update()
-		self._strategy.initialize_state()
-		self._schedule_update()
+	def _schedule_update(self):
+		assert self._timeoutId is None
+		self._strategy.increment_state()
+		nextTimeout = self._strategy.timeout
+		if nextTimeout != self.INFINITE_PERIOD and nextTimeout < self._maxTime:
+			self._timeoutId = gobject_utils.timeout_add_seconds(nextTimeout, self._on_timeout)
+		_moduleLogger.info("%s Next update in %s seconds" % (self._name, nextTimeout, ))
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def _on_timeout(self):
