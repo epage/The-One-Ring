@@ -63,13 +63,12 @@ class Addressbook(object):
 			contactName = contactDetails["name"]
 			contactNumbers = (
 				(
-					numberDetails.get("phoneType", "Mobile"),
 					util_misc.normalize_number(numberDetails["phoneNumber"]),
-					contactDetails,
+					numberDetails.get("phoneType", "Mobile"),
 				)
 				for numberDetails in contactDetails["numbers"]
 			)
 			self._numbers.update(
-				(number, (contactName, phoneType))
-				for (phoneType, number) in contactNumbers
+				(number, (contactName, phoneType, contactDetails))
+				for (number, phoneType) in contactNumbers
 			)

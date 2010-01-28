@@ -27,6 +27,7 @@ class AllContactsListChannel(
 		self.__props = props
 		self.__session = connection.session
 		self.__listHandle = listHandle
+		self.__members = set()
 
 		self._callback = coroutines.func_sink(
 			coroutines.expand_positional(
@@ -41,7 +42,7 @@ class AllContactsListChannel(
 
 		addressbook = connection.session.addressbook
 		contacts = addressbook.get_numbers()
-		self._process_refresh(addressbook, set(contacts), set())
+		self._process_refresh(addressbook, set(contacts), set(), set())
 
 
 	@gtk_toolbox.log_exception(_moduleLogger)
@@ -64,21 +65,60 @@ class AllContactsListChannel(
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def _on_contacts_refreshed(self, addressbook, added, removed, changed):
-		self._process_refresh(addressbook, added, removed)
+		self._process_refresh(addressbook, added, removed, changed)
 
-	def _process_refresh(self, addressbook, added, removed):
+	def _is_on_list(self, number):
+		return True
+
+	def _is_on_list_changed(self, number):
+		return (number in self.__members) ^ (self._is_on_list(number))
+
+	def _is_now_on_list(self, number):
+		return number not in self.__members and self._is_on_list(number)
+
+	def _was_on_list(self, number):
+		return number in self.__members and not self._is_on_list(number)
+
+	def _process_refresh(self, addressbook, added, removed, changed):
 		_moduleLogger.info(
 			"%s Added: %r, Removed: %r" % (self.__listHandle.get_name(), len(added), len(removed))
 		)
 		connection = self._conn
+
+		# convert changed into added/removed
+		alsoAdded = set(
+			number
+			for number in changed
+			if self._is_now_on_list(number)
+		)
+		alsoRemoved = set(
+			number
+			for number in changed
+			if self._was_on_list(number)
+		)
+
+		# Merge the added/removed with changed
+		added = [
+			contactNumber
+			for contactNumber in added
+			if self._is_on_list(contactNumber)
+		]
+		added.extend(alsoAdded)
+		added.sort()
 		handlesAdded = [
 			handle.create_handle(connection, "contact", contactNumber)
 			for contactNumber in added
 		]
+		self.__members.union(added)
+
+		removed = list(removed)
+		removed.extend(alsoRemoved)
 		handlesRemoved = [
 			handle.create_handle(connection, "contact", contactNumber)
 			for contactNumber in removed
 		]
+		self.__members.difference(removed)
+
 		message = ""
 		actor = 0
 		reason = telepathy.CHANNEL_GROUP_CHANGE_REASON_NONE
@@ -91,6 +131,12 @@ class AllContactsListChannel(
 		)
 
 
+class DenyContactsListChannel(AllContactsListChannel):
+
+	def _is_on_list(self, number):
+		return self._conn.session.addressbook.is_blocked(number)
+
+
 _LIST_TO_FACTORY = {
 	# The group of contacts for whom you receive presence
 	'subscribe': AllContactsListChannel,
@@ -101,9 +147,10 @@ _LIST_TO_FACTORY = {
 	# This doesn't make sense to support
 	'hide': None,
 	# A group of contacts who may send you messages
+	# Is this meant to serve as a definitive white list for all contact?
 	'allow': None,
 	# A group of contacts who may not send you messages
-	'deny': None,
+	'deny': DenyContactsListChannel,
 	# On protocols where the user's contacts are stored, this contact list
 	# contains all stored contacts regardless of subscription status.
 	'stored': AllContactsListChannel,
