@@ -29,20 +29,23 @@ class AllContactsListChannel(
 		self.__listHandle = listHandle
 		self.__members = set()
 
-		self._callback = coroutines.func_sink(
-			coroutines.expand_positional(
-				self._on_contacts_refreshed
+		if self._conn.options.useGVContacts:
+			self._callback = coroutines.func_sink(
+				coroutines.expand_positional(
+					self._on_contacts_refreshed
+				)
 			)
-		)
-		self.__session.addressbook.updateSignalHandler.register_sink(
-			self._callback
-		)
+			self.__session.addressbook.updateSignalHandler.register_sink(
+				self._callback
+			)
+
+			addressbook = connection.session.addressbook
+			contacts = addressbook.get_numbers()
+			self._process_refresh(addressbook, set(contacts), set(), set())
+		else:
+			self._callback = None
 
 		self.GroupFlagsChanged(0, 0)
-
-		addressbook = connection.session.addressbook
-		contacts = addressbook.get_numbers()
-		self._process_refresh(addressbook, set(contacts), set(), set())
 
 
 	@gtk_toolbox.log_exception(_moduleLogger)
@@ -51,10 +54,11 @@ class AllContactsListChannel(
 
 	def close(self):
 		_moduleLogger.debug("Closing contact list")
-		self.__session.addressbook.updateSignalHandler.unregister_sink(
-			self._callback
-		)
-		self._callback = None
+		if self._callback is not None:
+			self.__session.addressbook.updateSignalHandler.unregister_sink(
+				self._callback
+			)
+			self._callback = None
 
 		tp.ChannelTypeContactList.Close(self)
 		self.remove_from_connection()

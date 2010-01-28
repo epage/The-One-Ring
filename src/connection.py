@@ -32,6 +32,16 @@ import channel_manager
 _moduleLogger = logging.getLogger("connection")
 
 
+class TheOneRingOptions(object):
+
+	useGVContacts = True
+
+	def __init__(self, parameters = None):
+		if parameters is None:
+			return
+		self.useGVContacts = parameters["use-gv-contacts"]
+
+
 class TheOneRingConnection(
 	tp.Connection,
 	requests.RequestsMixin,
@@ -50,9 +60,11 @@ class TheOneRingConnection(
 	# overiding base class variable
 	_optional_parameters = {
 		'forward' : 's',
+		'use-gv-contacts' : 'b',
 	}
 	_parameter_defaults = {
 		'forward' : '',
+		'use-gv-contacts' : TheOneRingOptions.useGVContacts,
 	}
 	_secret_parameters = set((
 		"password",
@@ -70,6 +82,7 @@ class TheOneRingConnection(
 
 		# Connection init must come first
 		self.__session = gvoice.session.Session(None)
+		self.__options = TheOneRingOptions(parameters)
 		tp.Connection.__init__(
 			self,
 			constants._telepathy_protocol_name_,
@@ -116,6 +129,10 @@ class TheOneRingConnection(
 		return self.__session
 
 	@property
+	def options(self):
+		return self.__options
+
+	@property
 	def username(self):
 		return self.__credentials[0]
 
@@ -126,11 +143,11 @@ class TheOneRingConnection(
 	def get_handle_by_name(self, handleType, handleName):
 		requestedHandleName = handleName.encode('utf-8')
 		if handleType == telepathy.HANDLE_TYPE_CONTACT:
-			_moduleLogger.info("get_handle_by_name Contact: %s" % requestedHandleName)
+			_moduleLogger.debug("get_handle_by_name Contact: %s" % requestedHandleName)
 			h = handle.create_handle(self, 'contact', requestedHandleName)
 		elif handleType == telepathy.HANDLE_TYPE_LIST:
 			# Support only server side (immutable) lists
-			_moduleLogger.info("get_handle_by_name List: %s" % requestedHandleName)
+			_moduleLogger.debug("get_handle_by_name List: %s" % requestedHandleName)
 			h = handle.create_handle(self, 'list', requestedHandleName)
 		else:
 			raise telepathy.errors.NotAvailable('Handle type unsupported %d' % handleType)

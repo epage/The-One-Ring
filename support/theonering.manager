@@ -7,4 +7,6 @@ ObjectPath = /org/freedesktop/Telepathy/ConnectionManager/theonering
 param-account = s required
 param-password = s required secret
 param-forward = s
+param-use-gv-contacts = b
 default-forward =
+default-use-gv-contacts = true
