@@ -6,6 +6,7 @@ import logging
 
 import telepathy
 
+import constants
 import tp
 import gtk_toolbox
 import gvoice
@@ -43,7 +44,9 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 		finally:
 			self.stdin, self.stdout = oldStdin, oldStdout
 
-		self._report_new_message(currentStdout.getvalue())
+		stdoutData = currentStdout.getvalue().strip()
+		if stdoutData:
+			self._report_new_message(stdoutData)
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def Close(self):
@@ -208,3 +211,12 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 
 	def help_send_sms(self):
 		self._report_new_message("\n".join(["send_sms NUMBER MESSAGE0 MESSAGE1 ...", "Send an sms to number NUMBER"]))
+
+	def do_version(self, args):
+		if args:
+			self._report_new_message("No arguments supported")
+			return
+		self._report_new_message("%s-%s" % (constants.__version__, constants.__build__))
+
+	def help_version(self):
+		self._report_new_message("Prints the version (hint: %s-%s)" % (constants.__version__, constants.__build__))
