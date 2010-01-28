@@ -47,13 +47,22 @@ class Addressbook(object):
 		return self._numbers.iterkeys()
 
 	def get_contact_name(self, strippedNumber):
+		"""
+		@throws KeyError if contact not in list (so client can choose what to display)
+		"""
 		return self._numbers[strippedNumber][0]
 
 	def get_phone_type(self, strippedNumber):
-		return self._numbers[strippedNumber][1]
+		try:
+			return self._numbers[strippedNumber][1]
+		except KeyError:
+			return "unknown"
 
 	def is_blocked(self, strippedNumber):
-		return self._numbers[strippedNumber][1]["response"] == self._RESPONSE_BLOCKED
+		try:
+			return self._numbers[strippedNumber][1]["response"] == self._RESPONSE_BLOCKED
+		except KeyError:
+			return False
 
 	def _populate_contacts(self):
 		if self._numbers:

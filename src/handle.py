@@ -52,14 +52,6 @@ class ContactHandle(TheOneRingHandle):
 	def phoneNumber(self):
 		return self._phoneNumber
 
-	@property
-	def contact_name(self):
-		return self._conn.session.addressbook.get_contact_name(self.phoneNumber)
-
-	@property
-	def contactDetails(self):
-		return self._conn.session.addressbook.get_phone_type(self.phoneNumber)
-
 
 class ListHandle(TheOneRingHandle):
 
