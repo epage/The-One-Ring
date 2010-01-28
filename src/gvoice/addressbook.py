@@ -12,6 +12,9 @@ _moduleLogger = logging.getLogger("gvoice.addressbook")
 
 class Addressbook(object):
 
+	_RESPONSE_GOOD = 0
+	_RESPONSE_BLOCKED = 3
+
 	def __init__(self, backend):
 		self._backend = backend
 		self._numbers = {}
@@ -49,6 +52,9 @@ class Addressbook(object):
 	def get_phone_type(self, strippedNumber):
 		return self._numbers[strippedNumber][1]
 
+	def is_blocked(self, strippedNumber):
+		return self._numbers[strippedNumber][1]["response"] == self._RESPONSE_BLOCKED
+
 	def _populate_contacts(self):
 		if self._numbers:
 			return
@@ -59,6 +65,7 @@ class Addressbook(object):
 				(
 					numberDetails.get("phoneType", "Mobile"),
 					util_misc.normalize_number(numberDetails["phoneNumber"]),
+					contactDetails,
 				)
 				for numberDetails in contactDetails["numbers"]
 			)
