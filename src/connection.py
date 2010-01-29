@@ -223,14 +223,14 @@ class TheOneRingConnection(
 		"""
 		For org.freedesktop.telepathy.Connection
 		"""
-		self.StatusChanged(
-			telepathy.CONNECTION_STATUS_DISCONNECTED,
-			telepathy.CONNECTION_STATUS_REASON_REQUESTED
-		)
 		try:
 			self._disconnect()
 		except Exception:
 			_moduleLogger.exception("Error durring disconnect")
+		self.StatusChanged(
+			telepathy.CONNECTION_STATUS_DISCONNECTED,
+			telepathy.CONNECTION_STATUS_REASON_REQUESTED
+		)
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def RequestChannel(self, type, handleType, handleId, suppressHandler):
