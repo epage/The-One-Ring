@@ -67,7 +67,7 @@ class Session(object):
 		self._voicemailsStateMachine.set_state_strategy(
 			state_machine.StateMachine.STATE_IDLE,
 			state_machine.ConstantStateStrategy(
-				min(voicemailPeriodInSeconds * 4, self._MINIMUM_MESSAGE_PERIOD)
+				max(voicemailPeriodInSeconds * 4, self._MINIMUM_MESSAGE_PERIOD)
 			)
 		)
 		self._voicemailsStateMachine.set_state_strategy(
@@ -90,7 +90,7 @@ class Session(object):
 		self._textsStateMachine.set_state_strategy(
 			state_machine.StateMachine.STATE_IDLE,
 			state_machine.ConstantStateStrategy(
-				min(textsPeriodInSeconds * 4, self._MINIMUM_MESSAGE_PERIOD)
+				max(textsPeriodInSeconds * 4, self._MINIMUM_MESSAGE_PERIOD)
 			)
 		)
 		self._textsStateMachine.set_state_strategy(
