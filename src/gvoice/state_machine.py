@@ -51,6 +51,9 @@ class NopStateStrategy(object):
 	def timeout(self):
 		return UpdateStateMachine.INFINITE_PERIOD
 
+	def __repr__(self):
+		return "NopStateStrategy()"
+
 
 class ConstantStateStrategy(object):
 
@@ -67,6 +70,9 @@ class ConstantStateStrategy(object):
 	@property
 	def timeout(self):
 		return self._timeout
+
+	def __repr__(self):
+		return "ConstantStateStrategy(timeout=%r)" % self._timeout
 
 
 class GeometricStateStrategy(object):
@@ -93,6 +99,11 @@ class GeometricStateStrategy(object):
 	def timeout(self):
 		timeout = self._init + self._current
 		return timeout
+
+	def __repr__(self):
+		return "GeometricStateStrategy(init=%r, min=%r, max=%r)" % (
+			self._init, self._min, self._max
+		)
 
 
 class StateMachine(object):
@@ -174,6 +185,12 @@ class UpdateStateMachine(StateMachine):
 				self._request_reset_timers
 			)
 		)
+
+	def __repr__(self):
+		return """UpdateStateMachine(
+	name=%r,
+	strategie=%r,
+)""" % (self._name, self._strategies)
 
 	def set_state_strategy(self, state, strategy):
 		self._strategies[state] = strategy

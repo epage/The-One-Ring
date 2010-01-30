@@ -220,3 +220,20 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 
 	def help_version(self):
 		self._report_new_message("Prints the version (hint: %s-%s)" % (constants.__version__, constants.__build__))
+
+	def do_get_polling(self, args):
+		if args:
+			self._report_new_message("No arguments supported")
+			return
+		self._report_new_message("\n".join((
+			"Contacts:", repr(self._conn.session.addressbookStateMachine)
+		)))
+		self._report_new_message("\n".join((
+			"Voicemail:", repr(self._conn.session.voicemailsStateMachine)
+		)))
+		self._report_new_message("\n".join((
+			"Texts:", repr(self._conn.session.textsStateMachine)
+		)))
+
+	def help_get_polling(self):
+		self._report_new_message("Prints the frequency each of the state machines updates")
