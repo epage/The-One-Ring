@@ -36,10 +36,22 @@ class TheOneRingOptions(object):
 
 	useGVContacts = True
 
+	assert gvoice.session.Session._DEFAULTS["contacts"][1] == "hours"
+	contactsPollPeriodInHours = gvoice.session.Session._DEFAULTS["contacts"][0]
+
+	assert gvoice.session.Session._DEFAULTS["voicemail"][1] == "minutes"
+	voicemailPollPeriodInMinutes = gvoice.session.Session._DEFAULTS["voicemail"][0]
+
+	assert gvoice.session.Session._DEFAULTS["texts"][1] == "minutes"
+	textsPollPeriodInMinutes = gvoice.session.Session._DEFAULTS["texts"][0]
+
 	def __init__(self, parameters = None):
 		if parameters is None:
 			return
 		self.useGVContacts = parameters["use-gv-contacts"]
+		self.contactsPollPeriodInHours = parameters['contacts-poll-period-in-hours']
+		self.voicemailPollPeriodInMinutes = parameters['voicemail-poll-period-in-minutes']
+		self.textsPollPeriodInMinutes = parameters['texts-poll-period-in-minutes']
 
 
 class TheOneRingConnection(
@@ -54,17 +66,23 @@ class TheOneRingConnection(
 
 	# overiding base class variable
 	_mandatory_parameters = {
-		'account' : 's',
-		'password' : 's',
+		'account': 's',
+		'password': 's',
 	}
 	# overiding base class variable
 	_optional_parameters = {
-		'forward' : 's',
-		'use-gv-contacts' : 'b',
+		'forward': 's',
+		'use-gv-contacts': 'b',
+		'contacts-poll-period': 'i',
+		'voicemail-poll-period': 'i',
+		'texts-poll-period': 'i',
 	}
 	_parameter_defaults = {
-		'forward' : '',
-		'use-gv-contacts' : TheOneRingOptions.useGVContacts,
+		'forward': '',
+		'use-gv-contacts': TheOneRingOptions.useGVContacts,
+		'contacts-poll-period-in-hours': TheOneRingOptions.contactsPollPeriodInHours,
+		'voicemail-poll-period-in-minutes': TheOneRingOptions.voicemailPollPeriodInMinutes,
+		'texts-poll-period-in-minutes': TheOneRingOptions.textsPollPeriodInMinutes,
 	}
 	_secret_parameters = set((
 		"password",

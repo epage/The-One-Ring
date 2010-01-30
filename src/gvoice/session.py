@@ -15,12 +15,31 @@ _moduleLogger = logging.getLogger("gvoice.session")
 
 class Session(object):
 
-	def __init__(self, cookiePath = None):
+	_DEFAULTS = {
+		"contacts": (3, "hours"),
+		"voicemail": (30, "minutes"),
+		"texts": (5, "minutes"),
+	}
+
+	_MINIMUM_MESSAGE_PERIOD = state_machine.to_seconds(minutes=30)
+
+	def __init__(self, cookiePath = None, defaults = None):
+		if defaults is None:
+			defaults = self._DEFAULTS
+		else:
+			for key, (quant, unit) in defaults.iteritems():
+				if quant == 0:
+					defaults[key] = self._DEFAULTS[key]
+				elif quant < 0:
+					defaults[key] = state_machine.INFINITE_PERIOD
 		self._username = None
 		self._password = None
 
 		self._backend = backend.GVoiceBackend(cookiePath)
 
+		contactsPeriodInSeconds = state_machine.to_seconds(
+			**{defaults["contacts"][1]: defaults["contacts"][0],}
+		)
 		self._addressbook = addressbook.Addressbook(self._backend)
 		self._addressbookStateMachine = state_machine.UpdateStateMachine([self.addressbook], "Addressbook")
 		self._addressbookStateMachine.set_state_strategy(
@@ -33,9 +52,12 @@ class Session(object):
 		)
 		self._addressbookStateMachine.set_state_strategy(
 			state_machine.StateMachine.STATE_ACTIVE,
-			state_machine.ConstantStateStrategy(state_machine.to_seconds(hours=3))
+			state_machine.ConstantStateStrategy(contactsPeriodInSeconds)
 		)
 
+		voicemailPeriodInSeconds = state_machine.to_seconds(
+			**{defaults["voicemail"][1]: defaults["voicemail"][0],}
+		)
 		self._voicemails = conversations.Conversations(self._backend.get_voicemails)
 		self._voicemailsStateMachine = state_machine.UpdateStateMachine([self.voicemails], "Voicemail")
 		self._voicemailsStateMachine.set_state_strategy(
@@ -44,16 +66,21 @@ class Session(object):
 		)
 		self._voicemailsStateMachine.set_state_strategy(
 			state_machine.StateMachine.STATE_IDLE,
-			state_machine.ConstantStateStrategy(state_machine.to_seconds(hours=2))
+			state_machine.ConstantStateStrategy(
+				min(voicemailPeriodInSeconds * 4, self._MINIMUM_MESSAGE_PERIOD)
+			)
 		)
 		self._voicemailsStateMachine.set_state_strategy(
 			state_machine.StateMachine.STATE_ACTIVE,
-			state_machine.ConstantStateStrategy(state_machine.to_seconds(minutes=30))
+			state_machine.ConstantStateStrategy(voicemailPeriodInSeconds)
 		)
 		self._voicemails.updateSignalHandler.register_sink(
 			self._voicemailsStateMachine.request_reset_timers
 		)
 
+		textsPeriodInSeconds = state_machine.to_seconds(
+			**{defaults["texts"][1]: defaults["texts"][0],}
+		)
 		self._texts = conversations.Conversations(self._backend.get_texts)
 		self._textsStateMachine = state_machine.UpdateStateMachine([self.texts], "Texting")
 		self._textsStateMachine.set_state_strategy(
@@ -62,14 +89,16 @@ class Session(object):
 		)
 		self._textsStateMachine.set_state_strategy(
 			state_machine.StateMachine.STATE_IDLE,
-			state_machine.ConstantStateStrategy(state_machine.to_seconds(minutes=30))
+			state_machine.ConstantStateStrategy(
+				min(textsPeriodInSeconds * 4, self._MINIMUM_MESSAGE_PERIOD)
+			)
 		)
 		self._textsStateMachine.set_state_strategy(
 			state_machine.StateMachine.STATE_ACTIVE,
 			state_machine.GeometricStateStrategy(
 				state_machine.to_seconds(seconds=20),
 				state_machine.to_seconds(seconds=1),
-				state_machine.to_seconds(minutes=30),
+				textsPeriodInSeconds,
 			)
 		)
 		self._texts.updateSignalHandler.register_sink(
