@@ -32,14 +32,14 @@ IconName = general_presence_invisible
 Type = 5
 
 [Action chat]
-Name = GV SMS
-IconName = general_sms
+Name = addr_bd_cont_starter_im_service_chat
+IconName = im-theonering
 VCardFields = X-GV,TEL
 prop-org.freedesktop.Telepathy.Channel.ChannelType-s = org.freedesktop.Telepathy.Channel.Type.Text
 
 [Action call]
-Name = GV Callback
-IconName = general_call
+Name = addr_bd_cont_starter_im_service_call
+IconName = im-theonering
 VCardFields = X-GV,TEL
 prop-org.freedesktop.Telepathy.Channel.ChannelType-s = org.freedesktop.Telepathy.Channel.Type.StreamedMedia
 
