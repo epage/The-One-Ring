@@ -1,3 +1,6 @@
+from __future__ import with_statement
+
+import os
 import cmd
 import StringIO
 import time
@@ -184,12 +187,12 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 		self._report_new_message("Print the callback number currently enabled")
 
 	def do_call(self, args):
-		if len(args) != 1:
+		if not args:
 			self._report_new_message("Must specify the phone number and only the phone nunber")
 			return
 
 		try:
-			number = args[0]
+			number = args
 			self._conn.session.backend.call(number)
 		except Exception, e:
 			self._report_new_message(str(e))
@@ -198,6 +201,7 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 		self._report_new_message("\n".join(["call NUMBER", "Initiate a callback, Google forwarding the call to the callback number"]))
 
 	def do_send_sms(self, args):
+		args = args.split(" ")
 		if 1 < len(args):
 			self._report_new_message("Must specify the phone number and then message")
 			return
@@ -242,9 +246,31 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 		if args:
 			self._report_new_message("No arguments supported")
 			return
-		publishProps = self._conn._generate_props(telepathy.CHANNEL_TYPE_FILE_TRANSFER, self.__otherHandle, False)
-		self._conn._channel_manager.channel_for_props(publishProps, signal=True)
+
+		try:
+			publishProps = self._conn._generate_props(telepathy.CHANNEL_TYPE_FILE_TRANSFER, self.__otherHandle, False)
+			self._conn._channel_manager.channel_for_props(publishProps, signal=True)
+		except Exception, e:
+			self._report_new_message(str(e))
 
 	def help_grab_log(self):
 		self._report_new_message("Download the debug log for including with bug report")
 		self._report_new_message("Warning: this may contain sensitive information")
+
+	def do_save_log(self, args):
+		if not args:
+			self._report_new_message("Must specify a filename to save the log to")
+			return
+
+		try:
+			filename = os.path.expanduser(args)
+			with open(constants._user_logpath_, "r") as f:
+				logLines = f.xreadlines()
+				log = "".join(logLines)
+			with open(filename, "w") as f:
+				f.write(log)
+		except Exception, e:
+			self._report_new_message(str(e))
+
+	def help_save_log(self):
+		self._report_new_message("Save the log to a specified location")
