@@ -34,7 +34,7 @@ import constants
 import connection_manager
 
 
-IDLE_TIMEOUT = 5000
+IDLE_TIMEOUT = 5
 
 
 def run_theonering(persist):
@@ -60,7 +60,7 @@ def run_theonering(persist):
 	if persist:
 		shutdown_callback = None
 	else:
-		gobject.timeout_add(IDLE_TIMEOUT, timeout_cb)
+		gobject_utils.timeout_add_seconds(IDLE_TIMEOUT, timeout_cb)
 		shutdown_callback = quit
 
 	signal.signal(signal.SIGTERM, quit)

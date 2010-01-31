@@ -6,6 +6,7 @@ import telepathy
 import constants
 import tp
 import gtk_toolbox
+import util.go_utils as gobject_utils
 import connection
 
 
@@ -64,7 +65,7 @@ class TheOneRingConnectionManager(tp.ConnectionManager):
 		Overrides tp.ConnectionManager
 		"""
 		result = tp.ConnectionManager.disconnected(self, conn)
-		gobject.timeout_add(5000, self._shutdown)
+		gobject_utils.timeout_add_seconds(5, self._shutdown)
 
 	def quit(self):
 		"""
