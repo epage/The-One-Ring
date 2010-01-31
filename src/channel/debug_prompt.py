@@ -12,7 +12,7 @@ import gtk_toolbox
 import gvoice
 
 
-_moduleLogger = logging.getLogger("channel.text")
+_moduleLogger = logging.getLogger("channel.debug_prompt")
 
 
 class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
@@ -237,3 +237,14 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 
 	def help_get_polling(self):
 		self._report_new_message("Prints the frequency each of the state machines updates")
+
+	def do_grab_log(self, args):
+		if args:
+			self._report_new_message("No arguments supported")
+			return
+		publishProps = self._conn._generate_props(telepathy.CHANNEL_TYPE_FILE_TRANSFER, self.__otherHandle, False)
+		self._conn._channel_manager.channel_for_props(publishProps, signal=True)
+
+	def help_grab_log(self):
+		self._report_new_message("Download the debug log for including with bug report")
+		self._report_new_message("Warning: this may contain sensitive information")
