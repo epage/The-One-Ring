@@ -41,8 +41,9 @@ class MozillaEmulator(object):
 	def __init__(self, trycount = 1):
 		"""Create a new MozillaEmulator object.
 
-		@param trycount: The download() method will retry the operation if it fails. You can specify -1 for infinite retrying.
-			 A value of 0 means no retrying. A value of 1 means one retry. etc."""
+		@param trycount: The download() method will retry the operation if it
+		fails. You can specify -1 for infinite retrying.  A value of 0 means no
+		retrying. A value of 1 means one retry. etc."""
 		self.debug = False
 		self.trycount = trycount
 		self._cookies = cookielib.LWPCookieJar()
