@@ -34,6 +34,22 @@ __email__ = "eopage@byu.net"
 __version__ = constants.__version__
 __build__ = constants.__build__
 __changelog__ = """
+0.7.2
+* Added a Deny list
+* Added option to make GV Contacts optional
+* Added a limit, where if a state machine period is longer than it, than we set the period to infinite
+* Delayed when we say the connection is disconnected to hopefully help random issues
+* Tweaked how The One Ring shows up in the addressbook (Maemo 5)
+* Made polling configurable
+* Delayed auto-disconnect in case the user is just switching network connections (Maemo 4.1)
+* Bugfix: Removed superfluous blank message from debug prompt
+* Bugfix: Moved some more (very minor, very rarely used) timeouts to second resolution reducing overhead
+* Bugfix: debug prompt commands handled command validation poorly
+* Debug Prompt: Added a "version" command
+* Debug Prompt: Added a "get_polling" command to find out what the actual polling periods are
+* Debug Prompt: Added a "grab_log" command which is a broken but means to offer the log file through a file transfer
+* Debug Prompt: Added a "save_log" command to help till grab_log works and for where file transfers aren't supported by clients
+
 0.7.1
 * Reducing the race window where GV will mark messages as read accidently
 * Modified some things blindly "because thats what Butterfly does"
