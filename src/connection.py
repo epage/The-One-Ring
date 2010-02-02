@@ -75,9 +75,9 @@ class TheOneRingConnection(
 	_optional_parameters = {
 		'forward': 's',
 		'use-gv-contacts': 'b',
-		'contacts-poll-period': 'i',
-		'voicemail-poll-period': 'i',
-		'texts-poll-period': 'i',
+		'contacts-poll-period-in-hours': 'i',
+		'voicemail-poll-period-in-minutes': 'i',
+		'texts-poll-period-in-minutes': 'i',
 	}
 	_parameter_defaults = {
 		'forward': '',
