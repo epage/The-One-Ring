@@ -60,7 +60,7 @@ class Addressbook(object):
 
 	def is_blocked(self, strippedNumber):
 		try:
-			return self._numbers[strippedNumber][1]["response"] == self._RESPONSE_BLOCKED
+			return self._numbers[strippedNumber][2]["response"] == self._RESPONSE_BLOCKED
 		except KeyError:
 			return False
 
