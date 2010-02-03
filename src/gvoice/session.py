@@ -31,15 +31,18 @@ class Session(object):
 				if quant == 0:
 					defaults[key] = self._DEFAULTS[key]
 				elif quant < 0:
-					defaults[key] = state_machine.INFINITE_PERIOD
+					defaults[key] = state_machine.UpdateStateMachine.INFINITE_PERIOD
 		self._username = None
 		self._password = None
 
 		self._backend = backend.GVoiceBackend(cookiePath)
 
-		contactsPeriodInSeconds = state_machine.to_seconds(
-			**{defaults["contacts"][1]: defaults["contacts"][0],}
-		)
+		if defaults["contacts"][0] == state_machine.UpdateStateMachine.INFINITE_PERIOD:
+			contactsPeriodInSeconds = state_machine.UpdateStateMachine.INFINITE_PERIOD
+		else:
+			contactsPeriodInSeconds = state_machine.to_seconds(
+				**{defaults["contacts"][1]: defaults["contacts"][0],}
+			)
 		self._addressbook = addressbook.Addressbook(self._backend)
 		self._addressbookStateMachine = state_machine.UpdateStateMachine([self.addressbook], "Addressbook")
 		self._addressbookStateMachine.set_state_strategy(
@@ -55,9 +58,12 @@ class Session(object):
 			state_machine.ConstantStateStrategy(contactsPeriodInSeconds)
 		)
 
-		voicemailPeriodInSeconds = state_machine.to_seconds(
-			**{defaults["voicemail"][1]: defaults["voicemail"][0],}
-		)
+		if defaults["voicemail"][0] == state_machine.UpdateStateMachine.INFINITE_PERIOD:
+			voicemailPeriodInSeconds = state_machine.UpdateStateMachine.INFINITE_PERIOD
+		else:
+			voicemailPeriodInSeconds = state_machine.to_seconds(
+				**{defaults["voicemail"][1]: defaults["voicemail"][0],}
+			)
 		self._voicemails = conversations.Conversations(self._backend.get_voicemails)
 		self._voicemailsStateMachine = state_machine.UpdateStateMachine([self.voicemails], "Voicemail")
 		self._voicemailsStateMachine.set_state_strategy(
@@ -78,9 +84,12 @@ class Session(object):
 			self._voicemailsStateMachine.request_reset_timers
 		)
 
-		textsPeriodInSeconds = state_machine.to_seconds(
-			**{defaults["texts"][1]: defaults["texts"][0],}
-		)
+		if defaults["texts"][0] == state_machine.UpdateStateMachine.INFINITE_PERIOD:
+			textsPeriodInSeconds = state_machine.UpdateStateMachine.INFINITE_PERIOD
+		else:
+			textsPeriodInSeconds = state_machine.to_seconds(
+				**{defaults["texts"][1]: defaults["texts"][0],}
+			)
 		self._texts = conversations.Conversations(self._backend.get_texts)
 		self._textsStateMachine = state_machine.UpdateStateMachine([self.texts], "Texting")
 		self._textsStateMachine.set_state_strategy(
