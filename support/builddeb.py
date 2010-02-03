@@ -34,6 +34,9 @@ __email__ = "eopage@byu.net"
 __version__ = constants.__version__
 __build__ = constants.__build__
 __changelog__ = """
+0.7.4
+* Fixing a bug with deny-lists
+
 0.7.3
 * Fixing bug with being able to configure polling times
 
