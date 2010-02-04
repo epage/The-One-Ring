@@ -44,6 +44,9 @@ class NopStateStrategy(object):
 	def initialize_state(self):
 		pass
 
+	def reinitialize_state(self):
+		pass
+
 	def increment_state(self):
 		pass
 
@@ -64,6 +67,9 @@ class ConstantStateStrategy(object):
 	def initialize_state(self):
 		pass
 
+	def reinitialize_state(self):
+		pass
+
 	def increment_state(self):
 		pass
 
@@ -78,8 +84,8 @@ class ConstantStateStrategy(object):
 class GeometricStateStrategy(object):
 
 	def __init__(self, init, min, max):
-		assert 0 < init and init < max and init != UpdateStateMachine.INFINITE_PERIOD
-		assert 0 < min and min != UpdateStateMachine.INFINITE_PERIOD
+		assert 0 < init and init < max or init == UpdateStateMachine.INFINITE_PERIOD
+		assert 0 < min or min == UpdateStateMachine.INFINITE_PERIOD
 		assert min < max or max == UpdateStateMachine.INFINITE_PERIOD
 		self._min = min
 		self._max = max
@@ -87,17 +93,27 @@ class GeometricStateStrategy(object):
 		self._current = 0
 
 	def initialize_state(self):
+		self._current = self._max
+
+	def reinitialize_state(self):
 		self._current = self._min
 
 	def increment_state(self):
-		if self._max == UpdateStateMachine.INFINITE_PERIOD:
+		if self._current == UpdateStateMachine.INFINITE_PERIOD:
+			pass
+		if self._init == UpdateStateMachine.INFINITE_PERIOD:
+			self._current = UpdateStateMachine.INFINITE_PERIOD
+		elif self._max == UpdateStateMachine.INFINITE_PERIOD:
 			self._current *= 2
 		else:
 			self._current = min(2 * self._current, self._max - self._init)
 
 	@property
 	def timeout(self):
-		timeout = self._init + self._current
+		if UpdateStateMachine.INFINITE_PERIOD in (self._init, self._current):
+			timeout = UpdateStateMachine.INFINITE_PERIOD
+		else:
+			timeout = self._init + self._current
 		return timeout
 
 	def __repr__(self):
@@ -244,7 +260,7 @@ class UpdateStateMachine(StateMachine):
 		if self._timeoutId is None:
 			return # not started yet
 		self._stop_update()
-		self._strategy.initialize_state()
+		self._strategy.reinitialize_state()
 		self._schedule_update()
 
 	def _stop_update(self):
@@ -258,8 +274,11 @@ class UpdateStateMachine(StateMachine):
 		self._strategy.increment_state()
 		nextTimeout = self._strategy.timeout
 		if nextTimeout != self.INFINITE_PERIOD and nextTimeout < self._maxTime:
+			assert 0 < nextTimeout
 			self._timeoutId = gobject_utils.timeout_add_seconds(nextTimeout, self._on_timeout)
-		_moduleLogger.info("%s Next update in %s seconds" % (self._name, nextTimeout, ))
+			_moduleLogger.info("%s Next update in %s seconds" % (self._name, nextTimeout, ))
+		else:
+			_moduleLogger.info("%s No further updates (timeout is %s seconds)" % (self._name, nextTimeout, ))
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def _on_timeout(self):
