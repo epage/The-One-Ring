@@ -241,7 +241,6 @@ class UpdateStateMachine(StateMachine):
 		return self._state
 
 	def reset_timers(self):
-		_moduleLogger.info("%s Resetting State Machine" % (self._name, ))
 		self._reset_timers()
 
 	@property
@@ -259,6 +258,7 @@ class UpdateStateMachine(StateMachine):
 	def _reset_timers(self):
 		if self._timeoutId is None:
 			return # not started yet
+		_moduleLogger.info("%s Resetting State Machine" % (self._name, ))
 		self._stop_update()
 		self._strategy.reinitialize_state()
 		self._schedule_update()
