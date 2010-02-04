@@ -71,18 +71,32 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 		self.__nextRecievedId += 1
 
 	def do_reset_state_machine(self, args):
-		if args:
-			self._report_new_message("No arguments supported")
-			return
-
 		try:
-			for machine in self._conn.session.stateMachine._machines:
-				machine.reset_timers()
+			args = args.strip().lower()
+			if not args:
+				args  = "all"
+			if args == "all":
+				for machine in self._conn.session.stateMachine._machines:
+					machine.reset_timers()
+			elif args == "contacts":
+				self._conn.session.addressbookStateMachine.reset_timers()
+			elif args == "voicemail":
+				self._conn.session.voicemailsStateMachine.reset_timers()
+			elif args == "texts":
+				self._conn.session.textsStateMachine.reset_timers()
+			else:
+				self._report_new_message('Unknown machine "%s"' % (args, ))
 		except Exception, e:
 			self._report_new_message(str(e))
 
 	def help_reset_state_machine(self):
-		self._report_new_message("Reset the refreshing state machine")
+		self._report_new_message("""Reset the refreshing state machine.
+"reset_state_machine" - resets all
+"reset_state_machine all"
+"reset_state_machine contacts"
+"reset_state_machine voicemail"
+"reset_state_machine texts"
+""")
 
 	def do_get_state(self, args):
 		if args:
