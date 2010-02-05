@@ -34,6 +34,11 @@ __email__ = "eopage@byu.net"
 __version__ = constants.__version__
 __build__ = constants.__build__
 __changelog__ = """
+0.7.6
+* On login, polling now starts at the max time rather than the min, reducing overhead
+* Bugfix: Polling configuration wasn't actually hooked up to anything
+* Debug Prompt: Made it so you can either reset one or all state machines (Rather than just all)
+
 0.7.5
 * Fixing a polling time bug introduced when making polling configurable
 
