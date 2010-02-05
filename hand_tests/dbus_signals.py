@@ -9,12 +9,7 @@ import telepathy
 DBUS_PROPERTIES = 'org.freedesktop.DBus.Properties'
 
 
-class AutoAcceptAttempt(object):
-	# @todo Make this more composable by just checking for incoming call.  Why
-	# incoming rather than just call?  Because it has more demands on what
-	# properties to get which we can then get them in parallel.  The callback
-	# would then chose to pickup based on the caller's number, wait to see if
-	# the call is ignored/rejected, etc
+class AutoAcceptCall(object):
 
 	def __init__(self, bus, conn, chan):
 		self._sessionBus = bus
@@ -109,14 +104,11 @@ class AutoAcceptAttempt(object):
 		print "ERROR", args
 
 
-class AutoAcceptCall(object):
-	# @todo Make this more composable by switchig it to just handle monitoring
-	# for new channels.  Other the callback on a new channel will filter for
-	# channel type.
+class NewChannelSignaller(object):
 
-	def __init__(self):
+	def __init__(self, on_new_channel):
 		self._sessionBus = dbus.SessionBus()
-		self._activeAttempts = []
+		self._on_new_channel = on_new_channel
 
 	def start(self):
 		self._sessionBus.add_signal_receiver(
@@ -127,26 +119,44 @@ class AutoAcceptCall(object):
 			None
 		)
 
-	def _on_new_channel(self, channelObjectPath, channelType, handleType, handle, supressHandler):
-		if channelType != telepathy.interfaces.CHANNEL_TYPE_STREAMED_MEDIA:
-			return
+	def stop(self):
+		self._sessionBus.remove_signal_receiver(
+			self._on_new_channel,
+			"NewChannel",
+			"org.freedesktop.Telepathy.Connection",
+			None,
+			None
+		)
 
+	def _on_new_channel(
+		self, channelObjectPath, channelType, handleType, handle, supressHandler
+	):
 		connObjectPath = channelObjectPath.rsplit("/", 1)[0][1:]
 		serviceName = connObjectPath.replace("/", ".")
 		conn = telepathy.client.Channel(serviceName, connObjectPath)
 		chan = telepathy.client.Channel(serviceName, channelObjectPath)
+		self._on_new_channel(self._sessionBus, conn, chan, channelType)
+
+
+class Manager(object):
+
+	def __init__(self):
+		self._newChannelSignaller = NewChannelSignaller(self._on_new_channel)
+		self._activeAttempts = []
+
+	def _on_new_channel(self, bus, conn, chan, channelType):
+		if channelType != telepathy.interfaces.CHANNEL_TYPE_STREAMED_MEDIA:
+			return
+
 		# @bug does not distinguish between preferred CMs
 		# @todo Need a way to be notified on error, ignored, or if picked up
-		attemptPickup = AutoAcceptAttempt(self._sessionBus, conn, chan)
+		attemptPickup = AutoAcceptCall(bus, conn, chan)
 		self._activeAttempts.append(attemptPickup)
-
-	def _on_nothing(*args):
-		print "ERROR", args
 
 
 if __name__ == "__main__":
 	l = dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
-	autoaccept = AutoAcceptCall()
+	autoaccept = Manager()
 
 	gobject.threads_init()
 	gobject.idle_add(autoaccept.start)
