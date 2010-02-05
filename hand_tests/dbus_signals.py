@@ -10,9 +10,15 @@ DBUS_PROPERTIES = 'org.freedesktop.DBus.Properties'
 
 
 class AutoAcceptAttempt(object):
+	# @todo Make this more composable by just checking for incoming call.  Why
+	# incoming rather than just call?  Because it has more demands on what
+	# properties to get which we can then get them in parallel.  The callback
+	# would then chose to pickup based on the caller's number, wait to see if
+	# the call is ignored/rejected, etc
 
-	def __init__(self, bus, chan):
+	def __init__(self, bus, conn, chan):
 		self._sessionBus = bus
+		self._conn = conn
 		self._chan = chan
 
 		self._selfHandle = None
@@ -24,14 +30,14 @@ class AutoAcceptAttempt(object):
 
 		if False:
 			# @bug Unsure why this isn't working
-			self._chan[DBUS_PROPERTIES].Get(
+			self._conn[DBUS_PROPERTIES].Get(
 				telepathy.interfaces.CONNECTION_INTERFACE,
 				'SelfHandle',
 				reply_handler = self._on_got_self_handle,
 				error_handler = self._on_nothing,
 			)
 		else:
-			self._chan[telepathy.interfaces.CHANNEL_INTERFACE_GROUP].GetSelfHandle(
+			self._conn[telepathy.interfaces.CHANNEL_INTERFACE_GROUP].GetSelfHandle(
 				reply_handler = self._on_got_self_handle,
 				error_handler = self._on_nothing,
 			)
@@ -104,6 +110,9 @@ class AutoAcceptAttempt(object):
 
 
 class AutoAcceptCall(object):
+	# @todo Make this more composable by switchig it to just handle monitoring
+	# for new channels.  Other the callback on a new channel will filter for
+	# channel type.
 
 	def __init__(self):
 		self._sessionBus = dbus.SessionBus()
@@ -122,11 +131,13 @@ class AutoAcceptCall(object):
 		if channelType != telepathy.interfaces.CHANNEL_TYPE_STREAMED_MEDIA:
 			return
 
-		serviceName = channelObjectPath.rsplit("/", 1)[0][1:].replace("/", ".")
+		connObjectPath = channelObjectPath.rsplit("/", 1)[0][1:]
+		serviceName = connObjectPath.replace("/", ".")
+		conn = telepathy.client.Channel(serviceName, connObjectPath)
 		chan = telepathy.client.Channel(serviceName, channelObjectPath)
 		# @bug does not distinguish between preferred CMs
 		# @todo Need a way to be notified on error, ignored, or if picked up
-		attemptPickup = AutoAcceptAttempt(self._sessionBus, chan)
+		attemptPickup = AutoAcceptAttempt(self._sessionBus, conn, chan)
 		self._activeAttempts.append(attemptPickup)
 
 	def _on_nothing(*args):
