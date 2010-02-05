@@ -29,9 +29,9 @@ class Session(object):
 		else:
 			for key, (quant, unit) in defaults.iteritems():
 				if quant == 0:
-					defaults[key] = self._DEFAULTS[key]
+					defaults[key] = (self._DEFAULTS[key], unit)
 				elif quant < 0:
-					defaults[key] = state_machine.UpdateStateMachine.INFINITE_PERIOD
+					defaults[key] = (state_machine.UpdateStateMachine.INFINITE_PERIOD, unit)
 		self._username = None
 		self._password = None
 

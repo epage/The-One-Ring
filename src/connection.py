@@ -101,8 +101,15 @@ class TheOneRingConnection(
 			raise telepathy.errors.InvalidArgument("Invalid forwarding number")
 
 		# Connection init must come first
-		self.__session = gvoice.session.Session(None)
 		self.__options = TheOneRingOptions(parameters)
+		self.__session = gvoice.session.Session(
+			cookiePath = None,
+			defaults = {
+				"contacts": (self.__options.contactsPollPeriodInHours, "hours"),
+				"voicemail": (self.__options.voicemailPollPeriodInMinutes, "minutes"),
+				"texts": (self.__options.textsPollPeriodInMinutes, "minutes"),
+			},
+		)
 		tp.Connection.__init__(
 			self,
 			constants._telepathy_protocol_name_,
