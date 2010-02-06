@@ -57,8 +57,6 @@ class AutoAcceptCall(object):
 
 	def is_inbound(self):
 		isInbound = self._targetHandle == self._initiatorHandle
-		print "is_inbound", self._targetHandle, self._initiatorHandle
-		print "is_inbound", self._targetID, self._initiatorID
 		return isInbound
 
 	@property
