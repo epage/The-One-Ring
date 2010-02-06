@@ -234,7 +234,7 @@ class UpdateStateMachine(StateMachine):
 		_moduleLogger.info("%s Transitioning from %s to %s" % (self._name, oldState, newState))
 
 		self._state = newState
-		self._reset_timers()
+		self._reset_timers(initialize=True)
 
 	@property
 	def state(self):
@@ -255,12 +255,15 @@ class UpdateStateMachine(StateMachine):
 	def _request_reset_timers(self, *args):
 		self._reset_timers()
 
-	def _reset_timers(self):
+	def _reset_timers(self, initialize=False):
 		if self._timeoutId is None:
 			return # not started yet
 		_moduleLogger.info("%s Resetting State Machine" % (self._name, ))
 		self._stop_update()
-		self._strategy.reinitialize_state()
+		if initialize:
+			self._strategy.initialize_state()
+		else:
+			self._strategy.reinitialize_state()
 		self._schedule_update()
 
 	def _stop_update(self):
