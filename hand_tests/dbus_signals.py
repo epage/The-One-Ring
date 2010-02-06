@@ -27,28 +27,11 @@ class AutoAcceptCall(object):
 		self._on_success = on_success
 		self._on_error = on_error
 
-		self._selfHandle = None
 		self._initiatorHandle = None
 		self._initiatorID = None
 		self._targetHandle = None
 		self._targetID = None
 		self._pendingHandles = None
-
-		if False:
-			# @bug Unsure why this isn't working
-			self._conn[DBUS_PROPERTIES].Get(
-				telepathy.interfaces.CONNECTION_INTERFACE,
-				'SelfHandle',
-				reply_handler = self._on_got_self_handle,
-				error_handler = self._custom_error(self._on_got_self_handle),
-			)
-		else:
-			self._conn[telepathy.interfaces.CONNECTION].GetSelfHandle(
-				reply_handler = self._on_got_self_handle,
-				error_handler = self._custom_error(self._on_got_self_handle),
-			)
-		self._outstandingRequests.append(self._on_got_self_handle)
-
 
 		self._chan[DBUS_PROPERTIES].GetAll(
 			telepathy.interfaces.CHANNEL_INTERFACE,
@@ -73,8 +56,8 @@ class AutoAcceptCall(object):
 		self._outstandingRequests.append(self._on_got_pending_members)
 
 	def is_inbound(self):
-		isInbound = self._selfHandle == self._targetHandle and self._selfHandle != self._initiatorHandle
-		print "is_inbound", self._selfHandle, self._targetHandle, self._initiatorHandle
+		isInbound = self._targetHandle == self._initiatorHandle
+		print "is_inbound", self._targetHandle, self._initiatorHandle
 		print "is_inbound", self._targetID, self._initiatorID
 		return isInbound
 
@@ -96,21 +79,21 @@ class AutoAcceptCall(object):
 
 	def _custom_on_accept(self, callback):
 
-		def on_accept(self):
+		def on_accept(*args):
 			callback(self)
 
 		return on_accept
 
 	def _custom_on_accept_error(self, callback):
 
-		def on_error(self, *args):
+		def on_error(*args):
 			callback(self, *args)
 
 		return on_error
 
 	def _custom_error(self, action):
 
-		def _on_error(self, *args):
+		def _on_error(*args):
 			_moduleLogger.error("Failed for %r (%r)" % (action, args))
 			self._outstandingRequests.remove(action)
 			if self._outstandingRequests:
@@ -127,7 +110,6 @@ class AutoAcceptCall(object):
 			return
 
 		assert None not in (
-			self._selfHandle,
 			self._initiatorHandle,
 			self._initiatorID,
 			self._targetHandle,
@@ -136,12 +118,6 @@ class AutoAcceptCall(object):
 		)
 
 		self._on_success(self)
-
-	@gtk_toolbox.log_exception(_moduleLogger)
-	def _on_got_self_handle(self, selfHandle):
-		self._selfHandle = selfHandle
-
-		self._report_callback_done(self._on_got_self_handle)
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def _on_got_all(self, properties):
