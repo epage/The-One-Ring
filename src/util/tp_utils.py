@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import logging
-import pprint
 
 import gobject
 import dbus
@@ -84,7 +83,6 @@ class WasMissedCall(object):
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def _on_members_changed(self, message, added, removed, lp, rp, actor, reason):
-		pprint.pprint((message, added, removed, lp, rp, actor, reason))
 		if added:
 			self._didMembersChange = True
 			self._report_missed_if_ready()
@@ -132,8 +130,32 @@ class NewChannelSignaller(object):
 	def _on_new_channel(
 		self, channelObjectPath, channelType, handleType, handle, supressHandler
 	):
-		connObjectPath = channelObjectPath.rsplit("/", 1)[0]
-		serviceName = connObjectPath[1:].replace("/", ".")
-		conn = telepathy.client.Connection(serviceName, connObjectPath)
-		chan = telepathy.client.Channel(serviceName, channelObjectPath)
-		self._on_user_new_channel(self._sessionBus, conn, chan, channelType)
+		connObjectPath = channel_path_to_conn_path(channelObjectPath)
+		serviceName = path_to_service_name(channelObjectPath)
+		self._on_user_new_channel(
+			self._sessionBus, serviceName, connObjectPath, channelObjectPath, channelType
+		)
+
+
+def channel_path_to_conn_path(channelObjectPath):
+	"""
+	>>> channel_path_to_conn_path("/org/freedesktop/Telepathy/ConnectionManager/theonering/sip/USERNAME/Channel1")
+	'/org/freedesktop/Telepathy/ConnectionManager/theonering/sip/USERNAME'
+	"""
+	return channelObjectPath.rsplit("/", 1)[0]
+
+
+def path_to_service_name(path):
+	"""
+	>>> path_to_service_name("/org/freedesktop/Telepathy/ConnectionManager/theonering/sip/USERNAME/Channel1")
+	'org.freedesktop.Telepathy.ConnectionManager.theonering.sip.USERNAME'
+	"""
+	return ".".join(path[1:].split("/")[0:7])
+
+
+def cm_from_path(path):
+	"""
+	>>> cm_from_path("/org/freedesktop/Telepathy/ConnectionManager/theonering/sip/USERNAME/Channel1")
+	'theonering'
+	"""
+	return path[1:].split("/")[4]

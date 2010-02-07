@@ -2,19 +2,10 @@ import os
 import weakref
 import logging
 
-import gobject
 import telepathy
-
-try:
-	import conic as _conic
-	conic = _conic
-except (ImportError, OSError):
-	conic = None
 
 import constants
 import tp
-import util.coroutines as coroutines
-import util.go_utils as gobject_utils
 import util.misc as util_misc
 import gtk_toolbox
 
@@ -28,6 +19,7 @@ import simple_presence
 import presence
 import capabilities
 
+import autogv
 import channel_manager
 
 
@@ -131,10 +123,6 @@ class TheOneRingConnection(
 		self.__callbackNumberParameter = encodedCallback
 		self.__channelManager = channel_manager.ChannelManager(self)
 
-		if conic is not None:
-			self.__connection = conic.Connection()
-		else:
-			self.__connection = None
 		self.__cachePath = os.sep.join((constants._data_path_, "cache", self.username))
 		try:
 			os.makedirs(self.__cachePath)
@@ -143,10 +131,12 @@ class TheOneRingConnection(
 				raise
 
 		self.set_self_handle(handle.create_handle(self, 'connection'))
+		self._plumbing = [
+			autogv.NewGVConversations(weakref.ref(self)),
+			autogv.RefreshVoicemail(weakref.ref(self)),
+			autogv.AutoDisconnect(weakref.ref(self)),
+		]
 
-		self.__callback = None
-		self.__connectionEventId = None
-		self.__delayedDisconnectEventId = None
 		_moduleLogger.info("Connection to the account %s created" % account)
 
 	@property
@@ -199,17 +189,8 @@ class TheOneRingConnection(
 		try:
 			self.__session.load(self.__cachePath)
 
-			self.__callback = coroutines.func_sink(
-				coroutines.expand_positional(
-					self._on_conversations_updated
-				)
-			)
-			self.session.voicemails.updateSignalHandler.register_sink(
-				self.__callback
-			)
-			self.session.texts.updateSignalHandler.register_sink(
-				self.__callback
-			)
+			for plumber in self._plumbing:
+				plumber.start()
 			self.session.login(*self.__credentials)
 			if not self.__callbackNumberParameter:
 				callback = gvoice.backend.get_sane_callback(
@@ -219,10 +200,10 @@ class TheOneRingConnection(
 			self.session.backend.set_callback_number(self.__callbackNumberParameter)
 
 			subscribeHandle = self.get_handle_by_name(telepathy.HANDLE_TYPE_LIST, "subscribe")
-			subscribeProps = self._generate_props(telepathy.CHANNEL_TYPE_CONTACT_LIST, subscribeHandle, False)
+			subscribeProps = self.generate_props(telepathy.CHANNEL_TYPE_CONTACT_LIST, subscribeHandle, False)
 			self.__channelManager.channel_for_props(subscribeProps, signal=True)
 			publishHandle = self.get_handle_by_name(telepathy.HANDLE_TYPE_LIST, "publish")
-			publishProps = self._generate_props(telepathy.CHANNEL_TYPE_CONTACT_LIST, publishHandle, False)
+			publishProps = self.generate_props(telepathy.CHANNEL_TYPE_CONTACT_LIST, publishHandle, False)
 			self.__channelManager.channel_for_props(publishProps, signal=True)
 		except gvoice.backend.NetworkError, e:
 			_moduleLogger.exception("Connection Failed")
@@ -244,8 +225,6 @@ class TheOneRingConnection(
 			telepathy.CONNECTION_STATUS_CONNECTED,
 			telepathy.CONNECTION_STATUS_REASON_REQUESTED
 		)
-		if self.__connection is not None:
-			self.__connectionEventId = self.__connection.connect("connection-event", self._on_connection_change)
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def Disconnect(self):
@@ -253,7 +232,7 @@ class TheOneRingConnection(
 		For org.freedesktop.telepathy.Connection
 		"""
 		try:
-			self._disconnect()
+			self.disconnect()
 		except Exception:
 			_moduleLogger.exception("Error durring disconnect")
 		self.StatusChanged(
@@ -275,7 +254,7 @@ class TheOneRingConnection(
 		self.check_handle(handleType, handleId)
 
 		h = self.get_handle_by_id(handleType, handleId) if handleId != 0 else None
-		props = self._generate_props(type, h, suppressHandler)
+		props = self.generate_props(type, h, suppressHandler)
 		self._validate_handle(props)
 
 		chan = self.__channelManager.channel_for_props(props, signal=True)
@@ -283,7 +262,7 @@ class TheOneRingConnection(
 		_moduleLogger.info("RequestChannel Object Path (%s): %s" % (type.rsplit(".", 1)[-1], path))
 		return path
 
-	def _generate_props(self, channelType, handle, suppressHandler, initiatorHandle=None):
+	def generate_props(self, channelType, handle, suppressHandler, initiatorHandle=None):
 		targetHandle = 0 if handle is None else handle.get_id()
 		targetHandleType = telepathy.HANDLE_TYPE_NONE if handle is None else handle.get_type()
 		props = {
@@ -298,15 +277,10 @@ class TheOneRingConnection(
 
 		return props
 
-	def _disconnect(self):
+	def disconnect(self):
 		_moduleLogger.info("Disconnecting")
-		self.session.voicemails.updateSignalHandler.unregister_sink(
-			self.__callback
-		)
-		self.session.texts.updateSignalHandler.unregister_sink(
-			self.__callback
-		)
-		self.__callback = None
+		for plumber in self._plumbing:
+			plumber.stop()
 
 		self.__channelManager.close()
 		self.session.save(self.__cachePath)
@@ -314,74 +288,4 @@ class TheOneRingConnection(
 		self.session.close()
 
 		self.manager.disconnected(self)
-
-		self._cancel_delayed_disconnect()
-		self.__connection = None
 		_moduleLogger.info("Disconnected")
-
-	@gtk_toolbox.log_exception(_moduleLogger)
-	def _on_conversations_updated(self, conv, conversationIds):
-		_moduleLogger.debug("Incoming messages from: %r" % (conversationIds, ))
-		for phoneNumber in conversationIds:
-			h = self.get_handle_by_name(telepathy.HANDLE_TYPE_CONTACT, phoneNumber)
-			# Just let the TextChannel decide whether it should be reported to the user or not
-			props = self._generate_props(telepathy.CHANNEL_TYPE_TEXT, h, False)
-			if self.__channelManager.channel_exists(props):
-				continue
-
-			# Maemo 4.1's RTComm opens a window for a chat regardless if a
-			# message is received or not, so we need to do some filtering here
-			mergedConv = conv.get_conversation(phoneNumber)
-			unreadConvs = [
-				conversation
-				for conversation in mergedConv.conversations
-				if not conversation.isRead and not conversation.isArchived
-			]
-			if not unreadConvs:
-				continue
-
-			chan = self.__channelManager.channel_for_props(props, signal=True)
-
-	@gtk_toolbox.log_exception(_moduleLogger)
-	def _on_connection_change(self, connection, event):
-		"""
-		@note Maemo specific
-		"""
-		status = event.get_status()
-		error = event.get_error()
-		iap_id = event.get_iap_id()
-		bearer = event.get_bearer_type()
-
-		if status == conic.STATUS_DISCONNECTED:
-			_moduleLogger.info("Disconnected from network, starting countdown to logoff")
-			self.__delayedDisconnectEventId = gobject_utils.timeout_add_seconds(
-				5, self._on_delayed_disconnect
-			)
-		elif status == conic.STATUS_CONNECTED:
-			_moduleLogger.info("Connected to network")
-			self._cancel_delayed_disconnect()
-		else:
-			_moduleLogger.info("Other status: %r" % (status, ))
-
-	def _cancel_delayed_disconnect(self):
-		if self.__delayedDisconnectEventId is None:
-			return
-		_moduleLogger.info("Cancelling auto-log off")
-		gobject.source_reove(self.__delayedDisconnectEventId)
-		self.__delayedDisconnectEventId = None
-
-	@gtk_toolbox.log_exception(_moduleLogger)
-	def _on_delayed_disconnect(self):
-		if not self.session.is_logged_in():
-			_moduleLogger.info("Received connection change event when not logged in")
-			return
-		try:
-			self._disconnect()
-		except Exception:
-			_moduleLogger.exception("Error durring disconnect")
-		self.StatusChanged(
-			telepathy.CONNECTION_STATUS_DISCONNECTED,
-			telepathy.CONNECTION_STATUS_REASON_NETWORK_ERROR
-		)
-		self.__delayedDisconnectEventId = None
-		return False

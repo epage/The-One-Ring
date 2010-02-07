@@ -262,7 +262,7 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 			return
 
 		try:
-			publishProps = self._conn._generate_props(telepathy.CHANNEL_TYPE_FILE_TRANSFER, self.__otherHandle, False)
+			publishProps = self._conn.generate_props(telepathy.CHANNEL_TYPE_FILE_TRANSFER, self.__otherHandle, False)
 			self._conn._channel_manager.channel_for_props(publishProps, signal=True)
 		except Exception, e:
 			self._report_new_message(str(e))
