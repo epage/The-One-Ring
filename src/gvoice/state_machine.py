@@ -81,6 +81,41 @@ class ConstantStateStrategy(object):
 		return "ConstantStateStrategy(timeout=%r)" % self._timeout
 
 
+class NTimesStateStrategy(object):
+
+	def __init__(self, timeouts, postTimeout):
+		assert 0 < len(timeouts)
+		for timeout in timeouts:
+			assert 0 < timeout or timeout == UpdateStateMachine.INFINITE_PERIOD
+		assert 0 < postTimeout or postTimeout == UpdateStateMachine.INFINITE_PERIOD
+		self._timeouts = timeouts
+		self._postTimeout = postTimeout
+
+		self._attemptCount = 0
+
+	def initialize_state(self):
+		self._attemptCount = len(self._timeouts)
+
+	def reinitialize_state(self):
+		self._attemptCount = 0
+
+	def increment_state(self):
+		self._attemptCount += 1
+
+	@property
+	def timeout(self):
+		try:
+			return self._timeouts[self._attemptCount]
+		except IndexError:
+			return self._postTimeout
+
+	def __repr__(self):
+		return "NTimesStateStrategy(timeouts=%r, postTimeout=%r)" % (
+			self._timeouts,
+			self._postTimeout,
+		)
+
+
 class GeometricStateStrategy(object):
 
 	def __init__(self, init, min, max):
@@ -250,6 +285,10 @@ class UpdateStateMachine(StateMachine):
 	@property
 	def _strategy(self):
 		return self._strategies[self._state]
+
+	@property
+	def maxTime(self):
+		return self._maxTime
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def _request_reset_timers(self, *args):

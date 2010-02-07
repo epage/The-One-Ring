@@ -78,7 +78,9 @@ class Session(object):
 		)
 		self._voicemailsStateMachine.set_state_strategy(
 			state_machine.StateMachine.STATE_ACTIVE,
-			state_machine.ConstantStateStrategy(voicemailPeriodInSeconds)
+			state_machine.NTimesStateStrategy(
+				3 * [state_machine.to_seconds(minutes=1)], voicemailPeriodInSeconds
+			)
 		)
 		self._voicemails.updateSignalHandler.register_sink(
 			self._voicemailsStateMachine.request_reset_timers
