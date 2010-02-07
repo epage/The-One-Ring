@@ -144,9 +144,6 @@ class AutoAcceptCall(object):
 class WasMissedCall(object):
 
 	def __init__(self, bus, conn, chan, on_success, on_error):
-		self._sessionBus = bus
-		self._conn = conn
-		self._chan = chan
 		self._on_success = on_success
 		self._on_error = on_error
 
@@ -157,21 +154,24 @@ class WasMissedCall(object):
 
 		self._timeoutId = gobject_utils.timeout_add_seconds(10, self._on_timeout)
 
-		self._chan[telepathy.interfaces.CHANNEL_INTERFACE_GROUP].connect_to_signal(
+		chan[telepathy.interfaces.CHANNEL_INTERFACE_GROUP].connect_to_signal(
 			"MembersChanged",
 			self._on_members_changed,
 		)
 
-		self._chan[telepathy.interfaces.CHANNEL].connect_to_signal(
+		chan[telepathy.interfaces.CHANNEL].connect_to_signal(
 			"Closed",
 			self._on_closed,
 		)
 
-		self._chan[DBUS_PROPERTIES].GetAll(
+		chan[DBUS_PROPERTIES].GetAll(
 			telepathy.interfaces.CHANNEL_INTERFACE,
 			reply_handler = self._on_got_all,
 			error_handler = self._on_got_all,
 		)
+
+	def cancel(self):
+		self._report_error("by request")
 
 	def _report_missed_if_ready(self):
 		if self._didReport:
@@ -204,13 +204,11 @@ class WasMissedCall(object):
 		self._on_error(self, reason)
 
 	@gtk_toolbox.log_exception(_moduleLogger)
-	@gtk_toolbox.trace(_moduleLogger)
 	def _on_got_all(self, properties):
 		self._requested = properties["Requested"]
 		self._report_missed_if_ready()
 
 	@gtk_toolbox.log_exception(_moduleLogger)
-	@gtk_toolbox.trace(_moduleLogger)
 	def _on_members_changed(self, message, added, removed, lp, rp, actor, reason):
 		pprint.pprint((message, added, removed, lp, rp, actor, reason))
 		if added:
@@ -218,18 +216,15 @@ class WasMissedCall(object):
 			self._report_missed_if_ready()
 
 	@gtk_toolbox.log_exception(_moduleLogger)
-	@gtk_toolbox.trace(_moduleLogger)
 	def _on_closed(self):
 		self._didClose = True
 		self._report_missed_if_ready()
 
 	@gtk_toolbox.log_exception(_moduleLogger)
-	@gtk_toolbox.trace(_moduleLogger)
 	def _on_error(self, *args):
 		self._report_error(args)
 
 	@gtk_toolbox.log_exception(_moduleLogger)
-	@gtk_toolbox.trace(_moduleLogger)
 	def _on_timeout(self):
 		self._report_error("timeout")
 		return False
