@@ -34,6 +34,13 @@ __email__ = "eopage@byu.net"
 __version__ = constants.__version__
 __build__ = constants.__build__
 __changelog__ = """
+0.7.7
+* On change between available/away, start state_machine at max rather than min, reducing overhead
+* Added a check for voicemails on missed/rejected calls (checks 3 times, 1 minute apart each)
+* Adjusted default polling times to be more battery cautious for our n8x0 friends who can't change things right now
+* Bugfix: Some of the derived polling settings had bugs
+* Bugfix: Setting text polling to infinite would still have polling done if one sent a text
+
 0.7.6
 * On login, polling now starts at the max time rather than the min, reducing overhead
 * Bugfix: Polling configuration wasn't actually hooked up to anything
