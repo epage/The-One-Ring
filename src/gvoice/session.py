@@ -16,9 +16,9 @@ _moduleLogger = logging.getLogger("gvoice.session")
 class Session(object):
 
 	_DEFAULTS = {
-		"contacts": (3, "hours"),
-		"voicemail": (30, "minutes"),
-		"texts": (5, "minutes"),
+		"contacts": (12, "hours"),
+		"voicemail": (120, "minutes"),
+		"texts": (10, "minutes"),
 	}
 
 	_MINIMUM_MESSAGE_PERIOD = state_machine.to_seconds(minutes=30)
@@ -60,10 +60,12 @@ class Session(object):
 
 		if defaults["voicemail"][0] == state_machine.UpdateStateMachine.INFINITE_PERIOD:
 			voicemailPeriodInSeconds = state_machine.UpdateStateMachine.INFINITE_PERIOD
+			idleVoicemailPeriodInSeconds = state_machine.UpdateStateMachine.INFINITE_PERIOD
 		else:
 			voicemailPeriodInSeconds = state_machine.to_seconds(
 				**{defaults["voicemail"][1]: defaults["voicemail"][0],}
 			)
+			idleVoicemailPeriodInSeconds = max(voicemailPeriodInSeconds * 4, self._MINIMUM_MESSAGE_PERIOD)
 		self._voicemails = conversations.Conversations(self._backend.get_voicemails)
 		self._voicemailsStateMachine = state_machine.UpdateStateMachine([self.voicemails], "Voicemail")
 		self._voicemailsStateMachine.set_state_strategy(
@@ -72,9 +74,7 @@ class Session(object):
 		)
 		self._voicemailsStateMachine.set_state_strategy(
 			state_machine.StateMachine.STATE_IDLE,
-			state_machine.ConstantStateStrategy(
-				max(voicemailPeriodInSeconds * 4, self._MINIMUM_MESSAGE_PERIOD)
-			)
+			state_machine.ConstantStateStrategy(idleVoicemailPeriodInSeconds)
 		)
 		self._voicemailsStateMachine.set_state_strategy(
 			state_machine.StateMachine.STATE_ACTIVE,
@@ -87,11 +87,17 @@ class Session(object):
 		)
 
 		if defaults["texts"][0] == state_machine.UpdateStateMachine.INFINITE_PERIOD:
+			initTextsPeriodInSeconds = state_machine.UpdateStateMachine.INFINITE_PERIOD
+			minTextsPeriodInSeconds = state_machine.UpdateStateMachine.INFINITE_PERIOD
 			textsPeriodInSeconds = state_machine.UpdateStateMachine.INFINITE_PERIOD
+			idleTextsPeriodInSeconds = state_machine.UpdateStateMachine.INFINITE_PERIOD
 		else:
+			initTextsPeriodInSeconds = state_machine.to_seconds(seconds=20)
+			minTextsPeriodInSeconds = state_machine.to_seconds(seconds=1)
 			textsPeriodInSeconds = state_machine.to_seconds(
 				**{defaults["texts"][1]: defaults["texts"][0],}
 			)
+			idleTextsPeriodInSeconds = max(textsPeriodInSeconds * 4, self._MINIMUM_MESSAGE_PERIOD)
 		self._texts = conversations.Conversations(self._backend.get_texts)
 		self._textsStateMachine = state_machine.UpdateStateMachine([self.texts], "Texting")
 		self._textsStateMachine.set_state_strategy(
@@ -100,15 +106,13 @@ class Session(object):
 		)
 		self._textsStateMachine.set_state_strategy(
 			state_machine.StateMachine.STATE_IDLE,
-			state_machine.ConstantStateStrategy(
-				max(textsPeriodInSeconds * 4, self._MINIMUM_MESSAGE_PERIOD)
-			)
+			state_machine.ConstantStateStrategy(idleTextsPeriodInSeconds)
 		)
 		self._textsStateMachine.set_state_strategy(
 			state_machine.StateMachine.STATE_ACTIVE,
 			state_machine.GeometricStateStrategy(
-				state_machine.to_seconds(seconds=20),
-				state_machine.to_seconds(seconds=1),
+				initTextsPeriodInSeconds,
+				minTextsPeriodInSeconds,
 				textsPeriodInSeconds,
 			)
 		)
