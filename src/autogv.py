@@ -173,12 +173,8 @@ class AutoDisconnect(object):
 		if not self.session.is_logged_in():
 			_moduleLogger.info("Received connection change event when not logged in")
 			return
-		self._connRef().StatusChanged(
-			telepathy.CONNECTION_STATUS_DISCONNECTED,
-			telepathy.CONNECTION_STATUS_REASON_NETWORK_ERROR
-		)
 		try:
-			self._connRef().disconnect()
+			self._connRef().disconnect(telepathy.CONNECTION_STATUS_REASON_NETWORK_ERROR)
 		except Exception:
 			_moduleLogger.exception("Error durring disconnect")
 		self.__delayedDisconnectEventId = None

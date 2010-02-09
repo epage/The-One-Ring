@@ -231,12 +231,8 @@ class TheOneRingConnection(
 		"""
 		For org.freedesktop.telepathy.Connection
 		"""
-		self.StatusChanged(
-			telepathy.CONNECTION_STATUS_DISCONNECTED,
-			telepathy.CONNECTION_STATUS_REASON_REQUESTED
-		)
 		try:
-			self.disconnect()
+			self.disconnect(telepathy.CONNECTION_STATUS_REASON_REQUESTED)
 		except Exception:
 			_moduleLogger.exception("Error durring disconnect")
 
@@ -277,8 +273,15 @@ class TheOneRingConnection(
 
 		return props
 
-	def disconnect(self):
+	def disconnect(self, reason):
 		_moduleLogger.info("Disconnecting")
+		# Not having the disconnect first can cause weird behavior with clients
+		# including not being able to reconnect or even crashing
+		self.StatusChanged(
+			telepathy.CONNECTION_STATUS_DISCONNECTED,
+			reason,
+		)
+
 		for plumber in self._plumbing:
 			plumber.stop()
 
