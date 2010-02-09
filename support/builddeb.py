@@ -34,6 +34,9 @@ __email__ = "eopage@byu.net"
 __version__ = constants.__version__
 __build__ = constants.__build__
 __changelog__ = """
+0.7.8
+* Bugfix: Issues with checking for new conversations
+
 0.7.7
 * On change between available/away, start state_machine at max rather than min, reducing overhead
 * Added a check for voicemails on missed/rejected calls (checks 3 times, 1 minute apart each)

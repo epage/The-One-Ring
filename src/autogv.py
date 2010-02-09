@@ -54,7 +54,7 @@ class NewGVConversations(object):
 			h = self._connRef().get_handle_by_name(telepathy.HANDLE_TYPE_CONTACT, phoneNumber)
 			# Just let the TextChannel decide whether it should be reported to the user or not
 			props = self._connRef().generate_props(telepathy.CHANNEL_TYPE_TEXT, h, False)
-			if self._channel_manager.channel_exists(props):
+			if self._connRef()._channel_manager.channel_exists(props):
 				continue
 
 			# Maemo 4.1's RTComm opens a window for a chat regardless if a
@@ -68,7 +68,7 @@ class NewGVConversations(object):
 			if not unreadConvs:
 				continue
 
-			chan = self._channel_manager.channel_for_props(props, signal=True)
+			chan = self._connRef()._channel_manager.channel_for_props(props, signal=True)
 
 
 class RefreshVoicemail(object):
