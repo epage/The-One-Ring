@@ -34,6 +34,10 @@ __email__ = "eopage@byu.net"
 __version__ = constants.__version__
 __build__ = constants.__build__
 __changelog__ = """
+0.7.10
+* Increased the network timeout when connecting to GV
+* Bugfix: On connection failure, the connection would be left around, preventing future connections
+
 0.7.9
 * Bugfix: Disconnect/Reconnect issues seem to be lessoned for me (What I previously thought was a bugfix turned out to cause several bugs.)
 
