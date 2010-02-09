@@ -33,7 +33,7 @@ import socket
 
 
 _moduleLogger = logging.getLogger("gvoice.browser_emu")
-socket.setdefaulttimeout(10)
+socket.setdefaulttimeout(20)
 
 
 class MozillaEmulator(object):
