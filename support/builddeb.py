@@ -34,6 +34,9 @@ __email__ = "eopage@byu.net"
 __version__ = constants.__version__
 __build__ = constants.__build__
 __changelog__ = """
+0.7.9
+* Bugfix: Disconnect/Reconnect issues seem to be lessoned for me (What I previously thought was a bugfix turned out to cause several bugs.)
+
 0.7.8
 * Bugfix: Issues with checking for new conversations
 
