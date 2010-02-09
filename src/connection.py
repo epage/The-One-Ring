@@ -207,17 +207,11 @@ class TheOneRingConnection(
 			self.__channelManager.channel_for_props(publishProps, signal=True)
 		except gvoice.backend.NetworkError, e:
 			_moduleLogger.exception("Connection Failed")
-			self.StatusChanged(
-				telepathy.CONNECTION_STATUS_DISCONNECTED,
-				telepathy.CONNECTION_STATUS_REASON_NETWORK_ERROR
-			)
+			self.disconnect(telepathy.CONNECTION_STATUS_REASON_NETWORK_ERROR)
 			return
 		except Exception, e:
 			_moduleLogger.exception("Connection Failed")
-			self.StatusChanged(
-				telepathy.CONNECTION_STATUS_DISCONNECTED,
-				telepathy.CONNECTION_STATUS_REASON_AUTHENTICATION_FAILED
-			)
+			self.disconnect(telepathy.CONNECTION_STATUS_REASON_AUTHENTICATION_FAILED)
 			return
 
 		_moduleLogger.info("Connected")
