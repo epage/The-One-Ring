@@ -45,17 +45,7 @@ class CallChannel(
 		tp.ChannelInterfaceCallState.__init__(self)
 		tp.ChannelInterfaceGroup.__init__(self)
 		self.__contactHandle = contactHandle
-		self._implement_property_get(
-			telepathy.interfaces.CHANNEL_TYPE_STREAMED_MEDIA,
-			{
-				"InitialAudio": self.initial_audio,
-				"InitialVideo": self.initial_video,
-			},
-		)
-		self._add_immutables({
-			'InitialAudio': telepathy.interfaces.CHANNEL_TYPE_STREAMED_MEDIA,
-			'InitialVideo': telepathy.interfaces.CHANNEL_TYPE_STREAMED_MEDIA,
-		})
+
 		self._implement_property_get(
 			telepathy.interfaces.CHANNEL_INTERFACE,
 			{
@@ -66,6 +56,23 @@ class CallChannel(
 		self._add_immutables({
 			'InitiatorHandle': telepathy.interfaces.CHANNEL_INTERFACE,
 			'InitiatorID': telepathy.interfaces.CHANNEL_INTERFACE,
+		})
+		self._implement_property_get(
+			telepathy.interfaces.CHANNEL_INTERFACE_GROUP,
+			{
+				'LocalPendingMembers': lambda: self.GetLocalPendingMembersWithInfo()
+			},
+		)
+		self._implement_property_get(
+			telepathy.interfaces.CHANNEL_TYPE_STREAMED_MEDIA,
+			{
+				"InitialAudio": self.initial_audio,
+				"InitialVideo": self.initial_video,
+			},
+		)
+		self._add_immutables({
+			'InitialAudio': telepathy.interfaces.CHANNEL_TYPE_STREAMED_MEDIA,
+			'InitialVideo': telepathy.interfaces.CHANNEL_TYPE_STREAMED_MEDIA,
 		})
 
 		self.GroupFlagsChanged(0, 0)
@@ -94,7 +101,25 @@ class CallChannel(
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def GetLocalPendingMembersWithInfo(self):
-		return []
+		info = dbus.Array([], signature="(uuus)")
+		for member in self._local_pending:
+			info.append((member, self._handle, 0, ''))
+		return info
+
+	@gtk_toolbox.log_exception(_moduleLogger)
+	def AddMembers(self, handles, message):
+		_moduleLogger.info("Add members %r: %s" % (handles, message))
+		for handle in handles:
+			if handle == int(self.GetSelfHandle()) and self.GetSelfHandle() in self._local_pending:
+				_moduleLogger.info("Technically the user just accepted the call")
+
+	@gtk_toolbox.log_exception(_moduleLogger)
+	def RemoveMembers(self, handles, message):
+		_moduleLogger.info("Remove members (no-op) %r: %s" % (handles, message))
+
+	@gtk_toolbox.log_exception(_moduleLogger)
+	def RemoveMembersWithReason(self, handles, message, reason):
+		_moduleLogger.info("Remove members (no-op) %r: %s (%i)" % (handles, message, reason))
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def ListStreams(self):
