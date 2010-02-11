@@ -9,6 +9,12 @@ try:
 except (ImportError, OSError):
 	conic = None
 
+try:
+	import osso as _osso
+	osso = _osso
+except (ImportError, OSError):
+	osso = None
+
 import constants
 import util.coroutines as coroutines
 import util.go_utils as gobject_utils
@@ -190,3 +196,45 @@ class AutoDisconnect(object):
 		self.__delayedDisconnectEventId = None
 		return False
 
+
+class DisconnectOnShutdown(object):
+	"""
+	I'm unsure when I get notified of shutdown or if I have enough time to do
+	anything about it, but thought this might help
+	"""
+
+	def __init__(self, connRef):
+		self._connRef = connRef
+
+		self._osso = None
+		self._deviceState = None
+
+	def start(self):
+		if osso is not None:
+			self._osso = osso.Context(constants.__app_name__, constants.__version__, False)
+			self._deviceState = osso.DeviceState(self._osso)
+			self._deviceState.set_device_state_callback(self._on_device_state_change, 0)
+		else:
+			_moduleLogger.warning("No device state support")
+
+	def stop(self):
+		try:
+			self._deviceState.close()
+		except AttributeError:
+			pass # Either None or close was removed (in Fremantle)
+		self._deviceState = None
+		try:
+			self._osso.close()
+		except AttributeError:
+			pass # Either None or close was removed (in Fremantle)
+		self._osso = None
+
+	@gtk_toolbox.log_exception(_moduleLogger)
+	def _on_device_state_change(self, shutdown, save_unsaved_data, memory_low, system_inactivity, message, userData):
+		"""
+		@note Hildon specific
+		"""
+		try:
+			self._connRef().disconnect(telepathy.CONNECTION_STATUS_REASON_REQUEST)
+		except Exception:
+			_moduleLogger.exception("Error durring disconnect")
