@@ -39,6 +39,9 @@ class NewGVConversations(object):
 		)
 
 	def stop(self):
+		if self.__callback is None:
+			_moduleLogger.info("New conversation monitor stopped without starting")
+			return
 		self._connRef().session.voicemails.updateSignalHandler.unregister_sink(
 			self.__callback
 		)
@@ -77,11 +80,16 @@ class RefreshVoicemail(object):
 		self._connRef = connRef
 		self._newChannelSignaller = telepathy_utils.NewChannelSignaller(self._on_new_channel)
 		self._outstandingRequests = []
+		self._isStarted = False
 
 	def start(self):
 		self._newChannelSignaller.start()
+		self._isStarted = True
 
 	def stop(self):
+		if not self._isStarted:
+			_moduleLogger.info("voicemail monitor stopped without starting")
+			return
 		_moduleLogger.info("Stopping voicemail refresh")
 		self._newChannelSignaller.stop()
 
@@ -91,6 +99,8 @@ class RefreshVoicemail(object):
 		localRequests = [r for r in self._outstandingRequests]
 		for request in localRequests:
 			localRequests.cancel()
+
+		self._isStarted = False
 
 	@gtk_toolbox.log_exception(_moduleLogger)
 	def _on_new_channel(self, bus, serviceName, connObjectPath, channelObjectPath, channelType):
