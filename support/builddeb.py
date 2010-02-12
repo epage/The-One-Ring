@@ -34,6 +34,12 @@ __email__ = "eopage@byu.net"
 __version__ = constants.__version__
 __build__ = constants.__build__
 __changelog__ = """
+0.7.11
+* Bugfix: Attempting to improve the behavior of calls by reducing potential RTComm errors
+* Bugfix: Issues with weird unexpected disconnect issues
+* Bugfix: I guess I made a mistake in registering for system signals, whoops
+* Bugfix: Following more closely the Telepathy spec by doing connects and disconnects asynchronously
+
 0.7.10
 * Increased the network timeout when connecting to GV
 * Bugfix: On connection failure, the connection would be left around, preventing future connections
