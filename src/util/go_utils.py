@@ -69,6 +69,9 @@ class Async(object):
 		else:
 			self.__idleId = gobject.idle_add(self.__func)
 
+	def is_running(self):
+		return self.__idleId is not None
+
 	def cancel(self):
 		if self.__idleId is not None:
 			gobject.source_remove(self.__idleId)
@@ -102,6 +105,9 @@ class Timeout(object):
 			self.__timeoutId = gobject.idle_add(self._on_once)
 		else:
 			timeout_add_seconds(timeoutInSeconds, self._on_once)
+
+	def is_running(self):
+		return self.__timeoutId is not None
 
 	def cancel(self):
 		if self.__timeoutId is not None:

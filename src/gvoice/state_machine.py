@@ -294,7 +294,7 @@ class UpdateStateMachine(StateMachine):
 		self._reset_timers()
 
 	def _reset_timers(self, initialize=False):
-		if self._timeoutId is None:
+		if self._onTimeout.is_running():
 			return # not started yet
 		_moduleLogger.info("%s Resetting State Machine" % (self._name, ))
 		self._onTimeout.cancel()
