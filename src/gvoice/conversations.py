@@ -12,7 +12,7 @@ except ImportError:
 
 import constants
 import util.coroutines as coroutines
-import util.misc as util_misc
+import util.misc as misc_utils
 
 
 _moduleLogger = logging.getLogger("gvoice.conversations")
@@ -64,7 +64,7 @@ class Conversations(object):
 		conversations = list(self._get_raw_conversations())
 		conversations.sort()
 		for conversation in conversations:
-			key = util_misc.normalize_number(conversation.number)
+			key = misc_utils.normalize_number(conversation.number)
 			try:
 				mergedConversations = self._conversations[key]
 			except KeyError:

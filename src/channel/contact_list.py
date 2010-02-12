@@ -4,7 +4,7 @@ import telepathy
 
 import tp
 import util.coroutines as coroutines
-import gtk_toolbox
+import util.misc as misc_utils
 import handle
 
 
@@ -48,7 +48,7 @@ class AllContactsListChannel(
 		self.GroupFlagsChanged(0, 0)
 
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def Close(self):
 		self.close()
 
@@ -63,11 +63,11 @@ class AllContactsListChannel(
 		tp.ChannelTypeContactList.Close(self)
 		self.remove_from_connection()
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def GetLocalPendingMembersWithInfo(self):
 		return []
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def _on_contacts_refreshed(self, addressbook, added, removed, changed):
 		self._process_refresh(addressbook, added, removed, changed)
 

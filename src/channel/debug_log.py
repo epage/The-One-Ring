@@ -7,7 +7,7 @@ import telepathy
 
 import constants
 import tp
-import gtk_toolbox
+import util.misc as misc_utils
 
 
 _moduleLogger = logging.getLogger("channel.debug_log")
@@ -79,7 +79,7 @@ class DebugLogChannel(tp.ChannelTypeFileTransfer):
 	def get_initial_offset(self):
 		return 0
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def AcceptFile(self, addressType, accessControl, accessControlParam, offset):
 		_moduleLogger.info("%r %r %r %r" % (addressType, accessControl, accessControlParam, offset))
 		self.InitialOffsetDefined(0)
@@ -111,11 +111,11 @@ class DebugLogChannel(tp.ChannelTypeFileTransfer):
 			telepathy.constants.FILE_TRANSFER_STATE_CHANGE_REASON_NONE,
 		)
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def ProvideFile(self, addressType, accessControl, accessControlParam):
 		raise telepathy.errors.NotImplemented("Cannot send outbound files")
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def Close(self):
 		self.close()
 

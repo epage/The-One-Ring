@@ -3,6 +3,8 @@ import logging
 import dbus
 import telepathy
 
+import util.misc as misc_utils
+
 
 _moduleLogger = logging.getLogger('contacts')
 
@@ -32,6 +34,7 @@ class ContactsMixin(telepathy.server.ConnectionInterfaceContacts):
 		raise NotImplementedError("Abstract function called")
 
 	# Overwrite the dbus attribute to get the sender argument
+	@misc_utils.log_exception(_moduleLogger)
 	@dbus.service.method(telepathy.CONNECTION_INTERFACE_CONTACTS, in_signature='auasb',
 							out_signature='a{ua{sv}}', sender_keyword='sender')
 	def GetContactAttributes(self, handles, interfaces, hold, sender):

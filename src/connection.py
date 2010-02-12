@@ -6,8 +6,8 @@ import telepathy
 
 import constants
 import tp
-import util.misc as util_misc
-import gtk_toolbox
+import util.go_utils as gobject_utils
+import util.misc as misc_utils
 
 import gvoice
 import handle
@@ -82,14 +82,14 @@ class TheOneRingConnection(
 		"password",
 	))
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def __init__(self, manager, parameters):
 		self.check_parameters(parameters)
 		account = unicode(parameters['account'])
 		encodedAccount = parameters['account'].encode('utf-8')
 		encodedPassword = parameters['password'].encode('utf-8')
-		encodedCallback = util_misc.normalize_number(parameters['forward'].encode('utf-8'))
-		if encodedCallback and not util_misc.is_valid_number(encodedCallback):
+		encodedCallback = misc_utils.normalize_number(parameters['forward'].encode('utf-8'))
+		if encodedCallback and not misc_utils.is_valid_number(encodedCallback):
 			raise telepathy.errors.InvalidArgument("Invalid forwarding number")
 
 		# Connection init must come first
@@ -136,6 +136,7 @@ class TheOneRingConnection(
 			autogv.RefreshVoicemail(weakref.ref(self)),
 			autogv.AutoDisconnect(weakref.ref(self)),
 		]
+		self._delayedConnect = gobject_utils.Async(self._delayed_connect)
 
 		_moduleLogger.info("Connection to the account %s created" % account)
 
@@ -176,11 +177,19 @@ class TheOneRingConnection(
 	def _channel_manager(self):
 		return self.__channelManager
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def Connect(self):
 		"""
 		For org.freedesktop.telepathy.Connection
 		"""
+		if self._status != telepathy.CONNECTION_STATUS_DISCONNECTED:
+			_moduleLogger.info("Attempting connect when not disconnected")
+			return
+		_moduleLogger.info("Kicking off connect")
+		self._delayedConnect.start()
+
+	@misc_utils.log_exception(_moduleLogger)
+	def _delayed_connect(self):
 		_moduleLogger.info("Connecting...")
 		self.StatusChanged(
 			telepathy.CONNECTION_STATUS_CONNECTING,
@@ -196,7 +205,7 @@ class TheOneRingConnection(
 				callback = gvoice.backend.get_sane_callback(
 					self.session.backend
 				)
-				self.__callbackNumberParameter = util_misc.normalize_number(callback)
+				self.__callbackNumberParameter = misc_utils.normalize_number(callback)
 			self.session.backend.set_callback_number(self.__callbackNumberParameter)
 
 			subscribeHandle = self.get_handle_by_name(telepathy.HANDLE_TYPE_LIST, "subscribe")
@@ -220,17 +229,15 @@ class TheOneRingConnection(
 			telepathy.CONNECTION_STATUS_REASON_REQUESTED
 		)
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def Disconnect(self):
 		"""
 		For org.freedesktop.telepathy.Connection
 		"""
-		try:
-			self.disconnect(telepathy.CONNECTION_STATUS_REASON_REQUESTED)
-		except Exception:
-			_moduleLogger.exception("Error durring disconnect")
+		_moduleLogger.info("Kicking off disconnect")
+		self._delayed_disconnect()
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def RequestChannel(self, type, handleType, handleId, suppressHandler):
 		"""
 		For org.freedesktop.telepathy.Connection
@@ -267,8 +274,16 @@ class TheOneRingConnection(
 
 		return props
 
+	@gobject_utils.async
+	def _delayed_disconnect(self):
+		self.disconnect(telepathy.CONNECTION_STATUS_REASON_REQUESTED)
+		return False
+
 	def disconnect(self, reason):
 		_moduleLogger.info("Disconnecting")
+
+		self._delayedConnect.cancel()
+
 		# Not having the disconnect first can cause weird behavior with clients
 		# including not being able to reconnect or even crashing
 		self.StatusChanged(

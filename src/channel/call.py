@@ -5,7 +5,8 @@ import gobject
 import telepathy
 
 import tp
-import gtk_toolbox
+import util.go_utils as gobject_utils
+import util.misc as misc_utils
 
 
 _moduleLogger = logging.getLogger("channel.call")
@@ -20,7 +21,7 @@ class CallChannel(
 	def __init__(self, connection, manager, props, contactHandle):
 		self.__manager = manager
 		self.__props = props
-		self.__cancelId = None
+		self._delayedCancel = gobject_utils.Async(self._on_cancel)
 
 		if telepathy.interfaces.CHANNEL_INTERFACE + '.InitiatorHandle' in props:
 			self._initiator = connection.get_handle_by_id(
@@ -87,7 +88,7 @@ class CallChannel(
 	def initial_video(self):
 		return False
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def Close(self):
 		self.close()
 
@@ -95,47 +96,45 @@ class CallChannel(
 		_moduleLogger.debug("Closing call")
 		tp.ChannelTypeStreamedMedia.Close(self)
 		self.remove_from_connection()
-		if self.__cancelId is not None:
-			gobject.source_remove(self.__cancelId)
-			self.__cancelId = None
+		self._delayedCancel.cancel()
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def GetLocalPendingMembersWithInfo(self):
 		info = dbus.Array([], signature="(uuus)")
 		for member in self._local_pending:
 			info.append((member, self._handle, 0, ''))
 		return info
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def AddMembers(self, handles, message):
 		_moduleLogger.info("Add members %r: %s" % (handles, message))
 		for handle in handles:
 			if handle == int(self.GetSelfHandle()) and self.GetSelfHandle() in self._local_pending:
 				_moduleLogger.info("Technically the user just accepted the call")
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def RemoveMembers(self, handles, message):
 		_moduleLogger.info("Remove members (no-op) %r: %s" % (handles, message))
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def RemoveMembersWithReason(self, handles, message, reason):
 		_moduleLogger.info("Remove members (no-op) %r: %s (%i)" % (handles, message, reason))
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def ListStreams(self):
 		"""
 		For org.freedesktop.Telepathy.Channel.Type.StreamedMedia
 		"""
 		return ()
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def RemoveStreams(self, streams):
 		"""
 		For org.freedesktop.Telepathy.Channel.Type.StreamedMedia
 		"""
 		raise telepathy.errors.NotImplemented("Cannot remove a stream")
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def RequestStreamDirection(self, stream, streamDirection):
 		"""
 		For org.freedesktop.Telepathy.Channel.Type.StreamedMedia
@@ -145,7 +144,7 @@ class CallChannel(
 		_moduleLogger.info("A request was made to change the stream direction")
 		raise telepathy.errors.NotImplemented("Cannot change directions")
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def RequestStreams(self, contactId, streamTypes):
 		"""
 		For org.freedesktop.Telepathy.Channel.Type.StreamedMedia
@@ -157,7 +156,7 @@ class CallChannel(
 		contactNumber = contact.phoneNumber
 
 		self.CallStateChanged(self.__contactHandle, telepathy.constants.CHANNEL_CALL_STATE_RINGING)
-		self.__cancelId = gobject.idle_add(self._on_cancel)
+		self._delayedCancel.start()
 		self._conn.session.backend.call(contactNumber)
 
 		streamId = 0
@@ -166,7 +165,7 @@ class CallChannel(
 		pendingSendFlags = telepathy.constants.MEDIA_STREAM_PENDING_REMOTE_SEND
 		return [(streamId, contact, streamTypes[0], streamState, streamDirection, pendingSendFlags)]
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def GetCallStates(self):
 		"""
 		For org.freedesktop.Telepathy.Channel.Interface.CallState
@@ -176,9 +175,7 @@ class CallChannel(
 		"""
 		return {self.__contactHandle: telepathy.constants.CHANNEL_CALL_STATE_FORWARDED}
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def _on_cancel(self, *args):
 		self.CallStateChanged(self.__contactHandle, telepathy.constants.CHANNEL_CALL_STATE_FORWARDED)
 		self.close()
-		self.__cancelId = None
-		return False

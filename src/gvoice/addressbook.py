@@ -4,7 +4,7 @@
 import logging
 
 import util.coroutines as coroutines
-import util.misc as util_misc
+import util.misc as misc_utils
 
 
 _moduleLogger = logging.getLogger("gvoice.addressbook")
@@ -72,7 +72,7 @@ class Addressbook(object):
 			contactName = contactDetails["name"]
 			contactNumbers = (
 				(
-					util_misc.normalize_number(numberDetails["phoneNumber"]),
+					misc_utils.normalize_number(numberDetails["phoneNumber"]),
 					numberDetails.get("phoneType", "Mobile"),
 				)
 				for numberDetails in contactDetails["numbers"]

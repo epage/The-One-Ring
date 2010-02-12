@@ -7,7 +7,7 @@ import dbus
 import telepathy
 
 import util.go_utils as gobject_utils
-import gtk_toolbox
+import misc
 
 
 _moduleLogger = logging.getLogger("tp_utils")
@@ -25,7 +25,8 @@ class WasMissedCall(object):
 		self._didClose = False
 		self._didReport = False
 
-		self._timeoutId = gobject_utils.timeout_add_seconds(10, self._on_timeout)
+		self._onTimeout = misc.Timeout(self._on_timeout)
+		self._onTimeout.start(seconds=10)
 
 		chan[telepathy.interfaces.CHANNEL_INTERFACE_GROUP].connect_to_signal(
 			"MembersChanged",
@@ -63,40 +64,36 @@ class WasMissedCall(object):
 	def _report_success(self):
 		assert not self._didReport
 		self._didReport = True
-		if self._timeoutId:
-			gobject.source_remove(self._timeoutId)
-			self._timeoutId = None
+		self._onTimeout.cancel()
 		self._on_success(self)
 
 	def _report_error(self, reason):
 		assert not self._didReport
 		self._didReport = True
-		if self._timeoutId:
-			gobject.source_remove(self._timeoutId)
-			self._timeoutId = None
+		self._onTimeout.cancel()
 		self._on_error(self, reason)
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc.log_exception(_moduleLogger)
 	def _on_got_all(self, properties):
 		self._requested = properties["Requested"]
 		self._report_missed_if_ready()
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc.log_exception(_moduleLogger)
 	def _on_members_changed(self, message, added, removed, lp, rp, actor, reason):
 		if added:
 			self._didMembersChange = True
 			self._report_missed_if_ready()
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc.log_exception(_moduleLogger)
 	def _on_closed(self):
 		self._didClose = True
 		self._report_missed_if_ready()
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc.log_exception(_moduleLogger)
 	def _on_error(self, *args):
 		self._report_error(args)
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc.log_exception(_moduleLogger)
 	def _on_timeout(self):
 		self._report_error("timeout")
 		return False
@@ -126,7 +123,7 @@ class NewChannelSignaller(object):
 			None
 		)
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc.log_exception(_moduleLogger)
 	def _on_new_channel(
 		self, channelObjectPath, channelType, handleType, handle, supressHandler
 	):

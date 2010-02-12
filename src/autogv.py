@@ -19,7 +19,7 @@ import constants
 import util.coroutines as coroutines
 import util.go_utils as gobject_utils
 import util.tp_utils as telepathy_utils
-import gtk_toolbox
+import util.misc as misc_utils
 
 
 _moduleLogger = logging.getLogger("autogv")
@@ -56,7 +56,7 @@ class NewGVConversations(object):
 		)
 		self.__callback = None
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def _on_conversations_updated(self, conv, conversationIds):
 		_moduleLogger.debug("Incoming messages from: %r" % (conversationIds, ))
 		for phoneNumber in conversationIds:
@@ -108,7 +108,7 @@ class RefreshVoicemail(object):
 
 		self._isStarted = False
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def _on_new_channel(self, bus, serviceName, connObjectPath, channelObjectPath, channelType):
 		if channelType != telepathy.interfaces.CHANNEL_TYPE_STREAMED_MEDIA:
 			return
@@ -125,13 +125,13 @@ class RefreshVoicemail(object):
 		)
 		self._outstandingRequests.append(missDetection)
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def _on_missed_call(self, missDetection):
 		_moduleLogger.info("Missed a call")
 		self._connRef().session.voicemailsStateMachine.reset_timers()
 		self._outstandingRequests.remove(missDetection)
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def _on_error_for_missed(self, missDetection, reason):
 		_moduleLogger.debug("Error: %r claims %r" % (missDetection, reason))
 		self._outstandingRequests.remove(missDetection)
@@ -147,7 +147,7 @@ class AutoDisconnect(object):
 			self.__connection = None
 
 		self.__connectionEventId = None
-		self.__delayedDisconnectEventId = None
+		self.__delayedDisconnect = gobject_utils.Timeout(self._on_delayed_disconnect)
 
 	def start(self):
 		if self.__connection is not None:
@@ -156,7 +156,7 @@ class AutoDisconnect(object):
 	def stop(self):
 		self._cancel_delayed_disconnect()
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def _on_connection_change(self, connection, event):
 		"""
 		@note Maemo specific
@@ -168,9 +168,7 @@ class AutoDisconnect(object):
 
 		if status == conic.STATUS_DISCONNECTED:
 			_moduleLogger.info("Disconnected from network, starting countdown to logoff")
-			self.__delayedDisconnectEventId = gobject_utils.timeout_add_seconds(
-				5, self._on_delayed_disconnect
-			)
+			self.__delayedDisconnect.start(seconds=5)
 		elif status == conic.STATUS_CONNECTED:
 			_moduleLogger.info("Connected to network")
 			self._cancel_delayed_disconnect()
@@ -178,13 +176,10 @@ class AutoDisconnect(object):
 			_moduleLogger.info("Other status: %r" % (status, ))
 
 	def _cancel_delayed_disconnect(self):
-		if self.__delayedDisconnectEventId is None:
-			return
 		_moduleLogger.info("Cancelling auto-log off")
-		gobject.source_reove(self.__delayedDisconnectEventId)
-		self.__delayedDisconnectEventId = None
+		self.__delayedDisconnect.cancel()
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def _on_delayed_disconnect(self):
 		if not self.session.is_logged_in():
 			_moduleLogger.info("Received connection change event when not logged in")
@@ -193,8 +188,6 @@ class AutoDisconnect(object):
 			self._connRef().disconnect(telepathy.CONNECTION_STATUS_REASON_NETWORK_ERROR)
 		except Exception:
 			_moduleLogger.exception("Error durring disconnect")
-		self.__delayedDisconnectEventId = None
-		return False
 
 
 class DisconnectOnShutdown(object):
@@ -229,7 +222,7 @@ class DisconnectOnShutdown(object):
 			pass # Either None or close was removed (in Fremantle)
 		self._osso = None
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def _on_device_state_change(self, shutdown, save_unsaved_data, memory_low, system_inactivity, message, userData):
 		"""
 		@note Hildon specific

@@ -2,7 +2,7 @@ import logging
 
 import telepathy
 
-import gtk_toolbox
+import util.misc as misc_utils
 import tp
 import handle
 import gvoice.state_machine as state_machine
@@ -98,7 +98,7 @@ class SimplePresenceMixin(tp.ConnectionInterfaceSimplePresence, TheOneRingPresen
 			{'Statuses' : self._get_statuses}
 		)
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def GetPresences(self, contacts):
 		"""
 		@return {ContactHandle: (Status, Presence Type, Message)}
@@ -109,7 +109,7 @@ class SimplePresenceMixin(tp.ConnectionInterfaceSimplePresence, TheOneRingPresen
 			for (h, (presenceType, presence)) in self.get_presences(contacts).iteritems()
 		)
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def SetPresence(self, status, message):
 		if message:
 			raise telepathy.errors.InvalidArgument("Messages aren't supported")

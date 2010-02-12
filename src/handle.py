@@ -4,7 +4,7 @@ import weakref
 import telepathy
 
 import tp
-import util.misc as util_misc
+import util.misc as misc_utils
 
 
 _moduleLogger = logging.getLogger("handle")
@@ -42,7 +42,7 @@ class ConnectionHandle(TheOneRingHandle):
 class ContactHandle(TheOneRingHandle):
 
 	def __init__(self, connection, id, phoneNumber):
-		self._phoneNumber = util_misc.normalize_number(phoneNumber)
+		self._phoneNumber = misc_utils.normalize_number(phoneNumber)
 
 		handleType = telepathy.HANDLE_TYPE_CONTACT
 		handleName = self._phoneNumber

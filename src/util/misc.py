@@ -16,6 +16,45 @@ import warnings
 import string
 
 
+_indentationLevel = [0]
+
+
+def log_call(logger):
+
+	def log_call_decorator(func):
+
+		@functools.wraps(func)
+		def wrapper(*args, **kwds):
+			logger.debug("%s> %s" % (" " * _indentationLevel[0], func.__name__, ))
+			_indentationLevel[0] += 1
+			try:
+				return func(*args, **kwds)
+			finally:
+				_indentationLevel[0] -= 1
+				logger.debug("%s< %s" % (" " * _indentationLevel[0], func.__name__, ))
+
+		return wrapper
+
+	return log_call_decorator
+
+
+def log_exception(logger):
+
+	def log_exception_decorator(func):
+
+		@functools.wraps(func)
+		def wrapper(*args, **kwds):
+			try:
+				return func(*args, **kwds)
+			except Exception:
+				logger.exception(func.__name__)
+				raise
+
+		return wrapper
+
+	return log_exception_decorator
+
+
 def printfmt(template):
 	"""
 	This hides having to create the Template object and call substitute/safe_substitute on it. For example:

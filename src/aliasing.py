@@ -3,8 +3,7 @@ import logging
 import telepathy
 
 import tp
-import gtk_toolbox
-import util.misc as util_misc
+import util.misc as misc_utils
 import handle
 
 
@@ -72,7 +71,7 @@ def make_pretty(phonenumber):
 	if phonenumber is None or phonenumber is "":
 		return ""
 
-	phonenumber = util_misc.normalize_number(phonenumber)
+	phonenumber = misc_utils.normalize_number(phonenumber)
 
 	if phonenumber[0] == "+":
 		prettynumber = _make_pretty_international(phonenumber[1:])
@@ -114,16 +113,16 @@ class AliasingMixin(tp.ConnectionInterfaceAliasing):
 		"""
 		raise NotImplementedError("Abstract function called")
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def GetAliasFlags(self):
 		return 0
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def RequestAliases(self, contactHandleIds):
 		_moduleLogger.debug("Called RequestAliases")
 		return [self._get_alias(handleId) for handleId in contactHandleIds]
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def GetAliases(self, contactHandleIds):
 		_moduleLogger.debug("Called GetAliases")
 
@@ -133,7 +132,7 @@ class AliasingMixin(tp.ConnectionInterfaceAliasing):
 		)
 		return idToAlias
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def SetAliases(self, aliases):
 		_moduleLogger.debug("Called SetAliases")
 		# first validate that no other handle types are included
@@ -144,11 +143,11 @@ class AliasingMixin(tp.ConnectionInterfaceAliasing):
 		else:
 			raise telepathy.errors.PermissionDenied("No user customizable aliases")
 
-		uglyNumber = util_misc.normalize_number(alias)
+		uglyNumber = misc_utils.normalize_number(alias)
 		if len(uglyNumber) == 0:
 			# Reset to the original from login if one was provided
 			uglyNumber = self.callbackNumberParameter
-		if not util_misc.is_valid_number(uglyNumber):
+		if not misc_utils.is_valid_number(uglyNumber):
 			raise telepathy.errors.InvalidArgument("Invalid phone number %r" % (uglyNumber, ))
 
 		# Update callback

@@ -3,7 +3,7 @@ import logging
 import telepathy
 
 import tp
-import gtk_toolbox
+import util.misc as misc_utils
 
 
 _moduleLogger = logging.getLogger('capabilities')
@@ -32,7 +32,7 @@ class CapabilitiesMixin(tp.ConnectionInterfaceCapabilities):
 		"""
 		raise NotImplementedError("Abstract function called")
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def GetCapabilities(self, handleIds):
 		ret = []
 		for handleId in handleIds:

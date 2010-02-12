@@ -6,7 +6,7 @@ import telepathy
 
 import tp
 import util.coroutines as coroutines
-import gtk_toolbox
+import util.misc as misc_utils
 
 
 _moduleLogger = logging.getLogger("channel.text")
@@ -53,7 +53,7 @@ class TextChannel(tp.ChannelTypeText):
 		else:
 			self._report_conversation(mergedConversations)
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def Send(self, messageType, text):
 		if messageType != telepathy.CHANNEL_TEXT_MESSAGE_TYPE_NORMAL:
 			raise telepathy.errors.NotImplemented("Unhandled message type: %r" % messageType)
@@ -79,7 +79,7 @@ class TextChannel(tp.ChannelTypeText):
 
 		self.Sent(int(time.time()), messageType, text)
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def Close(self):
 		self.close()
 
@@ -101,7 +101,7 @@ class TextChannel(tp.ChannelTypeText):
 		contactKey = self.__otherHandle.phoneNumber
 		return contactKey
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def _on_conversations_updated(self, conv, conversationIds):
 		if self._contactKey not in conversationIds:
 			return

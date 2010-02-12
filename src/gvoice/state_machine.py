@@ -6,7 +6,7 @@ import gobject
 
 import util.go_utils as gobject_utils
 import util.coroutines as coroutines
-import gtk_toolbox
+import util.misc as misc_utils
 
 
 _moduleLogger = logging.getLogger("gvoice.state_machine")
@@ -228,7 +228,7 @@ class UpdateStateMachine(StateMachine):
 		self._maxTime = maxTime
 
 		self._state = self.STATE_ACTIVE
-		self._timeoutId = None
+		self._onTimeout = gobject_utils.Timeout(self._on_timeout)
 
 		self._strategies = {}
 		self._callback = coroutines.func_sink(
@@ -247,19 +247,18 @@ class UpdateStateMachine(StateMachine):
 		self._strategies[state] = strategy
 
 	def start(self):
-		assert self._timeoutId is None
 		for strategy in self._strategies.itervalues():
 			strategy.initialize_state()
 		if self._strategy.timeout != self.INFINITE_PERIOD:
-			self._timeoutId = gobject.idle_add(self._on_timeout)
+			self._onTimeout.start(seconds=0)
 		_moduleLogger.info("%s Starting State Machine" % (self._name, ))
 
 	def stop(self):
 		_moduleLogger.info("%s Stopping State Machine" % (self._name, ))
-		self._stop_update()
+		self._onTimeout.cancel()
 
 	def close(self):
-		assert self._timeoutId is None
+		self._onTimeout.cancel()
 		self._callback = None
 
 	def set_state(self, newState):
@@ -290,7 +289,7 @@ class UpdateStateMachine(StateMachine):
 	def maxTime(self):
 		return self._maxTime
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def _request_reset_timers(self, *args):
 		self._reset_timers()
 
@@ -298,37 +297,28 @@ class UpdateStateMachine(StateMachine):
 		if self._timeoutId is None:
 			return # not started yet
 		_moduleLogger.info("%s Resetting State Machine" % (self._name, ))
-		self._stop_update()
+		self._onTimeout.cancel()
 		if initialize:
 			self._strategy.initialize_state()
 		else:
 			self._strategy.reinitialize_state()
 		self._schedule_update()
 
-	def _stop_update(self):
-		if self._timeoutId is None:
-			return
-		gobject.source_remove(self._timeoutId)
-		self._timeoutId = None
-
 	def _schedule_update(self):
-		assert self._timeoutId is None
 		self._strategy.increment_state()
 		nextTimeout = self._strategy.timeout
 		if nextTimeout != self.INFINITE_PERIOD and nextTimeout < self._maxTime:
 			assert 0 < nextTimeout
-			self._timeoutId = gobject_utils.timeout_add_seconds(nextTimeout, self._on_timeout)
+			self._onTimeout.start(seconds=nextTimeout)
 			_moduleLogger.info("%s Next update in %s seconds" % (self._name, nextTimeout, ))
 		else:
 			_moduleLogger.info("%s No further updates (timeout is %s seconds)" % (self._name, nextTimeout, ))
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def _on_timeout(self):
-		self._timeoutId = None
 		self._schedule_update()
 		for item in self._updateItems:
 			try:
 				item.update(force=True)
 			except Exception:
 				_moduleLogger.exception("Update failed for %r" % item)
-		return False # do not continue

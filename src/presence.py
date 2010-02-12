@@ -1,7 +1,7 @@
 import logging
 
 import tp
-import gtk_toolbox
+import util.misc as misc_utils
 import simple_presence
 
 
@@ -14,7 +14,7 @@ class PresenceMixin(tp.ConnectionInterfacePresence, simple_presence.TheOneRingPr
 		tp.ConnectionInterfacePresence.__init__(self)
 		simple_presence.TheOneRingPresence.__init__(self)
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def GetStatuses(self):
 		# the arguments are in common to all on-line presences
 		arguments = {}
@@ -24,16 +24,16 @@ class PresenceMixin(tp.ConnectionInterfacePresence, simple_presence.TheOneRingPr
 			for (localType, telepathyType) in self.TO_PRESENCE_TYPE.iteritems()
 		)
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def RequestPresence(self, contactIds):
 		presences = self.__get_presences(contactIds)
 		self.PresenceUpdate(presences)
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def GetPresence(self, contactIds):
 		return self.__get_presences(contactIds)
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def SetStatus(self, statuses):
 		assert len(statuses) == 1
 		status, arguments = statuses.items()[0]

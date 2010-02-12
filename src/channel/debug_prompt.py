@@ -11,7 +11,7 @@ import telepathy
 
 import constants
 import tp
-import gtk_toolbox
+import util.misc as misc_utils
 import gvoice
 
 
@@ -32,7 +32,7 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 
 		self.__otherHandle = contactHandle
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def Send(self, messageType, text):
 		if messageType != telepathy.CHANNEL_TEXT_MESSAGE_TYPE_NORMAL:
 			raise telepathy.errors.NotImplemented("Unhandled message type: %r" % messageType)
@@ -51,7 +51,7 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 		if stdoutData:
 			self._report_new_message(stdoutData)
 
-	@gtk_toolbox.log_exception(_moduleLogger)
+	@misc_utils.log_exception(_moduleLogger)
 	def Close(self):
 		self.close()
 
