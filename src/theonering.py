@@ -63,7 +63,7 @@ def run_theonering(persist):
 		gobject_utils.timeout_add_seconds(IDLE_TIMEOUT, timeout_cb)
 		shutdown_callback = quit
 
-	signal.signal(signal.SIGTERM, quit)
+	signal.signal(signal.SIGTERM, lambda: quit)
 
 	try:
 		manager = connection_manager.TheOneRingConnectionManager(shutdown_func=shutdown_callback)
