@@ -74,6 +74,9 @@ class Async(object):
 			gobject.source_remove(self.__idleId)
 			self.__idleId = None
 
+	def __call__(self):
+		return self.start()
+
 	@misc.log_exception(_moduleLogger)
 	def _on_once(self):
 		self.cancel()
@@ -104,6 +107,9 @@ class Timeout(object):
 		if self.__timeoutId is not None:
 			gobject.source_remove(self.__timeoutId)
 			self.__timeoutId = None
+
+	def __call__(self, **kwds):
+		return self.start(**kwds)
 
 	@misc.log_exception(_moduleLogger)
 	def _on_once(self):
