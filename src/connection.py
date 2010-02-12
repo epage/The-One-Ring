@@ -259,9 +259,9 @@ class TheOneRingConnection(
 		_moduleLogger.info("RequestChannel Object Path (%s): %s" % (type.rsplit(".", 1)[-1], path))
 		return path
 
-	def generate_props(self, channelType, handle, suppressHandler, initiatorHandle=None):
-		targetHandle = 0 if handle is None else handle.get_id()
-		targetHandleType = telepathy.HANDLE_TYPE_NONE if handle is None else handle.get_type()
+	def generate_props(self, channelType, handleObj, suppressHandler, initiatorHandle=None):
+		targetHandle = 0 if handleObj is None else handleObj.get_id()
+		targetHandleType = telepathy.HANDLE_TYPE_NONE if handleObj is None else handleObj.get_type()
 		props = {
 			telepathy.CHANNEL_INTERFACE + '.ChannelType': channelType,
 			telepathy.CHANNEL_INTERFACE + '.TargetHandle': targetHandle,

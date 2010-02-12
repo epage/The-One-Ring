@@ -95,7 +95,7 @@ class DebugLogChannel(tp.ChannelTypeFileTransfer):
 			telepathy.constants.FILE_TRANSFER_STATE_CHANGE_REASON_NONE,
 		)
 
-		sockittome = socket.socket(socket.AF_UNIT, socket.SOCK_STREAM)
+		sockittome = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 		sockittome.connect(accessControlParam)
 		try:
 			sockittome.send(self._log)

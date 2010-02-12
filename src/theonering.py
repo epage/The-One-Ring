@@ -47,23 +47,23 @@ def run_theonering(persist):
 			raise
 
 	@gobject_utils.async
-	def quit():
+	def on_quit():
 		manager.quit()
 		mainloop.quit()
 
 	def timeout_cb():
 		if len(manager._connections) == 0:
 			logging.info('No connection received - quitting')
-			quit()
+			on_quit()
 		return False
 
 	if persist:
 		shutdown_callback = None
 	else:
 		gobject_utils.timeout_add_seconds(IDLE_TIMEOUT, timeout_cb)
-		shutdown_callback = quit
+		shutdown_callback = on_quit
 
-	signal.signal(signal.SIGTERM, lambda: quit)
+	signal.signal(signal.SIGTERM, lambda: on_quit)
 
 	try:
 		manager = connection_manager.TheOneRingConnectionManager(shutdown_func=shutdown_callback)

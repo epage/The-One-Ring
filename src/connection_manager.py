@@ -70,8 +70,8 @@ class TheOneRingConnectionManager(tp.ConnectionManager):
 		"""
 		Terminates all connections. Must be called upon quit
 		"""
-		for connection in self._connections:
-			connection.Disconnect()
+		for conn in self._connections:
+			conn.Disconnect()
 		_moduleLogger.info("Connection manager quitting")
 
 	@misc_utils.log_exception(_moduleLogger)

@@ -2,8 +2,6 @@
 
 import logging
 
-import gobject
-
 import util.go_utils as gobject_utils
 import util.coroutines as coroutines
 import util.misc as misc_utils

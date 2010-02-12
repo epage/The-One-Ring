@@ -186,7 +186,7 @@ class Session(object):
 		# To throttle checking with the server, use a 30s cache
 		newTime = time.time()
 		if self._lastDndCheck + 30 < newTime:
-			self._lasDndCheck = newTime
+			self._lastDndCheck = newTime
 			self._cachedIsDnd = self._backend.is_dnd()
 		return self._cachedIsDnd
 

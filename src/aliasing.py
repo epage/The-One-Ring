@@ -136,6 +136,7 @@ class AliasingMixin(tp.ConnectionInterfaceAliasing):
 	def SetAliases(self, aliases):
 		_moduleLogger.debug("Called SetAliases")
 		# first validate that no other handle types are included
+		handleId, alias = None, None
 		for handleId, alias in aliases.iteritems():
 			h = self.get_handle_by_id(telepathy.HANDLE_TYPE_CONTACT, handleId)
 			if isinstance(h, handle.ConnectionHandle):

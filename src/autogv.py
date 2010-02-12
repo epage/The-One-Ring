@@ -1,6 +1,5 @@
 import logging
 
-import gobject
 import telepathy
 
 try:
@@ -181,7 +180,7 @@ class AutoDisconnect(object):
 
 	@misc_utils.log_exception(_moduleLogger)
 	def _on_delayed_disconnect(self):
-		if not self.session.is_logged_in():
+		if not self._connRef().session.is_logged_in():
 			_moduleLogger.info("Received connection change event when not logged in")
 			return
 		try:
@@ -228,6 +227,6 @@ class DisconnectOnShutdown(object):
 		@note Hildon specific
 		"""
 		try:
-			self._connRef().disconnect(telepathy.CONNECTION_STATUS_REASON_REQUEST)
+			self._connRef().disconnect(telepathy.CONNECTION_STATUS_REASON_REQUESTED)
 		except Exception:
 			_moduleLogger.exception("Error durring disconnect")

@@ -2,7 +2,6 @@
 
 import logging
 
-import gobject
 import dbus
 import telepathy
 
@@ -17,15 +16,15 @@ DBUS_PROPERTIES = 'org.freedesktop.DBus.Properties'
 class WasMissedCall(object):
 
 	def __init__(self, bus, conn, chan, on_success, on_error):
-		self._on_success = on_success
-		self._on_error = on_error
+		self.__on_success = on_success
+		self.__on_error = on_error
 
 		self._requested = None
 		self._didMembersChange = False
 		self._didClose = False
 		self._didReport = False
 
-		self._onTimeout = misc.Timeout(self._on_timeout)
+		self._onTimeout = gobject_utils.Timeout(self._on_timeout)
 		self._onTimeout.start(seconds=10)
 
 		chan[telepathy.interfaces.CHANNEL_INTERFACE_GROUP].connect_to_signal(
@@ -41,7 +40,7 @@ class WasMissedCall(object):
 		chan[DBUS_PROPERTIES].GetAll(
 			telepathy.interfaces.CHANNEL_INTERFACE,
 			reply_handler = self._on_got_all,
-			error_handler = self._on_got_all,
+			error_handler = self._on_error,
 		)
 
 	def cancel(self):
@@ -65,13 +64,13 @@ class WasMissedCall(object):
 		assert not self._didReport
 		self._didReport = True
 		self._onTimeout.cancel()
-		self._on_success(self)
+		self.__on_success(self)
 
 	def _report_error(self, reason):
 		assert not self._didReport
 		self._didReport = True
 		self._onTimeout.cancel()
-		self._on_error(self, reason)
+		self.__on_error(self, reason)
 
 	@misc.log_exception(_moduleLogger)
 	def _on_got_all(self, properties):
