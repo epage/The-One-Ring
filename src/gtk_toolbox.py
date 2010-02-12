@@ -255,6 +255,9 @@ def log_exception(logger):
 	return log_exception_decorator
 
 
+_indentationLevel = [0]
+
+
 def trace(logger):
 
 	def trace_decorator(func):
@@ -262,13 +265,15 @@ def trace(logger):
 		@functools.wraps(func)
 		def wrapper(*args, **kwds):
 			try:
-				logger.info("> %s" % (func.__name__, ))
+				logger.debug("%s> %s" % (" " * _indentationLevel[0], func.__name__, ))
+				_indentationLevel[0] += 1
 				return func(*args, **kwds)
 			except Exception:
 				logger.exception(func.__name__)
 				raise
 			finally:
-				logger.info("< %s" % (func.__name__, ))
+				_indentationLevel[0] -= 1
+				logger.debug("%s< %s" % (" " * _indentationLevel[0], func.__name__, ))
 
 		return wrapper
 
