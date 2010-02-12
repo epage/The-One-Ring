@@ -34,6 +34,14 @@ __email__ = "eopage@byu.net"
 __version__ = constants.__version__
 __build__ = constants.__build__
 __changelog__ = """
+0.7.12
+* Bugfix: In 0.7.11 I messed up refreshing messages
+* Bugfix: DND support has been broken for a while
+* Bugfix: Auto-disconnect on Maemo 4.1 couldn't have worked for a while
+* Bugfix: Handling missed calls had .. issues
+* Bugfix: Issues when making a call introduced in 0.7.11
+* Etc with the bug fixes (all too small to list)
+
 0.7.11
 * Bugfix: Attempting to improve the behavior of calls by reducing potential RTComm errors
 * Bugfix: Issues with weird unexpected disconnect issues
