@@ -104,7 +104,7 @@ class Timeout(object):
 		if timeoutInSeconds == 0:
 			self.__timeoutId = gobject.idle_add(self._on_once)
 		else:
-			timeout_add_seconds(timeoutInSeconds, self._on_once)
+			self.__timeoutId = timeout_add_seconds(timeoutInSeconds, self._on_once)
 
 	def is_running(self):
 		return self.__timeoutId is not None
