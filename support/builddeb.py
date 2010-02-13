@@ -34,6 +34,9 @@ __email__ = "eopage@byu.net"
 __version__ = constants.__version__
 __build__ = constants.__build__
 __changelog__ = """
+0.7.13
+* Bugfix: Cancelling timeouts
+
 0.7.12
 * Bugfix: In 0.7.11 I messed up refreshing messages
 * Bugfix: DND support has been broken for a while
