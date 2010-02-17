@@ -234,7 +234,7 @@ class UpdateStateMachine(StateMachine):
 		self._name = name
 		self._updateItems = updateItems
 		self._maxTime = maxTime
-		self._isRunning = False
+		self._isActive = False
 
 		self._state = self.STATE_ACTIVE
 		self._onTimeout = gobject_utils.Timeout(self._on_timeout)
@@ -250,8 +250,9 @@ class UpdateStateMachine(StateMachine):
 		return """UpdateStateMachine(
 	name=%r,
 	strategie=%s,
-	isRunning=%r,
-)""" % (self._name, self._strategy, self._onTimeout.is_running())
+	isActive=%r,
+	isPolling=%r,
+)""" % (self._name, self._strategy, self._isActive, self._onTimeout.is_running())
 
 	def __repr__(self):
 		return """UpdateStateMachine(
@@ -267,12 +268,12 @@ class UpdateStateMachine(StateMachine):
 			strategy.initialize_state()
 		if self._strategy.timeout != self.INFINITE_PERIOD:
 			self._onTimeout.start(seconds=0)
-		self._isRunning = True
+		self._isActive = True
 		_moduleLogger.info("%s Starting State Machine" % (self._name, ))
 
 	def stop(self):
 		_moduleLogger.info("%s Stopping State Machine" % (self._name, ))
-		self._isRunning = False
+		self._isActive = False
 		self._onTimeout.cancel()
 
 	def close(self):
@@ -312,7 +313,7 @@ class UpdateStateMachine(StateMachine):
 		self._reset_timers()
 
 	def _reset_timers(self, initialize=False):
-		if not self._isRunning:
+		if not self._isActive:
 			return # not started yet
 		_moduleLogger.info("%s Resetting State Machine" % (self._name, ))
 		self._onTimeout.cancel()
