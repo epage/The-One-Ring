@@ -27,6 +27,7 @@ def _make_pretty_local(phonenumber):
 
 
 def _make_pretty_international(phonenumber):
+	prettynumber = phonenumber
 	if phonenumber.startswith("0"):
 		prettynumber = "+%s " % (phonenumber[0:3], )
 		if 3 < len(phonenumber):
