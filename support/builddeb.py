@@ -34,6 +34,12 @@ __email__ = "eopage@byu.net"
 __version__ = constants.__version__
 __build__ = constants.__build__
 __changelog__ = """
+0.7.14
+* Bugfix: Polling state machines weren't properly resetting (maybe thats why I had such good battery life)
+* Bugfix: On Maemo 4.1 there are still some empty windows created
+* Bugfix: Obscure alias bug no one should hit with The One Ring
+* Bugfix: Another obscure bug causing possibly no negative side-effects
+
 0.7.13
 * Bugfix: Cancelling timeouts
 
