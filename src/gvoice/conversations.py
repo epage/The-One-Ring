@@ -2,6 +2,7 @@
 
 from __future__ import with_statement
 
+import datetime
 import logging
 
 try:
@@ -175,3 +176,47 @@ class MergedConversations(object):
 			len(newConversationMessages),
 		))
 		assert 0 < len(newConversation.messages), "Everything shouldn't have been removed"
+
+
+def filter_out_read(conversations):
+	return (
+		conversation
+		for conversation in conversations
+		if not conversation.isRead and not conversation.isArchived
+	)
+
+
+def is_message_from_self(message):
+	return message.whoFrom == "Me:"
+
+
+def filter_out_self(conversations):
+	return (
+		newConversation
+		for newConversation in conversations
+		if len(newConversation.messages) and any(
+			not is_message_from_self(message)
+			for message in newConversation.messages
+		)
+	)
+
+
+class FilterOutReported(object):
+
+	NULL_TIMESTAMP = datetime.datetime(1, 1, 1)
+
+	def __init__(self):
+		self._lastMessageTimestamp = self.NULL_TIMESTAMP
+
+	def get_last_timestamp(self):
+		return self._lastMessageTimestamp
+
+	def __call__(self, conversations):
+		filteredConversations = [
+			conversation
+			for conversation in conversations
+			if self._lastMessageTimestamp < conversation.time
+		]
+		if filteredConversations and self._lastMessageTimestamp < filteredConversations[0].time:
+			self._lastMessageTimestamp = filteredConversations[0].time
+		return filteredConversations

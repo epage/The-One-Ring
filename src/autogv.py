@@ -19,6 +19,7 @@ import util.coroutines as coroutines
 import util.go_utils as gobject_utils
 import util.tp_utils as telepathy_utils
 import util.misc as misc_utils
+import gvoice
 
 
 _moduleLogger = logging.getLogger("autogv")
@@ -68,12 +69,11 @@ class NewGVConversations(object):
 			# Maemo 4.1's RTComm opens a window for a chat regardless if a
 			# message is received or not, so we need to do some filtering here
 			mergedConv = conv.get_conversation(phoneNumber)
-			unreadConvs = [
-				conversation
-				for conversation in mergedConv.conversations
-				if not conversation.isRead and not conversation.isArchived
-			]
-			if not unreadConvs:
+			newConversations = mergedConv.conversations
+			newConversations = gvoice.conversations.filter_out_read(newConversations)
+			newConversations = gvoice.conversations.filter_out_self(newConversations)
+			newConversations = list(newConversations)
+			if not newConversations:
 				continue
 
 			chan = self._connRef()._channel_manager.channel_for_props(props, signal=True)
