@@ -112,6 +112,40 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 	def help_get_state(self):
 		self._report_new_message("Print the current state the refreshing state machine is in")
 
+	def do_get_polling(self, args):
+		if args:
+			self._report_new_message("No arguments supported")
+			return
+		self._report_new_message("\n".join((
+			"Contacts:", repr(self._conn.session.addressbookStateMachine)
+		)))
+		self._report_new_message("\n".join((
+			"Voicemail:", repr(self._conn.session.voicemailsStateMachine)
+		)))
+		self._report_new_message("\n".join((
+			"Texts:", repr(self._conn.session.textsStateMachine)
+		)))
+
+	def help_get_polling(self):
+		self._report_new_message("Prints the frequency each of the state machines updates")
+
+	def do_get_state_status(self, args):
+		if args:
+			self._report_new_message("No arguments supported")
+			return
+		self._report_new_message("\n".join((
+			"Contacts:", str(self._conn.session.addressbookStateMachine)
+		)))
+		self._report_new_message("\n".join((
+			"Voicemail:", str(self._conn.session.voicemailsStateMachine)
+		)))
+		self._report_new_message("\n".join((
+			"Texts:", str(self._conn.session.textsStateMachine)
+		)))
+
+	def help_get_state_status(self):
+		self._report_new_message("Prints the current setting for the state machines")
+
 	def do_is_authed(self, args):
 		if args:
 			self._report_new_message("No arguments supported")
@@ -238,23 +272,6 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 
 	def help_version(self):
 		self._report_new_message("Prints the version (hint: %s-%s)" % (constants.__version__, constants.__build__))
-
-	def do_get_polling(self, args):
-		if args:
-			self._report_new_message("No arguments supported")
-			return
-		self._report_new_message("\n".join((
-			"Contacts:", repr(self._conn.session.addressbookStateMachine)
-		)))
-		self._report_new_message("\n".join((
-			"Voicemail:", repr(self._conn.session.voicemailsStateMachine)
-		)))
-		self._report_new_message("\n".join((
-			"Texts:", repr(self._conn.session.textsStateMachine)
-		)))
-
-	def help_get_polling(self):
-		self._report_new_message("Prints the frequency each of the state machines updates")
 
 	def do_grab_log(self, args):
 		if args:

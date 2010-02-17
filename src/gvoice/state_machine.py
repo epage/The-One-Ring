@@ -107,6 +107,11 @@ class NTimesStateStrategy(object):
 		except IndexError:
 			return self._postTimeout
 
+	def __str__(self):
+		return "NTimesStateStrategy(timeout=%r)" % (
+			self.timeout,
+		)
+
 	def __repr__(self):
 		return "NTimesStateStrategy(timeouts=%r, postTimeout=%r)" % (
 			self._timeouts,
@@ -148,6 +153,11 @@ class GeometricStateStrategy(object):
 		else:
 			timeout = self._init + self._current
 		return timeout
+
+	def __str__(self):
+		return "GeometricStateStrategy(timeout=%r)" % (
+			self.timeout
+		)
 
 	def __repr__(self):
 		return "GeometricStateStrategy(init=%r, min=%r, max=%r)" % (
@@ -224,6 +234,7 @@ class UpdateStateMachine(StateMachine):
 		self._name = name
 		self._updateItems = updateItems
 		self._maxTime = maxTime
+		self._isRunning = False
 
 		self._state = self.STATE_ACTIVE
 		self._onTimeout = gobject_utils.Timeout(self._on_timeout)
@@ -234,6 +245,13 @@ class UpdateStateMachine(StateMachine):
 				self._request_reset_timers
 			)
 		)
+
+	def __str__(self):
+		return """UpdateStateMachine(
+	name=%r,
+	strategie=%s,
+	isRunning=%r,
+)""" % (self._name, self._strategy, self._onTimeout.is_running())
 
 	def __repr__(self):
 		return """UpdateStateMachine(
@@ -249,10 +267,12 @@ class UpdateStateMachine(StateMachine):
 			strategy.initialize_state()
 		if self._strategy.timeout != self.INFINITE_PERIOD:
 			self._onTimeout.start(seconds=0)
+		self._isRunning = True
 		_moduleLogger.info("%s Starting State Machine" % (self._name, ))
 
 	def stop(self):
 		_moduleLogger.info("%s Stopping State Machine" % (self._name, ))
+		self._isRunning = False
 		self._onTimeout.cancel()
 
 	def close(self):
@@ -292,7 +312,7 @@ class UpdateStateMachine(StateMachine):
 		self._reset_timers()
 
 	def _reset_timers(self, initialize=False):
-		if self._onTimeout.is_running():
+		if not self._isRunning:
 			return # not started yet
 		_moduleLogger.info("%s Resetting State Machine" % (self._name, ))
 		self._onTimeout.cancel()
