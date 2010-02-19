@@ -2,7 +2,7 @@
 Manager=theonering
 Protocol=sip
 DisplayName=Google Voice
-IconName = im-theonering
+IconName = tor_handset
 ConfigurationUI = haze-plugin
 SupportsInvisible = 1
 Capabilities = chat-p2p, voice-p2p, supports-alias, supports-roster
@@ -34,13 +34,13 @@ Type = 5
 
 [Action chat]
 Name = addr_bd_cont_starter_im_service_chat
-IconName = im-theonering
+IconName = tor_handset
 VCardFields = X-GV,TEL
 prop-org.freedesktop.Telepathy.Channel.ChannelType-s = org.freedesktop.Telepathy.Channel.Type.Text
 
 [Action call]
 Name = addr_bd_cont_starter_im_service_call
-IconName = im-theonering
+IconName = tor_handset
 VCardFields = X-GV,TEL
 prop-org.freedesktop.Telepathy.Channel.ChannelType-s = org.freedesktop.Telepathy.Channel.Type.StreamedMedia
 

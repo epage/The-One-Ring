@@ -191,12 +191,7 @@ def build_package(distribution):
 	p.repository = "extras"
 	p.changelog = __changelog__
 	p.postinstall = __postinstall__
-	p.icon = {
-		"debian": "26x26-theonering.png",
-		"diablo": "26x26-theonering.png",
-		"fremantle": "64x64-theonering.png", # Fremantle natively uses 48x48
-		"mer": "64x64-theonering.png",
-	}[distribution]
+	p.icon = "32-tor_handset.png"
 	for relPath, files in unflatten_files(find_files(".")).iteritems():
 		fullPath = "/usr/lib/theonering"
 		if relPath:
@@ -212,7 +207,12 @@ def build_package(distribution):
 		p["/usr/share/osso-rtcom"] = ["theonering.profile.%s|theonering.profile"% distribution]
 	p["/usr/lib/telepathy"] = ["telepathy-theonering"]
 	p["/usr/share/telepathy/managers"] = ["theonering.manager"]
-	p["/usr/share/icons/hicolor/26x26/hildon"] = ["26x26-theonering.png|im-theonering.png"]
+	p["/usr/share/icons/hicolor/26x26/hildon"] = ["26-tor_handset.png|tor_handset.png"]
+	p["/usr/share/icons/hicolor/26x26/hildon"] = ["26-tor_phone.png|tor_phone.png"]
+	p["/usr/share/icons/hicolor/26x26/hildon"] = ["26-tor_question.png|tor_question.png"]
+	p["/usr/share/icons/hicolor/64x64/hildon"] = ["64-tor_handset.png|tor_handset.png"]
+	p["/usr/share/icons/hicolor/64x64/hildon"] = ["64-tor_phone.png|tor_phone.png"]
+	p["/usr/share/icons/hicolor/64x64/hildon"] = ["64-tor_question.png|tor_question.png"]
 
 	if distribution == "debian":
 		print p

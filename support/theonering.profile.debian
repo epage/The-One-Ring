@@ -2,7 +2,7 @@
 Manager=theonering
 Protocol=sip
 DisplayName=Google Voice
-IconName = im-theonering
+IconName = tor_handset
 SupportsInvisible = 1
 Capabilities = chat-p2p, voice-p2p, supports-alias, supports-roster
 VCardDefault = 1
