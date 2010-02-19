@@ -207,12 +207,11 @@ def build_package(distribution):
 		p["/usr/share/osso-rtcom"] = ["theonering.profile.%s|theonering.profile"% distribution]
 	p["/usr/lib/telepathy"] = ["telepathy-theonering"]
 	p["/usr/share/telepathy/managers"] = ["theonering.manager"]
-	p["/usr/share/icons/hicolor/26x26/hildon"] = ["26-tor_handset.png|tor_handset.png"]
-	p["/usr/share/icons/hicolor/26x26/hildon"] = ["26-tor_phone.png|tor_phone.png"]
-	p["/usr/share/icons/hicolor/26x26/hildon"] = ["26-tor_question.png|tor_question.png"]
-	p["/usr/share/icons/hicolor/64x64/hildon"] = ["64-tor_handset.png|tor_handset.png"]
-	p["/usr/share/icons/hicolor/64x64/hildon"] = ["64-tor_phone.png|tor_phone.png"]
-	p["/usr/share/icons/hicolor/64x64/hildon"] = ["64-tor_question.png|tor_question.png"]
+	p["/usr/share/icons/hicolor/32x32/hildon"] = ["32-tor_handset.png|im_theonering.png"]
+	p["/usr/share/theonering"] = ["32-tor_handset.png|tor_handset.png"]
+	p["/usr/share/theonering"] = ["32-tor_phone.png|tor_phone.png"]
+	p["/usr/share/theonering"] = ["32-tor_question.png|tor_question.png"]
+	p["/usr/share/theonering"] = ["32-tor_self.png|tor_self.png"]
 
 	if distribution == "debian":
 		print p
