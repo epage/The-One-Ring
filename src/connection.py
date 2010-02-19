@@ -12,12 +12,13 @@ import util.misc as misc_utils
 import gvoice
 import handle
 
-import requests
-import contacts
 import aliasing
-import simple_presence
-import presence
+import avatars
 import capabilities
+import contacts
+import presence
+import requests
+import simple_presence
 
 import autogv
 import channel_manager
@@ -50,12 +51,13 @@ class TheOneRingOptions(object):
 
 class TheOneRingConnection(
 	tp.Connection,
-	requests.RequestsMixin,
-	contacts.ContactsMixin,
 	aliasing.AliasingMixin,
-	simple_presence.SimplePresenceMixin,
-	presence.PresenceMixin,
+	avatars.AvatarsMixin,
 	capabilities.CapabilitiesMixin,
+	contacts.ContactsMixin,
+	presence.PresenceMixin,
+	requests.RequestsMixin,
+	simple_presence.SimplePresenceMixin,
 ):
 
 	# overiding base class variable
@@ -108,12 +110,13 @@ class TheOneRingConnection(
 			account,
 			constants._telepathy_implementation_name_
 		)
-		requests.RequestsMixin.__init__(self)
-		contacts.ContactsMixin.__init__(self)
 		aliasing.AliasingMixin.__init__(self)
-		simple_presence.SimplePresenceMixin.__init__(self)
-		presence.PresenceMixin.__init__(self)
+		avatars.AvatarsMixin.__init__(self)
 		capabilities.CapabilitiesMixin.__init__(self)
+		contacts.ContactsMixin.__init__(self)
+		presence.PresenceMixin.__init__(self)
+		requests.RequestsMixin.__init__(self)
+		simple_presence.SimplePresenceMixin.__init__(self)
 
 		self.__manager = weakref.proxy(manager)
 		self.__credentials = (
