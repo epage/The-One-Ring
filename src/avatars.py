@@ -26,6 +26,7 @@ class AvatarsMixin(tp.server.ConnectionInterfaceAvatars):
 
 	def __init__(self):
 		tp.server.ConnectionInterfaceAvatars.__init__(self)
+		self._avatarCache = {}
 
 		self._implement_property_get(
 			telepathy.interfaces.CONNECTION_INTERFACE_AVATARS,
@@ -78,14 +79,14 @@ class AvatarsMixin(tp.server.ConnectionInterfaceAvatars):
 	@misc_utils.log_exception(_moduleLogger)
 	def RequestAvatar(self, contact):
 		imageName = self._select_avatar(contact)
-		image = self._load_avatar(imageName)
+		image = self._get_avatar(imageName)
 		return image, "image/png"
 
 	@misc_utils.log_exception(_moduleLogger)
 	def RequestAvatars(self, contacts):
 		for handleid in contacts:
 			imageName = self._select_avatar(handleid)
-			image = self._load_avatar(imageName)
+			image = self._get_avatar(imageName)
 			self.AvatarRetrieved(handleid, imageName, image, "image/png")
 
 	@misc_utils.log_exception(_moduleLogger)
@@ -115,7 +116,16 @@ class AvatarsMixin(tp.server.ConnectionInterfaceAvatars):
 
 		return imageName
 
+	def _get_avatar(self, imageName):
+		try:
+			return self._avatarCache[imageName]
+		except AttributeError:
+			image = self._load_avatar(imageName)
+			self._avatarCache[imageName] = image
+			return image
+
 	def _load_avatar(self, imageName):
+		_moduleLogger.debug("Loading avatar %r from file" % (imageName, ))
 		try:
 			with open(os.sep.join([self.__LOOKUP_PATHS[0], imageName+".png"]), "rb") as f:
 				return f.read()
