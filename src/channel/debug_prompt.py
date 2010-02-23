@@ -15,7 +15,7 @@ import util.misc as misc_utils
 import gvoice
 
 
-_moduleLogger = logging.getLogger("channel.debug_prompt")
+_moduleLogger = logging.getLogger(__name__)
 
 
 class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):

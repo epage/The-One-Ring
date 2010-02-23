@@ -10,7 +10,7 @@ import conversations
 import state_machine
 
 
-_moduleLogger = logging.getLogger("gvoice.session")
+_moduleLogger = logging.getLogger(__name__)
 
 
 class Session(object):

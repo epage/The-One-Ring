@@ -7,7 +7,7 @@ import util.misc as misc_utils
 import handle
 
 
-_moduleLogger = logging.getLogger('aliasing')
+_moduleLogger = logging.getLogger(__name__)
 
 
 def _make_pretty_with_areacodde(phonenumber):

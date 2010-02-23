@@ -10,7 +10,7 @@ import tp
 import util.misc as misc_utils
 
 
-_moduleLogger = logging.getLogger("channel.debug_log")
+_moduleLogger = logging.getLogger(__name__)
 
 
 class DebugLogChannel(tp.ChannelTypeFileTransfer):

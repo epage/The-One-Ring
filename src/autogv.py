@@ -22,7 +22,7 @@ import util.misc as misc_utils
 import gvoice
 
 
-_moduleLogger = logging.getLogger("autogv")
+_moduleLogger = logging.getLogger(__name__)
 
 
 class NewGVConversations(object):

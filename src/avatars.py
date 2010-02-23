@@ -9,7 +9,7 @@ import tp
 import util.misc as misc_utils
 
 
-_moduleLogger = logging.getLogger('avatars')
+_moduleLogger = logging.getLogger(__name__)
 
 
 class AvatarsMixin(tp.server.ConnectionInterfaceAvatars):

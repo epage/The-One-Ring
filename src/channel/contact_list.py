@@ -8,7 +8,7 @@ import util.misc as misc_utils
 import handle
 
 
-_moduleLogger = logging.getLogger("channel.contact_list")
+_moduleLogger = logging.getLogger(__name__)
 
 
 class AllContactsListChannel(

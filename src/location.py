@@ -5,7 +5,7 @@ import telepathy
 import util.misc as misc_utils
 
 
-_moduleLogger = logging.getLogger('location')
+_moduleLogger = logging.getLogger(__name__)
 
 
 #class LocationMixin(tp.ConnectionInterfaceLocation):

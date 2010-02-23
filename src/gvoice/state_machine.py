@@ -7,7 +7,7 @@ import util.coroutines as coroutines
 import util.misc as misc_utils
 
 
-_moduleLogger = logging.getLogger("gvoice.state_machine")
+_moduleLogger = logging.getLogger(__name__)
 
 
 def to_milliseconds(**kwd):

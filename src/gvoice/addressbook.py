@@ -7,7 +7,7 @@ import util.coroutines as coroutines
 import util.misc as misc_utils
 
 
-_moduleLogger = logging.getLogger("gvoice.addressbook")
+_moduleLogger = logging.getLogger(__name__)
 
 
 class Addressbook(object):

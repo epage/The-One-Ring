@@ -9,7 +9,7 @@ import util.misc as misc_utils
 import connection
 
 
-_moduleLogger = logging.getLogger("connection_manager")
+_moduleLogger = logging.getLogger(__name__)
 
 
 class TheOneRingConnectionManager(tp.ConnectionManager):

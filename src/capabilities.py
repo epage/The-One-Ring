@@ -6,7 +6,7 @@ import tp
 import util.misc as misc_utils
 
 
-_moduleLogger = logging.getLogger('capabilities')
+_moduleLogger = logging.getLogger(__name__)
 
 
 class CapabilitiesMixin(tp.ConnectionInterfaceCapabilities):

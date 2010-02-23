@@ -7,7 +7,7 @@ import tp
 import util.misc as misc_utils
 
 
-_moduleLogger = logging.getLogger("handle")
+_moduleLogger = logging.getLogger(__name__)
 
 
 class TheOneRingHandle(tp.Handle):

@@ -8,7 +8,7 @@ import channel
 import util.misc as misc_utils
 
 
-_moduleLogger = logging.getLogger("channel_manager")
+_moduleLogger = logging.getLogger(__name__)
 
 
 class ChannelManager(tp.ChannelManager):

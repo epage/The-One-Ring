@@ -5,7 +5,7 @@ import util.misc as misc_utils
 import simple_presence
 
 
-_moduleLogger = logging.getLogger('presence')
+_moduleLogger = logging.getLogger(__name__)
 
 
 class PresenceMixin(tp.ConnectionInterfacePresence, simple_presence.TheOneRingPresence):

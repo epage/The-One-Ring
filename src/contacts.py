@@ -6,7 +6,7 @@ import telepathy
 import util.misc as misc_utils
 
 
-_moduleLogger = logging.getLogger('contacts')
+_moduleLogger = logging.getLogger(__name__)
 
 
 class ContactsMixin(telepathy.server.ConnectionInterfaceContacts):

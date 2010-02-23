@@ -1,7 +1,6 @@
 import logging
 
 import dbus
-import gobject
 import telepathy
 
 import tp
@@ -9,7 +8,7 @@ import util.go_utils as gobject_utils
 import util.misc as misc_utils
 
 
-_moduleLogger = logging.getLogger("channel.call")
+_moduleLogger = logging.getLogger(__name__)
 
 
 class CallChannel(

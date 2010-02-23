@@ -9,7 +9,7 @@ import util.misc as misc_utils
 import gvoice
 
 
-_moduleLogger = logging.getLogger("channel.text")
+_moduleLogger = logging.getLogger(__name__)
 
 
 class TextChannel(tp.ChannelTypeText):

@@ -24,7 +24,7 @@ import autogv
 import channel_manager
 
 
-_moduleLogger = logging.getLogger("connection")
+_moduleLogger = logging.getLogger(__name__)
 
 
 class TheOneRingOptions(object):
@@ -217,11 +217,11 @@ class TheOneRingConnection(
 			publishHandle = self.get_handle_by_name(telepathy.HANDLE_TYPE_LIST, "publish")
 			publishProps = self.generate_props(telepathy.CHANNEL_TYPE_CONTACT_LIST, publishHandle, False)
 			self.__channelManager.channel_for_props(publishProps, signal=True)
-		except gvoice.backend.NetworkError, e:
+		except gvoice.backend.NetworkError:
 			_moduleLogger.exception("Connection Failed")
 			self.disconnect(telepathy.CONNECTION_STATUS_REASON_NETWORK_ERROR)
 			return
-		except Exception, e:
+		except Exception:
 			_moduleLogger.exception("Connection Failed")
 			self.disconnect(telepathy.CONNECTION_STATUS_REASON_AUTHENTICATION_FAILED)
 			return
