@@ -298,9 +298,10 @@ class TheOneRingConnection(
 			plumber.stop()
 
 		self.__channelManager.close()
+		self.manager.disconnected(self)
+
 		self.session.save(self.__cachePath)
 		self.session.logout()
 		self.session.close()
 
-		self.manager.disconnected(self)
 		_moduleLogger.info("Disconnected")
