@@ -36,7 +36,7 @@ class Conversations(object):
 		try:
 			with open(path, "rb") as f:
 				fileVersion, fileBuild, convs = pickle.load(f)
-		except (pickle.PickleError, IOError):
+		except (pickle.PickleError, IOError, EOFError, ValueError):
 			_moduleLogger.exception("While loading for %s" % self._name)
 			return
 
