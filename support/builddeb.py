@@ -34,6 +34,10 @@ __email__ = "eopage@byu.net"
 __version__ = constants.__version__
 __build__ = constants.__build__
 __changelog__ = """
+0.8.0
+* Basic avatar support to distinguish phone types
+* Tweaks to hopefully improve behavior
+
 0.7.14
 * Bugfix: Polling state machines weren't properly resetting (maybe thats why I had such good battery life)
 * Bugfix: On Maemo 4.1 there are still some empty windows created
@@ -208,10 +212,12 @@ def build_package(distribution):
 	p["/usr/lib/telepathy"] = ["telepathy-theonering"]
 	p["/usr/share/telepathy/managers"] = ["theonering.manager"]
 	p["/usr/share/icons/hicolor/32x32/hildon"] = ["32-tor_handset.png|im_theonering.png"]
-	p["/usr/share/theonering"] = ["32-tor_handset.png|tor_handset.png"]
-	p["/usr/share/theonering"] = ["32-tor_phone.png|tor_phone.png"]
-	p["/usr/share/theonering"] = ["32-tor_question.png|tor_question.png"]
-	p["/usr/share/theonering"] = ["32-tor_self.png|tor_self.png"]
+	p["/usr/share/theonering"] = [
+		"32-tor_handset.png|tor_handset.png",
+		"32-tor_phone.png|tor_phone.png",
+		"32-tor_question.png|tor_question.png",
+		"32-tor_self.png|tor_self.png",
+	]
 
 	if distribution == "debian":
 		print p
