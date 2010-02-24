@@ -119,7 +119,7 @@ class AvatarsMixin(tp.server.ConnectionInterfaceAvatars):
 	def _get_avatar(self, imageName):
 		try:
 			return self._avatarCache[imageName]
-		except AttributeError:
+		except KeyError:
 			image = self._load_avatar(imageName)
 			self._avatarCache[imageName] = image
 			return image
