@@ -84,8 +84,9 @@ def create_handle_factory():
 			cache[key] = handle
 			isNewHandle = True
 		connection._handles[handle.get_type(), handle.get_id()] = handle
-		handleStatus = "Is New!" if isNewHandle else "From Cache"
-		_moduleLogger.debug("Created Handle: %r (%s)" % (handle, handleStatus))
+		if isNewHandle:
+			handleStatus = "Is New!" if isNewHandle else "From Cache"
+			_moduleLogger.debug("Created Handle: %r (%s)" % (handle, handleStatus))
 		return handle
 
 	return _create_handle
