@@ -10,7 +10,7 @@ import handle
 _moduleLogger = logging.getLogger(__name__)
 
 
-def _make_pretty_with_areacodde(phonenumber):
+def _make_pretty_with_areacode(phonenumber):
 	prettynumber = "(%s)" % (phonenumber[0:3], )
 	if 3 < len(phonenumber):
 		prettynumber += " %s" % (phonenumber[3:6], )
@@ -31,10 +31,10 @@ def _make_pretty_international(phonenumber):
 	if phonenumber.startswith("0"):
 		prettynumber = "+%s " % (phonenumber[0:3], )
 		if 3 < len(phonenumber):
-			prettynumber += _make_pretty_with_areacodde(phonenumber[3:])
-	if phonenumber.startswith("1"):
+			prettynumber += _make_pretty_with_areacode(phonenumber[3:])
+	elif phonenumber.startswith("1"):
 		prettynumber = "1 "
-		prettynumber += _make_pretty_with_areacodde(phonenumber[1:])
+		prettynumber += _make_pretty_with_areacode(phonenumber[1:])
 	return prettynumber
 
 
@@ -81,7 +81,7 @@ def make_pretty(phonenumber):
 	elif 8 < len(phonenumber) and phonenumber[0] in ("0", "1"):
 		prettynumber = _make_pretty_international(phonenumber)
 	elif 7 < len(phonenumber):
-		prettynumber = _make_pretty_with_areacodde(phonenumber)
+		prettynumber = _make_pretty_with_areacode(phonenumber)
 	elif 3 < len(phonenumber):
 		prettynumber = _make_pretty_local(phonenumber)
 	else:
