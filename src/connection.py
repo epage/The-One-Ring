@@ -238,7 +238,7 @@ class TheOneRingConnection(
 		For org.freedesktop.telepathy.Connection
 		"""
 		_moduleLogger.info("Kicking off disconnect")
-		self._delayed_disconnect()
+		self.disconnect(telepathy.CONNECTION_STATUS_REASON_REQUESTED)
 
 	@misc_utils.log_exception(_moduleLogger)
 	def RequestChannel(self, type, handleType, handleId, suppressHandler):
@@ -276,11 +276,6 @@ class TheOneRingConnection(
 			props[telepathy.CHANNEL_INTERFACE + '.InitiatorHandle'] = initiatorHandle.id
 
 		return props
-
-	@gobject_utils.async
-	def _delayed_disconnect(self):
-		self.disconnect(telepathy.CONNECTION_STATUS_REASON_REQUESTED)
-		return False
 
 	def disconnect(self, reason):
 		_moduleLogger.info("Disconnecting")
