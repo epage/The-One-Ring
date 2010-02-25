@@ -20,7 +20,7 @@ class CallChannel(
 	def __init__(self, connection, manager, props, contactHandle):
 		self.__manager = manager
 		self.__props = props
-		self._delayedCancel = gobject_utils.Async(self._on_cancel)
+		self._delayedClose = gobject_utils.Timeout(self._on_close_requested)
 
 		if telepathy.interfaces.CHANNEL_INTERFACE + '.InitiatorHandle' in props:
 			self._initiator = connection.get_handle_by_id(
@@ -45,6 +45,7 @@ class CallChannel(
 		tp.ChannelInterfaceCallState.__init__(self)
 		tp.ChannelInterfaceGroup.__init__(self)
 		self.__contactHandle = contactHandle
+		self.__calledNumer = None
 
 		self._implement_property_get(
 			telepathy.interfaces.CHANNEL_INTERFACE,
@@ -95,7 +96,9 @@ class CallChannel(
 		_moduleLogger.debug("Closing call")
 		tp.ChannelTypeStreamedMedia.Close(self)
 		self.remove_from_connection()
-		self._delayedCancel.cancel()
+		if self.__calledNumer is not None:
+			self._conn.session.backend.cancel(self.__calledNumer)
+		self._delayedClose.cancel()
 
 	@misc_utils.log_exception(_moduleLogger)
 	def GetLocalPendingMembersWithInfo(self):
@@ -154,9 +157,11 @@ class CallChannel(
 		assert self.__contactHandle == contact, "%r != %r" % (self.__contactHandle, contact)
 		contactNumber = contact.phoneNumber
 
+		self.__calledNumer = contactNumber
 		self.CallStateChanged(self.__contactHandle, telepathy.constants.CHANNEL_CALL_STATE_RINGING)
-		self._delayedCancel.start()
 		self._conn.session.backend.call(contactNumber)
+		self._delayedClose.start(seconds=5)
+		self.CallStateChanged(self.__contactHandle, telepathy.constants.CHANNEL_CALL_STATE_FORWARDED)
 
 		streamId = 0
 		streamState = telepathy.constants.MEDIA_STREAM_STATE_CONNECTED
@@ -175,6 +180,7 @@ class CallChannel(
 		return {self.__contactHandle: telepathy.constants.CHANNEL_CALL_STATE_FORWARDED}
 
 	@misc_utils.log_exception(_moduleLogger)
-	def _on_cancel(self, *args):
-		self.CallStateChanged(self.__contactHandle, telepathy.constants.CHANNEL_CALL_STATE_FORWARDED)
+	def _on_close_requested(self, *args):
+		_moduleLogger.debug("Cancel now disallowed")
+		self.__calledNumer = None
 		self.close()
