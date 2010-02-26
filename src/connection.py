@@ -166,11 +166,9 @@ class TheOneRingConnection(
 	def get_handle_by_name(self, handleType, handleName):
 		requestedHandleName = handleName.encode('utf-8')
 		if handleType == telepathy.HANDLE_TYPE_CONTACT:
-			_moduleLogger.debug("get_handle_by_name Contact: %s" % requestedHandleName)
 			h = handle.create_handle(self, 'contact', requestedHandleName)
 		elif handleType == telepathy.HANDLE_TYPE_LIST:
 			# Support only server side (immutable) lists
-			_moduleLogger.debug("get_handle_by_name List: %s" % requestedHandleName)
 			h = handle.create_handle(self, 'list', requestedHandleName)
 		else:
 			raise telepathy.errors.NotAvailable('Handle type unsupported %d' % handleType)
