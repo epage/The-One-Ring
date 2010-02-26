@@ -128,9 +128,12 @@ class NewChannelSignaller(object):
 	):
 		connObjectPath = channel_path_to_conn_path(channelObjectPath)
 		serviceName = path_to_service_name(channelObjectPath)
-		self._on_user_new_channel(
-			self._sessionBus, serviceName, connObjectPath, channelObjectPath, channelType
-		)
+		try:
+			self._on_user_new_channel(
+				self._sessionBus, serviceName, connObjectPath, channelObjectPath, channelType
+			)
+		except Exception:
+			_moduleLogger.exception("Blocking exception from being passed up")
 
 
 def channel_path_to_conn_path(channelObjectPath):

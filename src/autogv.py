@@ -1,5 +1,6 @@
 import logging
 
+import dbus
 import telepathy
 
 try:
@@ -107,7 +108,6 @@ class RefreshVoicemail(object):
 
 		self._isStarted = False
 
-	@misc_utils.log_exception(_moduleLogger)
 	def _on_new_channel(self, bus, serviceName, connObjectPath, channelObjectPath, channelType):
 		if channelType != telepathy.interfaces.CHANNEL_TYPE_STREAMED_MEDIA:
 			return
@@ -118,7 +118,11 @@ class RefreshVoicemail(object):
 			return
 
 		conn = telepathy.client.Connection(serviceName, connObjectPath)
-		chan = telepathy.client.Channel(serviceName, channelObjectPath)
+		try:
+			chan = telepathy.client.Channel(serviceName, channelObjectPath)
+		except dbus.exceptions.UnknownMethodException:
+			_moduleLogger.exception("Client might not have implemented a deprecated method")
+			return
 		missDetection = telepathy_utils.WasMissedCall(
 			bus, conn, chan, self._on_missed_call, self._on_error_for_missed
 		)
