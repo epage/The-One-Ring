@@ -34,6 +34,10 @@ __email__ = "eopage@byu.net"
 __version__ = constants.__version__
 __build__ = constants.__build__
 __changelog__ = """
+0.8.1
+* Canceling of outbound calls
+* Bugfix: Removing race condition with disconnect.  I introduced it expecting it to help but it hurts more than it helps
+
 0.8.0
 * Basic avatar support to distinguish phone types
 * Tweaks to hopefully improve behavior
