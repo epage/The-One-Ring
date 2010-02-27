@@ -34,6 +34,10 @@ __email__ = "eopage@byu.net"
 __version__ = constants.__version__
 __build__ = constants.__build__
 __changelog__ = """
+0.8.3
+* "Hold" support for calls, so that initiating a callback does not block incoming calls
+* Increased the auto-cleanup timeout from 5 seconds to 10 seconds
+
 0.8.2
 * Improved debug logs, removing noise
 * Reduced allotted disconnect time from 5 seconds to 2
