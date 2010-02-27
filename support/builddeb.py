@@ -34,6 +34,12 @@ __email__ = "eopage@byu.net"
 __version__ = constants.__version__
 __build__ = constants.__build__
 __changelog__ = """
+0.8.2
+* Improved debug logs, removing noise
+* Reduced allotted disconnect time from 5 seconds to 2
+* Auto-cleanup resources when client only does phase 1 of 2 connection creation phases
+* Added 26x26 and 64x64 variants of icons to hopefully fix issues on Maemo 4.1
+
 0.8.1
 * Canceling of outbound calls
 * Bugfix: Removing race condition with disconnect.  I introduced it expecting it to help but it hurts more than it helps
@@ -215,7 +221,9 @@ def build_package(distribution):
 		p["/usr/share/osso-rtcom"] = ["theonering.profile.%s|theonering.profile"% distribution]
 	p["/usr/lib/telepathy"] = ["telepathy-theonering"]
 	p["/usr/share/telepathy/managers"] = ["theonering.manager"]
+	p["/usr/share/icons/hicolor/26x26/hildon"] = ["26-tor_handset.png|im_theonering.png"]
 	p["/usr/share/icons/hicolor/32x32/hildon"] = ["32-tor_handset.png|im_theonering.png"]
+	p["/usr/share/icons/hicolor/64x64/hildon"] = ["64-tor_handset.png|im_theonering.png"]
 	p["/usr/share/theonering"] = [
 		"32-tor_handset.png|tor_handset.png",
 		"32-tor_phone.png|tor_phone.png",
