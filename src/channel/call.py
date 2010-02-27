@@ -160,7 +160,7 @@ class CallChannel(
 		self.__calledNumer = contactNumber
 		self.CallStateChanged(self.__contactHandle, telepathy.constants.CHANNEL_CALL_STATE_RINGING)
 		self._conn.session.backend.call(contactNumber)
-		self._delayedClose.start(seconds=5)
+		self._delayedClose.start(seconds=2)
 		self.CallStateChanged(self.__contactHandle, telepathy.constants.CHANNEL_CALL_STATE_FORWARDED)
 
 		streamId = 0
