@@ -140,6 +140,23 @@ class RefreshVoicemail(object):
 		self._outstandingRequests.remove(missDetection)
 
 
+class TimedDisconnect(object):
+
+	def __init__(self, connRef):
+		self._connRef = connRef
+		self.__delayedDisconnect = gobject_utils.Timeout(self._on_delayed_disconnect)
+
+	def start(self):
+		self.__delayedDisconnect.start(seconds=5)
+
+	def stop(self):
+		self.__delayedDisconnect.cancel()
+
+	def _on_delayed_disconnect(self):
+		_moduleLogger.info("Timed disconnect occurred")
+		self._connRef().disconnect(telepathy.CONNECTION_STATUS_REASON_NETWORK_ERROR)
+
+
 class AutoDisconnect(object):
 
 	def __init__(self, connRef):

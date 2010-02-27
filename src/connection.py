@@ -142,6 +142,8 @@ class TheOneRingConnection(
 		self._delayedConnect = gobject_utils.Async(self._delayed_connect)
 
 		_moduleLogger.info("Connection to the account %s created" % account)
+		self._timedDisconnect = autogv.TimedDisconnect(weakref.ref(self))
+		self._timedDisconnect.start()
 
 	@property
 	def manager(self):
@@ -188,6 +190,7 @@ class TheOneRingConnection(
 			return
 		_moduleLogger.info("Kicking off connect")
 		self._delayedConnect.start()
+		self._timedDisconnect.stop()
 
 	@misc_utils.log_exception(_moduleLogger)
 	def _delayed_connect(self):
@@ -279,6 +282,7 @@ class TheOneRingConnection(
 		_moduleLogger.info("Disconnecting")
 
 		self._delayedConnect.cancel()
+		self._timedDisconnect.stop()
 
 		# Not having the disconnect first can cause weird behavior with clients
 		# including not being able to reconnect or even crashing
