@@ -13,8 +13,9 @@ _moduleLogger = logging.getLogger(__name__)
 
 class CallChannel(
 		tp.ChannelTypeStreamedMedia,
-		tp.ChannelInterfaceCallState,
 		tp.ChannelInterfaceGroup,
+		tp.ChannelInterfaceCallState,
+		tp.ChannelInterfaceHold,
 	):
 
 	def __init__(self, connection, manager, props, contactHandle):
@@ -42,8 +43,9 @@ class CallChannel(
 			self._initiator = connection.GetSelfHandle()
 
 		tp.ChannelTypeStreamedMedia.__init__(self, connection, manager, props)
-		tp.ChannelInterfaceCallState.__init__(self)
 		tp.ChannelInterfaceGroup.__init__(self)
+		tp.ChannelInterfaceCallState.__init__(self)
+		tp.ChannelInterfaceHold.__init__(self)
 		self.__contactHandle = contactHandle
 		self.__calledNumer = None
 
@@ -178,6 +180,30 @@ class CallChannel(
 		@returns {Contact: telepathy.constants.CHANNEL_CALL_STATE_*}
 		"""
 		return {self.__contactHandle: telepathy.constants.CHANNEL_CALL_STATE_FORWARDED}
+
+	@misc_utils.log_exception(_moduleLogger)
+	def GetHoldState(self):
+		"""
+		For org.freedesktop.Telepathy.Channel.Interface.Hold
+
+		Get the current hold state
+		@returns (HoldState, Reason)
+		"""
+		return (
+			telepathy.constants.LOCAL_HOLD_STATE_UNHELD,
+			telepathy.constants.LOCAL_HOLD_STATE_REASON_NONE,
+		)
+
+	@misc_utils.log_exception(_moduleLogger)
+	def RequestHold(self, Hold):
+		"""
+		For org.freedesktop.Telepathy.Channel.Interface.Hold
+		"""
+		if not Hold:
+			return
+		_moduleLogger.debug("Closing without cancel to get out of users way")
+		self.__calledNumer = None
+		self.close()
 
 	@misc_utils.log_exception(_moduleLogger)
 	def _on_close_requested(self, *args):
