@@ -79,8 +79,10 @@ class CallChannel(
 		})
 
 		self.GroupFlagsChanged(0, 0)
+		added, removed = [self._conn.GetSelfHandle()], []
+		localPending, remotePending = [], [contactHandle]
 		self.MembersChanged(
-			'', [self._conn.GetSelfHandle()], [], [], [contactHandle],
+			'', added, removed, localPending, remotePending,
 			0, telepathy.CHANNEL_GROUP_CHANGE_REASON_NONE
 		)
 
@@ -162,7 +164,7 @@ class CallChannel(
 		self.__calledNumer = contactNumber
 		self.CallStateChanged(self.__contactHandle, telepathy.constants.CHANNEL_CALL_STATE_RINGING)
 		self._conn.session.backend.call(contactNumber)
-		self._delayedClose.start(seconds=2)
+		self._delayedClose.start(seconds=0)
 		self.CallStateChanged(self.__contactHandle, telepathy.constants.CHANNEL_CALL_STATE_FORWARDED)
 
 		streamId = 0
