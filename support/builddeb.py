@@ -34,6 +34,12 @@ __email__ = "eopage@byu.net"
 __version__ = constants.__version__
 __build__ = constants.__build__
 __changelog__ = """
+0.8.4
+* Reduced time allowed for disconnect due to RTComm not putting TOR on hold, causing miss of callback
+* Doubled the timed disconnects time
+* Cleaning up things to better match the latest Empathy
+* Bugfix: Random "General Error"s when making a call
+
 0.8.3
 * "Hold" support for calls, so that initiating a callback does not block incoming calls
 * Increased the auto-cleanup timeout from 5 seconds to 10 seconds
@@ -189,7 +195,6 @@ def build_package(distribution):
 		"debian": "comm",
 		"diablo": "user/network",
 		"fremantle": "user/network",
-		"mer": "user/network",
 	}[distribution]
 	p.depends = ", ".join([
 		"python (>= 2.5) | python2.5",
@@ -201,11 +206,10 @@ def build_package(distribution):
 		"debian": "",
 		"diablo": ", python2.5-conic, account-plugin-haze",
 		"fremantle": ", account-plugin-haze",
-		"mer": "",
 	}[distribution]
 	p.arch = "all"
 	p.urgency = "low"
-	p.distribution = "diablo fremantle mer debian"
+	p.distribution = "diablo fremantle debian"
 	p.repository = "extras"
 	p.changelog = __changelog__
 	p.postinstall = __postinstall__
@@ -221,13 +225,17 @@ def build_package(distribution):
 	p["/usr/share/dbus-1/services"] = ["org.freedesktop.Telepathy.ConnectionManager.theonering.service"]
 	if distribution in ("debian", ):
 		p["/usr/share/mission-control/profiles"] = ["theonering.profile.%s|theonering.profile"% distribution]
-	elif distribution in ("diablo", "fremantle", "mer"):
+	elif distribution in ("diablo", "fremantle"):
 		p["/usr/share/osso-rtcom"] = ["theonering.profile.%s|theonering.profile"% distribution]
 	p["/usr/lib/telepathy"] = ["telepathy-theonering"]
 	p["/usr/share/telepathy/managers"] = ["theonering.manager"]
-	p["/usr/share/icons/hicolor/26x26/hildon"] = ["26-tor_handset.png|im-theonering.png"]
-	p["/usr/share/icons/hicolor/32x32/hildon"] = ["32-tor_handset.png|im-theonering.png"]
-	p["/usr/share/icons/hicolor/64x64/hildon"] = ["64-tor_handset.png|im-theonering.png"]
+	if distribution in ("debian", ):
+		iconBasePath = "/usr/share/icons/gnome/%s/apps"
+	elif distribution in ("diablo", "fremantle"):
+		iconBasePath = "/usr/share/icons/hicolor/%s/hildon"
+	p[iconBasePath % "26x26"] = ["26-tor_handset.png|im-theonering.png"]
+	p[iconBasePath % "32x32"] = ["32-tor_handset.png|im-theonering.png"]
+	p[iconBasePath % "64x64"] = ["64-tor_handset.png|im-theonering.png"]
 	p["/usr/share/theonering"] = [
 		"32-tor_handset.png|tor_handset.png",
 		"32-tor_phone.png|tor_phone.png",
