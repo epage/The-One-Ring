@@ -74,7 +74,7 @@ class TextChannel(tp.ChannelTypeText):
 				)
 
 		_moduleLogger.info("Sending message to %r" % (self.__otherHandle, ))
-		self._conn.session.backend.send_sms(self.__otherHandle.phoneNumber, text)
+		self._conn.session.backend.send_sms([self.__otherHandle.phoneNumber], text)
 		self._conn.session.textsStateMachine.reset_timers()
 
 		self.Sent(int(time.time()), messageType, text)

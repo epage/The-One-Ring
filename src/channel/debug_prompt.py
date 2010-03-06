@@ -257,7 +257,7 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 		try:
 			number = args[0]
 			message = " ".join(args[1:])
-			self._conn.session.backend.send_sms(number, message)
+			self._conn.session.backend.send_sms([number], message)
 		except Exception, e:
 			self._report_new_message(str(e))
 

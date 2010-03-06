@@ -364,12 +364,16 @@ class GVoiceBackend(object):
 		)
 		self._parse_with_validation(page)
 
-	def send_sms(self, phoneNumber, message):
-		phoneNumber = self._send_validation(phoneNumber)
+	def send_sms(self, phoneNumbers, message):
+		validatedPhoneNumbers = [
+			self._send_validation(phoneNumber)
+			for phoneNumber in phoneNumbers
+		]
+		flattenedPhoneNumbers = ",".join(validatedPhoneNumbers)
 		page = self._get_page_with_token(
 			self._sendSmsURL,
 			{
-				'phoneNumber': phoneNumber,
+				'phoneNumber': flattenedPhoneNumbers,
 				'text': message
 			},
 		)
@@ -553,7 +557,7 @@ class GVoiceBackend(object):
 		for messageId, messageHtml in itergroup(splitVoicemail[1:], 2):
 			exactTimeGroup = self._exactVoicemailTimeRegex.search(messageHtml)
 			exactTime = exactTimeGroup.group(1).strip() if exactTimeGroup else ""
-			exactTime = datetime.datetime.strptime(exactTime, "%m/%d/%y %I:%M %p")
+			exactTime = google_strptime(exactTime)
 			relativeTimeGroup = self._relativeVoicemailTimeRegex.search(messageHtml)
 			relativeTime = relativeTimeGroup.group(1).strip() if relativeTimeGroup else ""
 			locationGroup = self._voicemailLocationRegex.search(messageHtml)
@@ -601,7 +605,7 @@ class GVoiceBackend(object):
 
 			exactTimeGroup = self._exactVoicemailTimeRegex.search(messageHtml)
 			exactTimeText = exactTimeGroup.group(1).strip() if exactTimeGroup else ""
-			conv.time = datetime.datetime.strptime(exactTimeText, "%m/%d/%y %I:%M %p")
+			conv.time = google_strptime(exactTimeText)
 			relativeTimeGroup = self._relativeVoicemailTimeRegex.search(messageHtml)
 			conv.relTime = relativeTimeGroup.group(1).strip() if relativeTimeGroup else ""
 			locationGroup = self._voicemailLocationRegex.search(messageHtml)
@@ -651,7 +655,7 @@ class GVoiceBackend(object):
 
 			exactTimeGroup = self._exactVoicemailTimeRegex.search(messageHtml)
 			exactTimeText = exactTimeGroup.group(1).strip() if exactTimeGroup else ""
-			conv.time = datetime.datetime.strptime(exactTimeText, "%m/%d/%y %I:%M %p")
+			conv.time = google_strptime(exactTimeText)
 			relativeTimeGroup = self._relativeVoicemailTimeRegex.search(messageHtml)
 			conv.relTime = relativeTimeGroup.group(1).strip() if relativeTimeGroup else ""
 			conv.location = ""
@@ -716,6 +720,19 @@ class GVoiceBackend(object):
 		json = parse_json(page)
 		validate_response(json)
 		return json
+
+
+def google_strptime(time):
+	"""
+	Hack: Google always returns the time in the same locale.  Sadly if the
+	local system's locale is different, there isn't a way to perfectly handle
+	the time.  So instead we handle implement some time formatting
+	"""
+	abbrevTime = time[:-3]
+	parsedTime = datetime.datetime.strptime(abbrevTime, "%m/%d/%y %I:%M")
+	if time[-2] == "PN":
+		parsedTime += datetime.timedelta(hours=12)
+	return parsedTime
 
 
 def itergroup(iterator, count, padValue = None):
