@@ -718,3 +718,40 @@ def is_valid_number(number):
 	@returns If This number be called ( syntax validation only )
 	"""
 	return _VALIDATE_RE.match(number) is not None
+
+
+def parse_version(versionText):
+	"""
+	>>> parse_version("0.5.2")
+	[0, 5, 2]
+	"""
+	return [
+		int(number)
+		for number in versionText.split(".")
+	]
+
+
+def compare_versions(leftParsedVersion, rightParsedVersion):
+	"""
+	>>> compare_versions([0, 1, 2], [0, 1, 2])
+	0
+	>>> compare_versions([0, 1, 2], [0, 1, 3])
+	-1
+	>>> compare_versions([0, 1, 2], [0, 2, 2])
+	-1
+	>>> compare_versions([0, 1, 2], [1, 1, 2])
+	-1
+	>>> compare_versions([0, 1, 3], [0, 1, 2])
+	1
+	>>> compare_versions([0, 2, 2], [0, 1, 2])
+	1
+	>>> compare_versions([1, 1, 2], [0, 1, 2])
+	1
+	"""
+	for left, right in zip(leftParsedVersion, rightParsedVersion):
+		if left < right:
+			return -1
+		elif right < left:
+			return 1
+	else:
+		return 0

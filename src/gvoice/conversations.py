@@ -40,11 +40,16 @@ class Conversations(object):
 			_moduleLogger.exception("While loading for %s" % self._name)
 			return
 
-		if fileVersion == constants.__version__ and fileBuild == constants.__build__:
+		if misc_utils.compare_versions(
+			misc_utils.parse_version("0.8.0"),
+			misc_utils.parse_version(fileVersion),
+		) <= 0:
 			self._conversations = convs
 		else:
 			_moduleLogger.debug(
-				"%s Skipping cache due to version mismatch (%s-%s)" % (self._name, fileVersion, fileBuild)
+				"%s Skipping cache due to version mismatch (%s-%s)" % (
+					self._name, fileVersion, fileBuild
+				)
 			)
 
 	def save(self, path):
