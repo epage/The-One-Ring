@@ -43,7 +43,7 @@ class Example(object):
 
 		# get the parameters required to make a Jabber connection
 		# Begin Example 2-3
-		cm[CONNECTION_MANAGER].RequestConnection('sip',
+		cm[CONNECTION_MANAGER].RequestConnection('gv',
 			{
 				'account':  account,
 				'forward':  forward,

@@ -138,23 +138,23 @@ class NewChannelSignaller(object):
 
 def channel_path_to_conn_path(channelObjectPath):
 	"""
-	>>> channel_path_to_conn_path("/org/freedesktop/Telepathy/ConnectionManager/theonering/sip/USERNAME/Channel1")
-	'/org/freedesktop/Telepathy/ConnectionManager/theonering/sip/USERNAME'
+	>>> channel_path_to_conn_path("/org/freedesktop/Telepathy/ConnectionManager/theonering/gv/USERNAME/Channel1")
+	'/org/freedesktop/Telepathy/ConnectionManager/theonering/gv/USERNAME'
 	"""
 	return channelObjectPath.rsplit("/", 1)[0]
 
 
 def path_to_service_name(path):
 	"""
-	>>> path_to_service_name("/org/freedesktop/Telepathy/ConnectionManager/theonering/sip/USERNAME/Channel1")
-	'org.freedesktop.Telepathy.ConnectionManager.theonering.sip.USERNAME'
+	>>> path_to_service_name("/org/freedesktop/Telepathy/ConnectionManager/theonering/gv/USERNAME/Channel1")
+	'org.freedesktop.Telepathy.ConnectionManager.theonering.gv.USERNAME'
 	"""
 	return ".".join(path[1:].split("/")[0:7])
 
 
 def cm_from_path(path):
 	"""
-	>>> cm_from_path("/org/freedesktop/Telepathy/ConnectionManager/theonering/sip/USERNAME/Channel1")
+	>>> cm_from_path("/org/freedesktop/Telepathy/ConnectionManager/theonering/gv/USERNAME/Channel1")
 	'theonering'
 	"""
 	return path[1:].split("/")[4]

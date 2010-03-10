@@ -1,6 +1,6 @@
 [Profile]
 Manager=theonering
-Protocol=sip
+Protocol=gv
 DisplayName=Google Voice
 IconName = im-theonering
 ConfigurationUI = haze-plugin
