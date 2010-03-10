@@ -34,6 +34,11 @@ __email__ = "eopage@byu.net"
 __version__ = constants.__version__
 __build__ = constants.__build__
 __changelog__ = """
+0.8.5
+* Bugfix: User's locale differs from google's causes errors
+* Bugfix: Reducing the times we ignore the cache of past conversations
+* Bugfix: The One Ring does not work on desktop systems with Empathy 2.28
+
 0.8.4
 * Reduced time allowed for disconnect due to RTComm not putting TOR on hold, causing miss of callback
 * Doubled the timed disconnects time
