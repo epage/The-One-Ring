@@ -34,7 +34,7 @@ import constants
 import connection_manager
 
 
-IDLE_TIMEOUT = 5
+IDLE_TIMEOUT = 10
 
 
 def run_theonering(persist):

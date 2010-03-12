@@ -64,7 +64,7 @@ class TheOneRingConnectionManager(tp.ConnectionManager):
 		Overrides tp.ConnectionManager
 		"""
 		result = tp.ConnectionManager.disconnected(self, conn)
-		gobject_utils.timeout_add_seconds(5, self._shutdown)
+		gobject_utils.timeout_add_seconds(10, self._shutdown)
 
 	def quit(self):
 		"""
