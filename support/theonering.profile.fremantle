@@ -33,13 +33,13 @@ IconName = general_presence_invisible
 Type = 5
 
 [Action chat]
-Name = addr_bd_cont_starter_im_service_chat
+Name = SMS through Google Voice
 IconName = im-theonering
 VCardFields = X-GV,TEL
 prop-org.freedesktop.Telepathy.Channel.ChannelType-s = org.freedesktop.Telepathy.Channel.Type.Text
 
 [Action call]
-Name = addr_bd_cont_starter_im_service_call
+Name = Call through Google Voice
 IconName = im-theonering
 VCardFields = X-GV,TEL
 prop-org.freedesktop.Telepathy.Channel.ChannelType-s = org.freedesktop.Telepathy.Channel.Type.StreamedMedia
