@@ -47,6 +47,7 @@ class Conversations(object):
 			self.OLDEST_COMPATIBLE_FORMAT_VERSION,
 			misc_utils.parse_version(fileVersion),
 		) <= 0:
+			_moduleLogger.info("%s Loaded cache" % (self._name, ))
 			self._conversations = convs
 		else:
 			_moduleLogger.debug(
@@ -57,6 +58,7 @@ class Conversations(object):
 
 	def save(self, path):
 		try:
+			_moduleLogger.info("%s Saving cache" % (self._name, ))
 			for conv in self._conversations.itervalues():
 				conv.compress(self.OLDEST_MESSAGE_WINDOW)
 			dataToDump = (constants.__version__, constants.__build__, self._conversations)
