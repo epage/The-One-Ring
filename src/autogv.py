@@ -108,6 +108,7 @@ class RefreshVoicemail(object):
 
 		self._isStarted = False
 
+	@misc_utils.log_exception(_moduleLogger)
 	def _on_new_channel(self, bus, serviceName, connObjectPath, channelObjectPath, channelType):
 		if channelType != telepathy.interfaces.CHANNEL_TYPE_STREAMED_MEDIA:
 			return
@@ -152,6 +153,7 @@ class TimedDisconnect(object):
 	def stop(self):
 		self.__delayedDisconnect.cancel()
 
+	@misc_utils.log_exception(_moduleLogger)
 	def _on_delayed_disconnect(self):
 		_moduleLogger.info("Timed disconnect occurred")
 		self._connRef().disconnect(telepathy.CONNECTION_STATUS_REASON_NETWORK_ERROR)
@@ -195,6 +197,7 @@ class AutoDisconnect(object):
 		else:
 			_moduleLogger.info("Other status: %r" % (status, ))
 
+	@misc_utils.log_exception(_moduleLogger)
 	def _cancel_delayed_disconnect(self):
 		_moduleLogger.info("Cancelling auto-log off")
 		self.__delayedDisconnect.cancel()
@@ -251,3 +254,22 @@ class DisconnectOnShutdown(object):
 			self._connRef().disconnect(telepathy.CONNECTION_STATUS_REASON_REQUESTED)
 		except Exception:
 			_moduleLogger.exception("Error durring disconnect")
+
+
+class DelayEnableContactIntegration(object):
+
+	def __init__(self, protocolName):
+		self.__enableSystemContactSupport = telepathy_utils.EnableSystemContactIntegration(
+			protocolName
+		)
+		self.__delayedEnable = gobject_utils.Async(self._on_delayed_enable)
+
+	def start(self):
+		self.__delayedEnable.start()
+
+	def stop(self):
+		self.__delayedEnable.cancel()
+
+	@misc_utils.log_exception(_moduleLogger)
+	def _on_delayed_enable(self):
+		self.__enableSystemContactSupport.start()

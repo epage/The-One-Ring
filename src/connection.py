@@ -138,6 +138,7 @@ class TheOneRingConnection(
 			autogv.NewGVConversations(weakref.ref(self)),
 			autogv.RefreshVoicemail(weakref.ref(self)),
 			autogv.AutoDisconnect(weakref.ref(self)),
+			autogv.DelayEnableContactIntegration(constants._telepathy_implementation_name_),
 		]
 		self._delayedConnect = gobject_utils.Async(self._delayed_connect)
 
