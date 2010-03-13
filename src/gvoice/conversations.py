@@ -21,6 +21,9 @@ _moduleLogger = logging.getLogger(__name__)
 
 class Conversations(object):
 
+	OLDEST_COMPATIBLE_FORMAT_VERSION = misc_utils.parse_version("0.8.0")
+	OLDEST_MESSAGE_WINDOW = datetime.timedelta(days=60)
+
 	def __init__(self, getter):
 		self._get_raw_conversations = getter
 		self._conversations = {}
@@ -41,7 +44,7 @@ class Conversations(object):
 			return
 
 		if misc_utils.compare_versions(
-			misc_utils.parse_version("0.8.0"),
+			self.OLDEST_COMPATIBLE_FORMAT_VERSION,
 			misc_utils.parse_version(fileVersion),
 		) <= 0:
 			self._conversations = convs
@@ -54,6 +57,8 @@ class Conversations(object):
 
 	def save(self, path):
 		try:
+			for conv in self._conversations.itervalues():
+				conv.compress(self.OLDEST_MESSAGE_WINDOW)
 			dataToDump = (constants.__version__, constants.__build__, self._conversations)
 			with open(path, "wb") as f:
 				pickle.dump(dataToDump, f, pickle.HIGHEST_PROTOCOL)
@@ -140,6 +145,21 @@ class MergedConversations(object):
 	@property
 	def conversations(self):
 		return self._conversations
+
+	def compress(self, timedelta):
+		now = datetime.datetime.now()
+		oldNumConvs = len(self._conversations)
+		oldConvs = self._conversations
+		self._conversations = [
+			conv
+			for conv in self._conversations
+			if (now - conv.time) < timedelta
+		]
+		newNumConvs = len(self._conversations)
+		if oldNumConvs != newNumConvs:
+			_moduleLogger.debug("Compressed conversations from %s to %s" % (oldNumConvs, newNumConvs))
+		else:
+			_moduleLogger.debug("Did not compress, %s" % (newNumConvs))
 
 	def _validate(self, newConversation):
 		if not self._conversations:
