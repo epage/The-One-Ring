@@ -302,4 +302,9 @@ class TheOneRingConnection(
 		self.session.logout()
 		self.session.close()
 
+		# In case one of the above items takes too long (which it should never
+		# do), we leave the starting of the shutdown-on-idle counter to the
+		# very end
+		self.manager.disconnect_completed(self)
+
 		_moduleLogger.info("Disconnected")
