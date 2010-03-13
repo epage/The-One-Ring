@@ -14,6 +14,8 @@ _moduleLogger = logging.getLogger(__name__)
 
 class TheOneRingConnectionManager(tp.ConnectionManager):
 
+	IDLE_TIMEOUT = 10
+
 	def __init__(self, shutdown_func=None):
 		tp.ConnectionManager.__init__(self, constants._telepathy_implementation_name_)
 
@@ -64,7 +66,7 @@ class TheOneRingConnectionManager(tp.ConnectionManager):
 		Overrides tp.ConnectionManager
 		"""
 		result = tp.ConnectionManager.disconnected(self, conn)
-		gobject_utils.timeout_add_seconds(10, self._shutdown)
+		gobject_utils.timeout_add_seconds(self.IDLE_TIMEOUT, self._shutdown)
 
 	def quit(self):
 		"""
