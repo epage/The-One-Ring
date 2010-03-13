@@ -34,6 +34,9 @@ __email__ = "eopage@byu.net"
 __version__ = constants.__version__
 __build__ = constants.__build__
 __changelog__ = """
+0.8.7
+* Adding some logging to help track down some issues
+
 0.8.6
 * Switched to a 10 second timeout without connections before closing TOR
 * Reduced the numbr of conversations cached

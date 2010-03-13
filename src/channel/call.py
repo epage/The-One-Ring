@@ -47,7 +47,7 @@ class CallChannel(
 		tp.ChannelInterfaceCallState.__init__(self)
 		tp.ChannelInterfaceHold.__init__(self)
 		self.__contactHandle = contactHandle
-		self.__calledNumer = None
+		self.__calledNumber = None
 
 		self._implement_property_get(
 			telepathy.interfaces.CHANNEL_INTERFACE,
@@ -98,11 +98,14 @@ class CallChannel(
 
 	def close(self):
 		_moduleLogger.debug("Closing call")
+		self._delayedClose.cancel()
+
 		tp.ChannelTypeStreamedMedia.Close(self)
 		self.remove_from_connection()
-		if self.__calledNumer is not None:
-			self._conn.session.backend.cancel(self.__calledNumer)
-		self._delayedClose.cancel()
+
+		if self.__calledNumber is not None:
+			_moduleLogger.debug("Cancelling call")
+			self._conn.session.backend.cancel(self.__calledNumber)
 
 	@misc_utils.log_exception(_moduleLogger)
 	def GetLocalPendingMembersWithInfo(self):
@@ -161,7 +164,7 @@ class CallChannel(
 		assert self.__contactHandle == contact, "%r != %r" % (self.__contactHandle, contact)
 		contactNumber = contact.phoneNumber
 
-		self.__calledNumer = contactNumber
+		self.__calledNumber = contactNumber
 		self.CallStateChanged(self.__contactHandle, telepathy.constants.CHANNEL_CALL_STATE_RINGING)
 		self._conn.session.backend.call(contactNumber)
 		self._delayedClose.start(seconds=0)
@@ -204,11 +207,11 @@ class CallChannel(
 		if not Hold:
 			return
 		_moduleLogger.debug("Closing without cancel to get out of users way")
-		self.__calledNumer = None
+		self.__calledNumber = None
 		self.close()
 
 	@misc_utils.log_exception(_moduleLogger)
 	def _on_close_requested(self, *args):
 		_moduleLogger.debug("Cancel now disallowed")
-		self.__calledNumer = None
+		self.__calledNumber = None
 		self.close()
