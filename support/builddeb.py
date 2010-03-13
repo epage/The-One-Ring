@@ -34,6 +34,12 @@ __email__ = "eopage@byu.net"
 __version__ = constants.__version__
 __build__ = constants.__build__
 __changelog__ = """
+0.8.6
+* Switched to a 10 second timeout without connections before closing TOR
+* Reduced the numbr of conversations cached
+* Forcing system contacts to be enabled but only calls are working for now
+* Bugfix: Reduced windows of hitting "Network Failure" when transitioning between networks
+
 0.8.5
 * Bugfix: User's locale differs from google's causes errors
 * Bugfix: Reducing the times we ignore the cache of past conversations
