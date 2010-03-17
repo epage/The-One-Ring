@@ -6,7 +6,6 @@ import telepathy
 
 import constants
 import tp
-import util.go_utils as gobject_utils
 import util.misc as misc_utils
 
 import gvoice
@@ -202,7 +201,7 @@ class TheOneRingConnection(
 		)
 
 	@misc_utils.log_exception(_moduleLogger)
-	def _on_login(self):
+	def _on_login(self, *args):
 		_moduleLogger.info("Connected, setting up...")
 		try:
 			self.__session.load(self.__cachePath)
