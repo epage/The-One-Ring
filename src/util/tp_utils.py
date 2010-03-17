@@ -9,7 +9,7 @@ import util.go_utils as gobject_utils
 import misc
 
 
-_moduleLogger = logging.getLogger("tp_utils")
+_moduleLogger = logging.getLogger(__name__)
 DBUS_PROPERTIES = 'org.freedesktop.DBus.Properties'
 
 
