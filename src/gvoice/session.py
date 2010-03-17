@@ -10,6 +10,7 @@ import conversations
 import state_machine
 
 import util.go_utils as gobject_utils
+import util.misc as misc_utils
 
 
 _moduleLogger = logging.getLogger(__name__)
@@ -162,7 +163,8 @@ class Session(object):
 
 	def __on_login_success(self, user_success):
 
-		def _actual_success(self, *args, **kwds):
+		@misc_utils.log_exception(_moduleLogger)
+		def _actual_success(*args, **kwds):
 			self._masterStateMachine.start()
 			user_success(*args, **kwds)
 
