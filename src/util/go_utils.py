@@ -131,7 +131,7 @@ class Timeout(object):
 		return False
 
 
-__QUEUE_EMPTY = object()
+_QUEUE_EMPTY = object()
 
 
 class AsyncPool(object):
@@ -151,7 +151,7 @@ class AsyncPool(object):
 		self.__isRunning = False
 		for _ in algorithms.itr_available(self.__workQueue):
 			pass # eat up queue to cut down dumb work
-		self.__workQueue.put(__QUEUE_EMPTY)
+		self.__workQueue.put(_QUEUE_EMPTY)
 
 	def add_task(self, func, args, kwds, on_success, on_error):
 		task = func, args, kwds, on_success, on_error
@@ -172,7 +172,7 @@ class AsyncPool(object):
 	def __consume_queue(self):
 		while True:
 			task = self.__workQueue.get()
-			if task is __QUEUE_EMPTY:
+			if task is _QUEUE_EMPTY:
 				break
 			func, args, kwds, on_success, on_error = task
 
