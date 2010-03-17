@@ -9,6 +9,8 @@ import addressbook
 import conversations
 import state_machine
 
+import util.go_utils as gobject_utils
+
 
 _moduleLogger = logging.getLogger(__name__)
 
@@ -35,6 +37,7 @@ class Session(object):
 		self._username = None
 		self._password = None
 
+		self._asyncPool = gobject_utils.AsyncPool()
 		self._backend = backend.GVoiceBackend(cookiePath)
 
 		if defaults["contacts"][0] == state_machine.UpdateStateMachine.INFINITE_PERIOD:
@@ -43,7 +46,7 @@ class Session(object):
 			contactsPeriodInSeconds = state_machine.to_seconds(
 				**{defaults["contacts"][1]: defaults["contacts"][0],}
 			)
-		self._addressbook = addressbook.Addressbook(self._backend)
+		self._addressbook = addressbook.Addressbook(self._backend, self._asyncPool)
 		self._addressbookStateMachine = state_machine.UpdateStateMachine([self.addressbook], "Addressbook")
 		self._addressbookStateMachine.set_state_strategy(
 			state_machine.StateMachine.STATE_DND,
@@ -66,7 +69,7 @@ class Session(object):
 				**{defaults["voicemail"][1]: defaults["voicemail"][0],}
 			)
 			idleVoicemailPeriodInSeconds = max(voicemailPeriodInSeconds * 4, self._MINIMUM_MESSAGE_PERIOD)
-		self._voicemails = conversations.Conversations(self._backend.get_voicemails)
+		self._voicemails = conversations.Conversations(self._backend.get_voicemails, self._asyncPool)
 		self._voicemailsStateMachine = state_machine.UpdateStateMachine([self.voicemails], "Voicemail")
 		self._voicemailsStateMachine.set_state_strategy(
 			state_machine.StateMachine.STATE_DND,
@@ -98,7 +101,7 @@ class Session(object):
 				**{defaults["texts"][1]: defaults["texts"][0],}
 			)
 			idleTextsPeriodInSeconds = max(textsPeriodInSeconds * 4, self._MINIMUM_MESSAGE_PERIOD)
-		self._texts = conversations.Conversations(self._backend.get_texts)
+		self._texts = conversations.Conversations(self._backend.get_texts, self._asyncPool)
 		self._textsStateMachine = state_machine.UpdateStateMachine([self.texts], "Texting")
 		self._textsStateMachine.set_state_strategy(
 			state_machine.StateMachine.STATE_DND,
@@ -145,14 +148,28 @@ class Session(object):
 		)
 		self._masterStateMachine.close()
 
-	def login(self, username, password):
+	def login(self, username, password, on_success, on_error):
 		self._username = username
 		self._password = password
-		self._backend.login(self._username, self._password)
+		self._asyncPool.start()
+		self._asyncPool.add_task(
+			self._backend.login,
+			(self._username, self._password),
+			{},
+			self.__on_login_success(on_success),
+			on_error
+		)
 
-		self._masterStateMachine.start()
+	def __on_login_success(self, user_success):
+
+		def _actual_success(self, *args, **kwds):
+			self._masterStateMachine.start()
+			user_success(*args, **kwds)
+
+		return _actual_success
 
 	def logout(self):
+		self._asyncPool.stop()
 		self._masterStateMachine.stop()
 		self._backend.logout()
 
@@ -192,11 +209,11 @@ class Session(object):
 
 	@property
 	def backend(self):
-		"""
-		Login enforcing backend
-		"""
-		assert self.is_logged_in(), "User not logged in"
 		return self._backend
+
+	@property
+	def pool(self):
+		return self._asyncPool
 
 	@property
 	def addressbook(self):

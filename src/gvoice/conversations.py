@@ -24,8 +24,9 @@ class Conversations(object):
 	OLDEST_COMPATIBLE_FORMAT_VERSION = misc_utils.parse_version("0.8.0")
 	OLDEST_MESSAGE_WINDOW = datetime.timedelta(days=60)
 
-	def __init__(self, getter):
+	def __init__(self, getter, asyncPool):
 		self._get_raw_conversations = getter
+		self._asyncPool = asyncPool
 		self._conversations = {}
 
 		self.updateSignalHandler = coroutines.CoTee()
@@ -70,11 +71,20 @@ class Conversations(object):
 	def update(self, force=False):
 		if not force and self._conversations:
 			return
+		self._asyncPool.add_task(
+			self._get_raw_conversations,
+			(),
+			{},
+			self._on_get_conversations,
+			self._on_get_conversations_failed,
+		)
 
+	@misc_utils.log_exception(_moduleLogger)
+	def _on_get_conversations(self, conversationResult):
 		oldConversationIds = set(self._conversations.iterkeys())
 
 		updateConversationIds = set()
-		conversations = list(self._get_raw_conversations())
+		conversations = list(conversationResult)
 		conversations.sort()
 		for conversation in conversations:
 			key = misc_utils.normalize_number(conversation.number)
@@ -98,6 +108,10 @@ class Conversations(object):
 		if updateConversationIds:
 			message = (self, updateConversationIds, )
 			self.updateSignalHandler.stage.send(message)
+
+	@misc_utils.log_exception(_moduleLogger)
+	def _on_get_conversations_failed(self, error):
+		_moduleLogger.error(error)
 
 	def get_conversations(self):
 		return self._conversations.iterkeys()

@@ -15,20 +15,29 @@ class Addressbook(object):
 	_RESPONSE_GOOD = 0
 	_RESPONSE_BLOCKED = 3
 
-	def __init__(self, backend):
+	def __init__(self, backend, asyncPool):
 		self._backend = backend
 		self._numbers = {}
+		self._asyncPool = asyncPool
 
 		self.updateSignalHandler = coroutines.CoTee()
 
 	def update(self, force=False):
 		if not force and self._numbers:
 			return
+		self._asyncPool.add_task(
+			self._backend.get_contacts,
+			(),
+			{},
+			self._on_get_contacts,
+			self._on_get_contacts_failed,
+		)
+
+	def _on_get_contacts(self, contacts):
 		oldContacts = self._numbers
 		oldContactNumbers = set(self.get_numbers())
 
-		self._numbers = {}
-		self._populate_contacts()
+		self._numbers = self._populate_contacts(contacts)
 		newContactNumbers = set(self.get_numbers())
 
 		addedContacts = newContactNumbers - oldContactNumbers
@@ -42,6 +51,10 @@ class Addressbook(object):
 		if addedContacts or removedContacts or changedContacts:
 			message = self, addedContacts, removedContacts, changedContacts
 			self.updateSignalHandler.stage.send(message)
+
+	@misc_utils.log_exception(_moduleLogger)
+	def _on_get_contacts_failed(self, error):
+		_moduleLogger.error(error)
 
 	def get_numbers(self):
 		return self._numbers.iterkeys()
@@ -64,10 +77,8 @@ class Addressbook(object):
 		except KeyError:
 			return False
 
-	def _populate_contacts(self):
-		if self._numbers:
-			return
-		contacts = self._backend.get_contacts()
+	def _populate_contacts(self, contacts):
+		numbers = {}
 		for contactId, contactDetails in contacts:
 			contactName = contactDetails["name"]
 			contactNumbers = (
@@ -77,7 +88,8 @@ class Addressbook(object):
 				)
 				for numberDetails in contactDetails["numbers"]
 			)
-			self._numbers.update(
+			numbers.update(
 				(number, (contactName, phoneType, contactDetails))
 				for (number, phoneType) in contactNumbers
 			)
+		return numbers
