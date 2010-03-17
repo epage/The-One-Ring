@@ -182,20 +182,10 @@ class Session(object):
 		if self._username is None and self._password is None:
 			_moduleLogger.info("Hasn't even attempted to login yet")
 			return False
-		elif self._backend.is_authed():
-			return True
 		else:
-			try:
-				loggedIn = self._backend.login(self._username, self._password)
-			except RuntimeError, e:
-				_moduleLogger.exception("Re-authenticating and erroring")
-				loggedIn = False
-			if loggedIn:
-				return True
-			else:
-				_moduleLogger.info("Login failed")
-				self.logout()
-				return False
+			isLoggedIn = self._backend.is_authed()
+			if not isLoggedIn:
+				_moduleLogger.error("Not logged in anymore")
 
 	def set_dnd(self, doNotDisturb):
 		self._backend.set_dnd(doNotDisturb)
@@ -211,6 +201,7 @@ class Session(object):
 
 	@property
 	def backend(self):
+		assert self.is_logged_in()
 		return self._backend
 
 	@property
