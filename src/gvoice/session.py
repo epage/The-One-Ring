@@ -150,25 +150,27 @@ class Session(object):
 		self._masterStateMachine.close()
 
 	def login(self, username, password, on_success, on_error):
+		self._asyncPool.start()
+
+		le = gobject_utils.AsyncLinearExecution(self._asyncPool, self._login)
+		le.start(username, password, on_success, on_error)
+
+	@misc_utils.log_exception(_moduleLogger)
+	def _login(self, username, password, on_success, on_error):
 		self._username = username
 		self._password = password
-		self._asyncPool.start()
-		self._asyncPool.add_task(
-			self._backend.login,
-			(self._username, self._password),
-			{},
-			self.__on_login_success(on_success),
-			on_error
-		)
+		try:
+			isLoggedIn = yield (
+				self._backend.login,
+				(self._username, self._password),
+				{},
+			)
+		except Exception, e:
+			on_error(e)
+			return
 
-	def __on_login_success(self, user_success):
-
-		@misc_utils.log_exception(_moduleLogger)
-		def _actual_success(*args, **kwds):
-			self._masterStateMachine.start()
-			user_success(*args, **kwds)
-
-		return _actual_success
+		self._masterStateMachine.start()
+		on_success(isLoggedIn)
 
 	def logout(self):
 		self._asyncPool.stop()

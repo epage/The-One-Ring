@@ -55,22 +55,21 @@ class TextChannel(tp.ChannelTypeText):
 
 	@misc_utils.log_exception(_moduleLogger)
 	def Send(self, messageType, text):
-		le = gobject_utils.LinearExecution(self._send)
+		le = gobject_utils.AsyncLinearExecution(self._conn.session.pool, self._send)
 		le.start(messageType, text)
 
-	def _send(self, messageType, text, on_success, on_error):
+	@misc_utils.log_exception(_moduleLogger)
+	def _send(self, messageType, text):
 		if messageType != telepathy.CHANNEL_TEXT_MESSAGE_TYPE_NORMAL:
 			raise telepathy.errors.NotImplemented("Unhandled message type: %r" % messageType)
 
 		_moduleLogger.info("Sending message to %r" % (self.__otherHandle, ))
 		try:
-			result = yield self._conn.session.pool.add_task, (
+			result = yield (
 				self._conn.session.backend.send_sms,
 				([self.__otherHandle.phoneNumber], text),
 				{},
-				on_success,
-				on_error,
-			), {}
+			)
 		except Exception:
 			_moduleLogger.exception(result)
 			return

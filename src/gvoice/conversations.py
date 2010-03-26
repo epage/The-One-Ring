@@ -14,6 +14,7 @@ except ImportError:
 import constants
 import util.coroutines as coroutines
 import util.misc as misc_utils
+import util.go_utils as gobject_utils
 
 
 _moduleLogger = logging.getLogger(__name__)
@@ -74,16 +75,18 @@ class Conversations(object):
 	def update(self, force=False):
 		if not force and self._conversations:
 			return
-		self._asyncPool.add_task(
+
+		le = gobject_utils.AsyncLinearExecution(self._asyncPool, self._update)
+		le.start()
+
+	@misc_utils.log_exception(_moduleLogger)
+	def _update(self):
+		conversationResult = yield (
 			self._get_raw_conversations,
 			(),
 			{},
-			self._on_get_conversations,
-			self._on_get_conversations_failed,
 		)
 
-	@misc_utils.log_exception(_moduleLogger)
-	def _on_get_conversations(self, conversationResult):
 		oldConversationIds = set(self._conversations.iterkeys())
 
 		updateConversationIds = set()
@@ -116,10 +119,6 @@ class Conversations(object):
 			message = (self, updateConversationIds, )
 			self.updateSignalHandler.stage.send(message)
 		self._hasDoneUpdate = True
-
-	@misc_utils.log_exception(_moduleLogger)
-	def _on_get_conversations_failed(self, error):
-		_moduleLogger.error(error)
 
 	def get_conversations(self):
 		return self._conversations.iterkeys()

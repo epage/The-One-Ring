@@ -12,6 +12,7 @@ import telepathy
 import constants
 import tp
 import util.misc as misc_utils
+import util.go_utils as gobject_utils
 import gvoice
 
 
@@ -147,12 +148,21 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 		self._report_new_message("Prints the current setting for the state machines")
 
 	def do_is_authed(self, args):
+		le = gobject_utils.AsyncLinearExecution(self._conn.session.pool, self._is_authed)
+		le.start(args)
+
+	@misc_utils.log_exception(_moduleLogger)
+	def _is_authed(self, args):
 		if args:
 			self._report_new_message("No arguments supported")
 			return
 
 		try:
-			isAuthed = self._conn.session.backend.is_authed()
+			isAuthed = yield (
+				self._conn.session.backend.is_authed,
+				(),
+				{}
+			)
 			self._report_new_message(str(isAuthed))
 		except Exception, e:
 			self._report_new_message(str(e))
@@ -161,12 +171,21 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 		self._report_new_message("Print whether logged in to Google Voice")
 
 	def do_is_dnd(self, args):
+		le = gobject_utils.AsyncLinearExecution(self._conn.session.pool, self._is_dnd)
+		le.start(args)
+
+	@misc_utils.log_exception(_moduleLogger)
+	def _is_dnd(self, args):
 		if args:
 			self._report_new_message("No arguments supported")
 			return
 
 		try:
-			isDnd = self._conn.session.backend.is_dnd()
+			isDnd = yield (
+				self._conn.session.backend.is_dnd,
+				(),
+				{}
+			)
 			self._report_new_message(str(isDnd))
 		except Exception, e:
 			self._report_new_message(str(e))
@@ -235,13 +254,22 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 		self._report_new_message("Print the callback number currently enabled")
 
 	def do_call(self, args):
+		le = gobject_utils.AsyncLinearExecution(self._conn.session.pool, self._call)
+		le.start(args)
+
+	@misc_utils.log_exception(_moduleLogger)
+	def _call(self, args):
 		if not args:
 			self._report_new_message("Must specify the phone number and only the phone nunber")
 			return
 
 		try:
 			number = args
-			self._conn.session.backend.call(number)
+			yield (
+				self._conn.session.backend.call,
+				(number),
+				{}
+			)
 		except Exception, e:
 			self._report_new_message(str(e))
 
@@ -249,6 +277,11 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 		self._report_new_message("\n".join(["call NUMBER", "Initiate a callback, Google forwarding the call to the callback number"]))
 
 	def do_send_sms(self, args):
+		le = gobject_utils.AsyncLinearExecution(self._conn.session.pool, self._send_sms)
+		le.start(args)
+
+	@misc_utils.log_exception(_moduleLogger)
+	def _send_sms(self, args):
 		args = args.split(" ")
 		if 1 < len(args):
 			self._report_new_message("Must specify the phone number and then message")
@@ -257,7 +290,11 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 		try:
 			number = args[0]
 			message = " ".join(args[1:])
-			self._conn.session.backend.send_sms([number], message)
+			yield (
+				self._conn.session.backend.send_sms,
+				([number], message),
+				{},
+			)
 		except Exception, e:
 			self._report_new_message(str(e))
 

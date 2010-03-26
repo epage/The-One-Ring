@@ -5,6 +5,7 @@ import logging
 
 import util.coroutines as coroutines
 import util.misc as misc_utils
+import util.go_utils as gobject_utils
 
 
 _moduleLogger = logging.getLogger(__name__)
@@ -25,15 +26,18 @@ class Addressbook(object):
 	def update(self, force=False):
 		if not force and self._numbers:
 			return
-		self._asyncPool.add_task(
+
+		le = gobject_utils.AsyncLinearExecution(self._asyncPool, self._update)
+		le.start()
+
+	@misc_utils.log_exception(_moduleLogger)
+	def _update(self):
+		contacts = yield (
 			self._backend.get_contacts,
 			(),
 			{},
-			self._on_get_contacts,
-			self._on_get_contacts_failed,
 		)
 
-	def _on_get_contacts(self, contacts):
 		oldContacts = self._numbers
 		oldContactNumbers = set(self.get_numbers())
 
@@ -51,10 +55,6 @@ class Addressbook(object):
 		if addedContacts or removedContacts or changedContacts:
 			message = self, addedContacts, removedContacts, changedContacts
 			self.updateSignalHandler.stage.send(message)
-
-	@misc_utils.log_exception(_moduleLogger)
-	def _on_get_contacts_failed(self, error):
-		_moduleLogger.error(error)
 
 	def get_numbers(self):
 		return self._numbers.iterkeys()
