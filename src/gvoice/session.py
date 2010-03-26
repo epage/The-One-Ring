@@ -186,6 +186,7 @@ class Session(object):
 			isLoggedIn = self._backend.is_authed()
 			if not isLoggedIn:
 				_moduleLogger.error("Not logged in anymore")
+			return isLoggedIn
 
 	def set_dnd(self, doNotDisturb):
 		self._backend.set_dnd(doNotDisturb)
