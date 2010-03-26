@@ -20,7 +20,6 @@ class TextChannel(tp.ChannelTypeText):
 
 		tp.ChannelTypeText.__init__(self, connection, manager, props)
 		self.__nextRecievedId = 0
-		self.__hasServerBeenPolled = False
 
 		self.__otherHandle = contactHandle
 
@@ -58,26 +57,28 @@ class TextChannel(tp.ChannelTypeText):
 		if messageType != telepathy.CHANNEL_TEXT_MESSAGE_TYPE_NORMAL:
 			raise telepathy.errors.NotImplemented("Unhandled message type: %r" % messageType)
 
-		if not self.__hasServerBeenPolled:
-			# Hack: GV marks messages as read when they are replied to.  If GV
-			# marks them as read than we ignore them.  So reduce the window for
-			# them being marked as read.  Oh and Conversations already handles
-			# it if the message was already part of a thread, so we can limit
-			# this to if we are trying to start a thread.  You might say a
-			# voicemail could be what is being replied to and that doesn't mean
-			# anything.  Oh well.
-			try:
-				self._conn.session.texts.update(force=True)
-			except Exception:
-				_moduleLogger.exception(
-					"Update failed when proactively checking for texts"
-				)
-
 		_moduleLogger.info("Sending message to %r" % (self.__otherHandle, ))
-		self._conn.session.backend.send_sms([self.__otherHandle.phoneNumber], text)
-		self._conn.session.textsStateMachine.reset_timers()
+		self._conn.session.pool.add_task(
+			self._conn.session.backend.send_sms,
+			([self.__otherHandle.phoneNumber], text),
+			{},
+			self._on_send_sms(messageType, text),
+			self._on_send_sms_failed,
+		)
 
-		self.Sent(int(time.time()), messageType, text)
+	def _on_send_sms(self, messageType, text):
+
+		@misc_utils.log_exception(_moduleLogger)
+		def _actual_on_send_sms(self, *args):
+			self._conn.session.textsStateMachine.reset_timers()
+
+			self.Sent(int(time.time()), messageType, text)
+
+		return _actual_on_send_sms
+
+	@misc_utils.log_exception(_moduleLogger)
+	def _on_send_sms_failed(self, error):
+		_moduleLogger.error(error)
 
 	@misc_utils.log_exception(_moduleLogger)
 	def Close(self):
@@ -120,9 +121,9 @@ class TextChannel(tp.ChannelTypeText):
 		# Can't filter out messages in a texting conversation that came in
 		# before the last one sent because that creates a race condition of two
 		# people sending at about the same time, which happens quite a bit
+		newConversations = gvoice.conversations.filter_out_self(newConversations)
 		newConversations = self._filter_out_reported(newConversations)
 		newConversations = gvoice.conversations.filter_out_read(newConversations)
-		newConversations = gvoice.conversations.filter_out_self(newConversations)
 		newConversations = list(newConversations)
 		if not newConversations:
 			_moduleLogger.debug(
@@ -147,7 +148,6 @@ class TextChannel(tp.ChannelTypeText):
 
 		for conv in newConversations:
 			conv.isRead = True
-		self.__hasServerBeenPolled = True
 
 	def _format_message(self, message):
 		return " ".join(part.text.strip() for part in message.body)

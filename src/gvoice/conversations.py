@@ -28,6 +28,8 @@ class Conversations(object):
 		self._get_raw_conversations = getter
 		self._asyncPool = asyncPool
 		self._conversations = {}
+		self._loadedFromCache = False
+		self._hasDoneUpdate = False
 
 		self.updateSignalHandler = coroutines.CoTee()
 
@@ -50,6 +52,7 @@ class Conversations(object):
 		) <= 0:
 			_moduleLogger.info("%s Loaded cache" % (self._name, ))
 			self._conversations = convs
+			self._loadedFromCache = True
 		else:
 			_moduleLogger.debug(
 				"%s Skipping cache due to version mismatch (%s-%s)" % (
@@ -94,8 +97,12 @@ class Conversations(object):
 				mergedConversations = MergedConversations()
 				self._conversations[key] = mergedConversations
 
+			if self._loadedFromCache or self._hasDoneUpdate:
+				markAllAsRead = False
+			else:
+				markAllAsRead = True
 			try:
-				mergedConversations.append_conversation(conversation)
+				mergedConversations.append_conversation(conversation, markAllAsRead)
 				isConversationUpdated = True
 			except RuntimeError, e:
 				if False:
@@ -108,6 +115,7 @@ class Conversations(object):
 		if updateConversationIds:
 			message = (self, updateConversationIds, )
 			self.updateSignalHandler.stage.send(message)
+		self._hasDoneUpdate = True
 
 	@misc_utils.log_exception(_moduleLogger)
 	def _on_get_conversations_failed(self, error):
@@ -134,24 +142,31 @@ class MergedConversations(object):
 	def __init__(self):
 		self._conversations = []
 
-	def append_conversation(self, newConversation):
+	def append_conversation(self, newConversation, markAllAsRead):
 		self._validate(newConversation)
-		similarExist = False
 		for similarConversation in self._find_related_conversation(newConversation.id):
 			self._update_previous_related_conversation(similarConversation, newConversation)
 			self._remove_repeats(similarConversation, newConversation)
-			similarExist = True
-		if similarExist:
-			# Hack to reduce a race window with GV marking messages as read
-			# because it thinks we replied when really we replied to the
-			# previous message.  Clients of this code are expected to handle
-			# this gracefully.  Other race conditions may exist but clients are
-			# responsible for them
-			if newConversation.messages:
-				newConversation.isRead = False
-			else:
-				newConversation.isRead = True
-		self._conversations.append(newConversation)
+
+		# HACK: Because GV marks all messages as read when you reply it has
+		# the following race:
+		# 1. Get all messages
+		# 2. Contact sends a text
+		# 3. User sends a text marking contacts text as read
+		# 4. Get all messages not returning text from step 2
+		# This isn't a problem for voicemails but we don't know(?( enough.
+		# So we hack around this by:
+		# * We cache to disk the history of messages sent/received
+		# * On first run we mark all server messages as read due to no cache
+		# * If not first load or from cache (disk or in-memory) then it must be unread
+		if markAllAsRead:
+			newConversation.isRead = True
+		else:
+			newConversation.isRead = False
+
+		if newConversation.messages:
+			# must not have had all items removed due to duplicates
+			self._conversations.append(newConversation)
 
 	def to_dict(self):
 		selfDict = {}
