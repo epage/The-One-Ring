@@ -6,6 +6,7 @@ import telepathy
 import tp
 import util.coroutines as coroutines
 import util.misc as misc_utils
+import util.go_utils as gobject_utils
 import gvoice
 
 
@@ -54,27 +55,29 @@ class TextChannel(tp.ChannelTypeText):
 
 	@misc_utils.log_exception(_moduleLogger)
 	def Send(self, messageType, text):
+		le = gobject_utils.LinearExecution(self._send)
+		le.start(messageType, text)
+
+	def _send(self, messageType, text, on_success, on_error):
 		if messageType != telepathy.CHANNEL_TEXT_MESSAGE_TYPE_NORMAL:
 			raise telepathy.errors.NotImplemented("Unhandled message type: %r" % messageType)
 
 		_moduleLogger.info("Sending message to %r" % (self.__otherHandle, ))
-		self._conn.session.pool.add_task(
-			self._conn.session.backend.send_sms,
-			([self.__otherHandle.phoneNumber], text),
-			{},
-			self._on_send_sms(messageType, text),
-			self._on_send_sms_failed,
-		)
+		try:
+			result = yield self._conn.session.pool.add_task, (
+				self._conn.session.backend.send_sms,
+				([self.__otherHandle.phoneNumber], text),
+				{},
+				on_success,
+				on_error,
+			), {}
+		except Exception:
+			_moduleLogger.exception(result)
+			return
 
-	def _on_send_sms(self, messageType, text):
+		self._conn.session.textsStateMachine.reset_timers()
 
-		@misc_utils.log_exception(_moduleLogger)
-		def _actual_on_send_sms(self, *args):
-			self._conn.session.textsStateMachine.reset_timers()
-
-			self.Sent(int(time.time()), messageType, text)
-
-		return _actual_on_send_sms
+		self.Sent(int(time.time()), messageType, text)
 
 	@misc_utils.log_exception(_moduleLogger)
 	def _on_send_sms_failed(self, error):

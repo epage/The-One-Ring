@@ -104,8 +104,8 @@ class CallChannel(
 		self.remove_from_connection()
 
 		if self.__calledNumber is not None:
-			_moduleLogger.debug("Cancelling call")
-			self._conn.session.backend.cancel(self.__calledNumber)
+			le = gobject_utils.LinearExecution(self._cancel)
+			le.start()
 
 	@misc_utils.log_exception(_moduleLogger)
 	def GetLocalPendingMembersWithInfo(self):
@@ -162,19 +162,50 @@ class CallChannel(
 		"""
 		contact = self._conn.get_handle_by_id(telepathy.constants.HANDLE_TYPE_CONTACT, contactId)
 		assert self.__contactHandle == contact, "%r != %r" % (self.__contactHandle, contact)
-		contactNumber = contact.phoneNumber
 
-		self.__calledNumber = contactNumber
-		self.CallStateChanged(self.__contactHandle, telepathy.constants.CHANNEL_CALL_STATE_RINGING)
-		self._conn.session.backend.call(contactNumber)
-		self._delayedClose.start(seconds=0)
-		self.CallStateChanged(self.__contactHandle, telepathy.constants.CHANNEL_CALL_STATE_FORWARDED)
+		le = gobject_utils.LinearExecution(self._call)
+		le.start(contact)
 
 		streamId = 0
 		streamState = telepathy.constants.MEDIA_STREAM_STATE_CONNECTED
 		streamDirection = telepathy.constants.MEDIA_STREAM_DIRECTION_BIDIRECTIONAL
 		pendingSendFlags = telepathy.constants.MEDIA_STREAM_PENDING_REMOTE_SEND
 		return [(streamId, contact, streamTypes[0], streamState, streamDirection, pendingSendFlags)]
+
+	def _call(self, contact, on_success, on_error):
+		contactNumber = contact.phoneNumber
+
+		self.__calledNumber = contactNumber
+		self.CallStateChanged(self.__contactHandle, telepathy.constants.CHANNEL_CALL_STATE_RINGING)
+
+		try:
+			result = yield self._conn.session.pool.add_task, (
+				self._conn.session.backend.call,
+				(contactNumber, ),
+				{},
+				on_success,
+				on_error,
+			), {}
+		except Exception:
+			_moduleLogger.exception(result)
+			return
+
+		self._delayedClose.start(seconds=0)
+		self.CallStateChanged(self.__contactHandle, telepathy.constants.CHANNEL_CALL_STATE_FORWARDED)
+
+	def _cancel(self, on_success, on_error):
+		_moduleLogger.debug("Cancelling call")
+		try:
+			result = yield self._conn.session.pool.add_task, (
+				self._conn.session.backend.cancel,
+				(self.__calledNumber, ),
+				{},
+				on_success,
+				on_error,
+			), {}
+		except Exception:
+			_moduleLogger.exception(result)
+			return
 
 	@misc_utils.log_exception(_moduleLogger)
 	def GetCallStates(self):
