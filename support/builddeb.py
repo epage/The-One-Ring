@@ -34,6 +34,9 @@ __email__ = "eopage@byu.net"
 __version__ = constants.__version__
 __build__ = constants.__build__
 __changelog__ = """
+0.8.8
+* Switching to a non-blocking system so TOR can remain responsive to MC and avoid being leaked in the first place
+
 0.8.7
 * Adding some logging to help track down some issues
 
