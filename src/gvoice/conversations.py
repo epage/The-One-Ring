@@ -39,6 +39,7 @@ class Conversations(object):
 		return repr(self._get_raw_conversations.__name__)
 
 	def load(self, path):
+		_moduleLogger.debug("%s Loading cache" % (self._name, ))
 		assert not self._conversations
 		try:
 			with open(path, "rb") as f:
@@ -54,6 +55,10 @@ class Conversations(object):
 			_moduleLogger.info("%s Loaded cache" % (self._name, ))
 			self._conversations = convs
 			self._loadedFromCache = True
+			for key, mergedConv in self._conversations.iteritems():
+				_moduleLogger.debug("%s \tLoaded %s" % (self._name, key))
+				for conv in mergedConv.conversations:
+					_moduleLogger.debug("%s \t\tLoaded %s (%r) %r %r %r" % (self._name, conv.id, conv.time, conv.isRead, conv.isArchived, len(conv.messages)))
 		else:
 			_moduleLogger.debug(
 				"%s Skipping cache due to version mismatch (%s-%s)" % (
@@ -64,13 +69,20 @@ class Conversations(object):
 	def save(self, path):
 		try:
 			_moduleLogger.info("%s Saving cache" % (self._name, ))
-			for conv in self._conversations.itervalues():
-				conv.compress(self.OLDEST_MESSAGE_WINDOW)
+			#for conv in self._conversations.itervalues():
+			#	conv.compress(self.OLDEST_MESSAGE_WINDOW)
+
+			for key, mergedConv in self._conversations.iteritems():
+				_moduleLogger.debug("%s \tSaving %s" % (self._name, key))
+				for conv in mergedConv.conversations:
+					_moduleLogger.debug("%s \t\tSaving %s (%r) %r %r %r" % (self._name, conv.id, conv.time, conv.isRead, conv.isArchived, len(conv.messages)))
+
 			dataToDump = (constants.__version__, constants.__build__, self._conversations)
 			with open(path, "wb") as f:
 				pickle.dump(dataToDump, f, pickle.HIGHEST_PROTOCOL)
 		except (pickle.PickleError, IOError):
 			_moduleLogger.exception("While saving for %s" % self._name)
+		_moduleLogger.info("%s Cache saved" % (self._name, ))
 
 	def update(self, force=False):
 		if not force and self._conversations:
@@ -114,6 +126,12 @@ class Conversations(object):
 
 			if isConversationUpdated:
 				updateConversationIds.add(key)
+
+		for key in updateConversationIds:
+			mergedConv = self._conversations[key]
+			_moduleLogger.debug("%s \tUpdated %s" % (self._name, key))
+			for conv in mergedConv.conversations:
+				_moduleLogger.debug("%s \t\tUpdated %s (%r) %r %r %r" % (self._name, conv.id, conv.time, conv.isRead, conv.isArchived, len(conv.messages)))
 
 		if updateConversationIds:
 			message = (self, updateConversationIds, )
