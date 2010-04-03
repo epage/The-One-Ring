@@ -134,7 +134,7 @@ class TextChannel(tp.ChannelTypeText):
 			return
 
 		messages = [
-			newMessage
+			(newMessage, newConversation.time)
 			for newConversation in newConversations
 			for newMessage in newConversation.messages
 			if not gvoice.conversations.is_message_from_self(newMessage)
@@ -144,19 +144,19 @@ class TextChannel(tp.ChannelTypeText):
 				"How did this happen for %r?" % (self._contactKey, )
 			)
 			return
-		for newMessage in messages:
+		for newMessage, convTime in messages:
 			formattedMessage = self._format_message(newMessage)
-			self._report_new_message(formattedMessage)
+			self._report_new_message(formattedMessage, convTime)
 
-		for conv in newConversations:
+		for conv in mergedConversations.conversations:
 			conv.isRead = True
 
 	def _format_message(self, message):
 		return " ".join(part.text.strip() for part in message.body)
 
-	def _report_new_message(self, message):
+	def _report_new_message(self, message, convTime):
 		currentReceivedId = self.__nextRecievedId
-		timestamp = int(time.time())
+		timestamp = time.mktime(convTime.timetuple())
 		type = telepathy.CHANNEL_TEXT_MESSAGE_TYPE_NORMAL
 
 		_moduleLogger.info("Received message from User %r" % self.__otherHandle)
