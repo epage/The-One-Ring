@@ -14,6 +14,7 @@ except ImportError:
 import constants
 import util.coroutines as coroutines
 import util.misc as misc_utils
+import util.go_utils as gobject_utils
 
 
 _moduleLogger = logging.getLogger(__name__)
@@ -22,11 +23,13 @@ _moduleLogger = logging.getLogger(__name__)
 class Conversations(object):
 
 	OLDEST_COMPATIBLE_FORMAT_VERSION = misc_utils.parse_version("0.8.0")
-	OLDEST_MESSAGE_WINDOW = datetime.timedelta(days=60)
 
-	def __init__(self, getter):
+	def __init__(self, getter, asyncPool):
 		self._get_raw_conversations = getter
+		self._asyncPool = asyncPool
 		self._conversations = {}
+		self._loadedFromCache = False
+		self._hasDoneUpdate = False
 
 		self.updateSignalHandler = coroutines.CoTee()
 
@@ -35,6 +38,7 @@ class Conversations(object):
 		return repr(self._get_raw_conversations.__name__)
 
 	def load(self, path):
+		_moduleLogger.debug("%s Loading cache" % (self._name, ))
 		assert not self._conversations
 		try:
 			with open(path, "rb") as f:
@@ -49,6 +53,14 @@ class Conversations(object):
 		) <= 0:
 			_moduleLogger.info("%s Loaded cache" % (self._name, ))
 			self._conversations = convs
+			self._loadedFromCache = True
+			for key, mergedConv in self._conversations.iteritems():
+				_moduleLogger.debug("%s \tLoaded %s" % (self._name, key))
+				for conv in mergedConv.conversations:
+					message = "%s \t\tLoaded %s (%r) %r %r %r" % (
+						self._name, conv.id, conv.time, conv.isRead, conv.isArchived, len(conv.messages)
+					)
+					_moduleLogger.debug(message)
 		else:
 			_moduleLogger.debug(
 				"%s Skipping cache due to version mismatch (%s-%s)" % (
@@ -57,24 +69,43 @@ class Conversations(object):
 			)
 
 	def save(self, path):
+		_moduleLogger.info("%s Saving cache" % (self._name, ))
 		try:
-			_moduleLogger.info("%s Saving cache" % (self._name, ))
-			for conv in self._conversations.itervalues():
-				conv.compress(self.OLDEST_MESSAGE_WINDOW)
 			dataToDump = (constants.__version__, constants.__build__, self._conversations)
 			with open(path, "wb") as f:
 				pickle.dump(dataToDump, f, pickle.HIGHEST_PROTOCOL)
 		except (pickle.PickleError, IOError):
 			_moduleLogger.exception("While saving for %s" % self._name)
 
+		for key, mergedConv in self._conversations.iteritems():
+			_moduleLogger.debug("%s \tSaving %s" % (self._name, key))
+			for conv in mergedConv.conversations:
+				message = "%s \t\tSaving %s (%r) %r %r %r" % (
+					self._name, conv.id, conv.time, conv.isRead, conv.isArchived, len(conv.messages)
+				)
+				_moduleLogger.debug(message)
+
+		_moduleLogger.info("%s Cache saved" % (self._name, ))
+
 	def update(self, force=False):
 		if not force and self._conversations:
 			return
 
+		le = gobject_utils.AsyncLinearExecution(self._asyncPool, self._update)
+		le.start()
+
+	@misc_utils.log_exception(_moduleLogger)
+	def _update(self):
+		conversationResult = yield (
+			self._get_raw_conversations,
+			(),
+			{},
+		)
+
 		oldConversationIds = set(self._conversations.iterkeys())
 
 		updateConversationIds = set()
-		conversations = list(self._get_raw_conversations())
+		conversations = list(conversationResult)
 		conversations.sort()
 		for conversation in conversations:
 			key = misc_utils.normalize_number(conversation.number)
@@ -84,8 +115,12 @@ class Conversations(object):
 				mergedConversations = MergedConversations()
 				self._conversations[key] = mergedConversations
 
+			if self._loadedFromCache or self._hasDoneUpdate:
+				markAllAsRead = False
+			else:
+				markAllAsRead = True
 			try:
-				mergedConversations.append_conversation(conversation)
+				mergedConversations.append_conversation(conversation, markAllAsRead)
 				isConversationUpdated = True
 			except RuntimeError, e:
 				if False:
@@ -95,9 +130,19 @@ class Conversations(object):
 			if isConversationUpdated:
 				updateConversationIds.add(key)
 
+		for key in updateConversationIds:
+			mergedConv = self._conversations[key]
+			_moduleLogger.debug("%s \tUpdated %s" % (self._name, key))
+			for conv in mergedConv.conversations:
+				message = "%s \t\tUpdated %s (%r) %r %r %r" % (
+					self._name, conv.id, conv.time, conv.isRead, conv.isArchived, len(conv.messages)
+				)
+				_moduleLogger.debug(message)
+
 		if updateConversationIds:
 			message = (self, updateConversationIds, )
 			self.updateSignalHandler.stage.send(message)
+		self._hasDoneUpdate = True
 
 	def get_conversations(self):
 		return self._conversations.iterkeys()
@@ -120,24 +165,31 @@ class MergedConversations(object):
 	def __init__(self):
 		self._conversations = []
 
-	def append_conversation(self, newConversation):
+	def append_conversation(self, newConversation, markAllAsRead):
 		self._validate(newConversation)
-		similarExist = False
 		for similarConversation in self._find_related_conversation(newConversation.id):
 			self._update_previous_related_conversation(similarConversation, newConversation)
 			self._remove_repeats(similarConversation, newConversation)
-			similarExist = True
-		if similarExist:
-			# Hack to reduce a race window with GV marking messages as read
-			# because it thinks we replied when really we replied to the
-			# previous message.  Clients of this code are expected to handle
-			# this gracefully.  Other race conditions may exist but clients are
-			# responsible for them
-			if newConversation.messages:
-				newConversation.isRead = False
-			else:
-				newConversation.isRead = True
-		self._conversations.append(newConversation)
+
+		# HACK: Because GV marks all messages as read when you reply it has
+		# the following race:
+		# 1. Get all messages
+		# 2. Contact sends a text
+		# 3. User sends a text marking contacts text as read
+		# 4. Get all messages not returning text from step 2
+		# This isn't a problem for voicemails but we don't know(?( enough.
+		# So we hack around this by:
+		# * We cache to disk the history of messages sent/received
+		# * On first run we mark all server messages as read due to no cache
+		# * If not first load or from cache (disk or in-memory) then it must be unread
+		if markAllAsRead:
+			newConversation.isRead = True
+		else:
+			newConversation.isRead = False
+
+		if newConversation.messages:
+			# must not have had all items removed due to duplicates
+			self._conversations.append(newConversation)
 
 	def to_dict(self):
 		selfDict = {}
@@ -147,21 +199,6 @@ class MergedConversations(object):
 	@property
 	def conversations(self):
 		return self._conversations
-
-	def compress(self, timedelta):
-		now = datetime.datetime.now()
-		oldNumConvs = len(self._conversations)
-		oldConvs = self._conversations
-		self._conversations = [
-			conv
-			for conv in self._conversations
-			if (now - conv.time) < timedelta
-		]
-		newNumConvs = len(self._conversations)
-		if oldNumConvs != newNumConvs:
-			_moduleLogger.debug("Compressed conversations from %s to %s" % (oldNumConvs, newNumConvs))
-		else:
-			_moduleLogger.debug("Did not compress, %s" % (newNumConvs))
 
 	def _validate(self, newConversation):
 		if not self._conversations:

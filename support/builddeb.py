@@ -34,6 +34,18 @@ __email__ = "eopage@byu.net"
 __version__ = constants.__version__
 __build__ = constants.__build__
 __changelog__ = """
+0.8.10
+* More improvements to the logging
+
+0.8.9
+* For now removing "removing of old conversations" in case that is contributing to people's problems
+* Attempting to use the messages actual time stamp rather than the time when we received it
+* Adding a bit of paranoia to marking messages as read
+* Added lots of debugging help
+
+0.8.8
+* Switching to a non-blocking system so TOR can remain responsive to MC and avoid being leaked in the first place
+
 0.8.7
 * Adding some logging to help track down some issues
 

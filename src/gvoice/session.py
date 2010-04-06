@@ -9,6 +9,9 @@ import addressbook
 import conversations
 import state_machine
 
+import util.go_utils as gobject_utils
+import util.misc as misc_utils
+
 
 _moduleLogger = logging.getLogger(__name__)
 
@@ -35,6 +38,7 @@ class Session(object):
 		self._username = None
 		self._password = None
 
+		self._asyncPool = gobject_utils.AsyncPool()
 		self._backend = backend.GVoiceBackend(cookiePath)
 
 		if defaults["contacts"][0] == state_machine.UpdateStateMachine.INFINITE_PERIOD:
@@ -43,7 +47,7 @@ class Session(object):
 			contactsPeriodInSeconds = state_machine.to_seconds(
 				**{defaults["contacts"][1]: defaults["contacts"][0],}
 			)
-		self._addressbook = addressbook.Addressbook(self._backend)
+		self._addressbook = addressbook.Addressbook(self._backend, self._asyncPool)
 		self._addressbookStateMachine = state_machine.UpdateStateMachine([self.addressbook], "Addressbook")
 		self._addressbookStateMachine.set_state_strategy(
 			state_machine.StateMachine.STATE_DND,
@@ -66,7 +70,7 @@ class Session(object):
 				**{defaults["voicemail"][1]: defaults["voicemail"][0],}
 			)
 			idleVoicemailPeriodInSeconds = max(voicemailPeriodInSeconds * 4, self._MINIMUM_MESSAGE_PERIOD)
-		self._voicemails = conversations.Conversations(self._backend.get_voicemails)
+		self._voicemails = conversations.Conversations(self._backend.get_voicemails, self._asyncPool)
 		self._voicemailsStateMachine = state_machine.UpdateStateMachine([self.voicemails], "Voicemail")
 		self._voicemailsStateMachine.set_state_strategy(
 			state_machine.StateMachine.STATE_DND,
@@ -98,7 +102,7 @@ class Session(object):
 				**{defaults["texts"][1]: defaults["texts"][0],}
 			)
 			idleTextsPeriodInSeconds = max(textsPeriodInSeconds * 4, self._MINIMUM_MESSAGE_PERIOD)
-		self._texts = conversations.Conversations(self._backend.get_texts)
+		self._texts = conversations.Conversations(self._backend.get_texts, self._asyncPool)
 		self._textsStateMachine = state_machine.UpdateStateMachine([self.texts], "Texting")
 		self._textsStateMachine.set_state_strategy(
 			state_machine.StateMachine.STATE_DND,
@@ -145,14 +149,31 @@ class Session(object):
 		)
 		self._masterStateMachine.close()
 
-	def login(self, username, password):
+	def login(self, username, password, on_success, on_error):
+		self._asyncPool.start()
+
+		le = gobject_utils.AsyncLinearExecution(self._asyncPool, self._login)
+		le.start(username, password, on_success, on_error)
+
+	@misc_utils.log_exception(_moduleLogger)
+	def _login(self, username, password, on_success, on_error):
 		self._username = username
 		self._password = password
-		self._backend.login(self._username, self._password)
+		try:
+			isLoggedIn = yield (
+				self._backend.login,
+				(self._username, self._password),
+				{},
+			)
+		except Exception, e:
+			on_error(e)
+			return
 
 		self._masterStateMachine.start()
+		on_success(isLoggedIn)
 
 	def logout(self):
+		self._asyncPool.stop()
 		self._masterStateMachine.stop()
 		self._backend.logout()
 
@@ -163,20 +184,11 @@ class Session(object):
 		if self._username is None and self._password is None:
 			_moduleLogger.info("Hasn't even attempted to login yet")
 			return False
-		elif self._backend.is_authed():
-			return True
 		else:
-			try:
-				loggedIn = self._backend.login(self._username, self._password)
-			except RuntimeError, e:
-				_moduleLogger.exception("Re-authenticating and erroring")
-				loggedIn = False
-			if loggedIn:
-				return True
-			else:
-				_moduleLogger.info("Login failed")
-				self.logout()
-				return False
+			isLoggedIn = self._backend.is_authed()
+			if not isLoggedIn:
+				_moduleLogger.error("Not logged in anymore")
+			return isLoggedIn
 
 	def set_dnd(self, doNotDisturb):
 		self._backend.set_dnd(doNotDisturb)
@@ -192,11 +204,12 @@ class Session(object):
 
 	@property
 	def backend(self):
-		"""
-		Login enforcing backend
-		"""
-		assert self.is_logged_in(), "User not logged in"
+		assert self.is_logged_in()
 		return self._backend
+
+	@property
+	def pool(self):
+		return self._asyncPool
 
 	@property
 	def addressbook(self):

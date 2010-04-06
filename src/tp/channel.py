@@ -21,7 +21,8 @@ import dbus
 import dbus.service
 
 from telepathy.constants import (CONNECTION_HANDLE_TYPE_NONE,
-                                 CHANNEL_TEXT_MESSAGE_TYPE_NORMAL)
+                                 CHANNEL_TEXT_MESSAGE_TYPE_NORMAL,
+                                 HANDLE_TYPE_NONE)
 
 from telepathy.errors import InvalidArgument
 
@@ -42,9 +43,11 @@ from telepathy._generated.Channel import Channel as _Channel
 
 from properties import DBusProperties
 
+from handle import NoneHandle
+
 class Channel(_Channel, DBusProperties):
 
-    def __init__(self, connection, manager, props):
+    def __init__(self, connection, manager, props, object_path=None):
         """
         Initialise the base channel object.
 
@@ -54,7 +57,8 @@ class Channel(_Channel, DBusProperties):
         """
         self._conn = connection
         self._chan_manager = manager
-        object_path = self._conn.get_channel_path()
+
+        object_path = self._conn.get_channel_path(object_path)
         _Channel.__init__(self, self._conn._name, object_path)
 
         self._type = props[CHANNEL_INTERFACE + '.ChannelType']
@@ -62,9 +66,15 @@ class Channel(_Channel, DBusProperties):
 
         self._immutable_properties = dict()
 
-        self._handle = self._conn.get_handle_by_id(
-            props[CHANNEL_INTERFACE + '.TargetHandleType'],
-            props[CHANNEL_INTERFACE + '.TargetHandle'])
+        tht = props.get(CHANNEL_INTERFACE + '.TargetHandleType', HANDLE_TYPE_NONE)
+
+        if tht == HANDLE_TYPE_NONE:
+            self._handle = NoneHandle()
+        else:
+            self._handle = self._conn.get_handle_by_id(
+                props[CHANNEL_INTERFACE + '.TargetHandleType'],
+                props[CHANNEL_INTERFACE + '.TargetHandle'])
+
         self._interfaces = set()
 
         DBusProperties.__init__(self)
@@ -72,8 +82,8 @@ class Channel(_Channel, DBusProperties):
             {'ChannelType': lambda: dbus.String(self.GetChannelType()),
              'Interfaces': lambda: dbus.Array(self.GetInterfaces(), signature='s'),
              'TargetHandle': lambda: dbus.UInt32(self._handle.get_id()),
-             'TargetHandleType': lambda: dbus.UInt32(self._get_handle_type()),
-             'TargetID': lambda: dbus.String(self._get_target_id()),
+             'TargetHandleType': lambda: dbus.UInt32(self._handle.get_type()),
+             'TargetID': lambda: dbus.String(self._handle.get_name()),
              'Requested': lambda: self._requested})
 
         self._add_immutables({
@@ -88,19 +98,9 @@ class Channel(_Channel, DBusProperties):
     def _add_immutables(self, props):
         self._immutable_properties.update(props)
 
-    def _get_handle_type(self):
-        if self._handle:
-            return self._handle.get_type()
-        else:
-            return CONNECTION_HANDLE_TYPE_NONE
-
-    def _get_target_id(self):
-        if self._handle:
-            return self._handle.get_name()
-        else:
-            return ''
-
     def get_props(self):
+        """Despite its name, this function actually only returns immutable channel
+        properties."""
         props = dict()
         for prop, iface in self._immutable_properties.items():
             props[iface + '.' + prop] = \
@@ -123,10 +123,7 @@ class Channel(_Channel, DBusProperties):
         """ Returns the handle type and number if this channel represents a
         communication with a particular contact, room or server-stored list, or
         zero if it is transient and defined only by its contents. """
-        if self._handle:
-            return self._handle.get_type(), self._handle
-        else:
-            return (CONNECTION_HANDLE_TYPE_NONE, 0)
+        return (self._handle.get_type(), self._handle.get_id())
 
     @dbus.service.method(CHANNEL_INTERFACE, in_signature='', out_signature='as')
     def GetInterfaces(self):
@@ -144,14 +141,15 @@ from telepathy._generated.Channel_Type_Contact_List \
 class ChannelTypeContactList(Channel, _ChannelTypeContactListIface):
     __doc__ = _ChannelTypeContactListIface.__doc__
 
-    def __init__(self, connection, manager, props):
+    def __init__(self, connection, manager, props, object_path=None):
         """
         Initialise the channel.
 
         Parameters:
         connection - the parent Telepathy Connection object
         """
-        Channel.__init__(self, connection, manager, props)
+        Channel.__init__(self, connection, manager, props,
+            object_path=object_path)
 
 
 from telepathy._generated.Channel_Type_File_Transfer \
@@ -160,30 +158,15 @@ from telepathy._generated.Channel_Type_File_Transfer \
 class ChannelTypeFileTransfer(Channel, _ChannelTypeFileTransferIface):
     __doc__ = _ChannelTypeFileTransferIface.__doc__
 
-    def __init__(self, connection, manager, props):
+    def __init__(self, connection, manager, props, object_path=None):
         """
         Initialise the channel.
 
         Parameters:
         connection - the parent Telepathy Connection object
         """
-        Channel.__init__(self, connection, manager, props)
-
-
-from telepathy._generated.Channel_Type_File_Transfer \
-        import ChannelTypeFileTransfer as _ChannelTypeFileTransferIface
-
-class ChannelTypeFileTransfer(Channel, _ChannelTypeFileTransferIface):
-    __doc__ = _ChannelTypeFileTransferIface.__doc__
-
-    def __init__(self, connection, manager, props):
-        """
-        Initialise the channel.
-
-        Parameters:
-        connection - the parent Telepathy Connection object
-        """
-        Channel.__init__(self, connection, manager, props)
+        Channel.__init__(self, connection, manager, props,
+            object_path=object_path)
 
 
 from telepathy._generated.Channel_Type_Streamed_Media \
@@ -192,14 +175,15 @@ from telepathy._generated.Channel_Type_Streamed_Media \
 class ChannelTypeStreamedMedia(Channel, _ChannelTypeStreamedMediaIface):
     __doc__ = _ChannelTypeStreamedMediaIface.__doc__
 
-    def __init__(self, connection, manager, props):
+    def __init__(self, connection, manager, props, object_path=None):
         """
         Initialise the channel.
 
         Parameters:
         connection - the parent Telepathy Connection object
         """
-        Channel.__init__(self, connection, manager, props)
+        Channel.__init__(self, connection, manager, props,
+            object_path=object_path)
 
 
 from telepathy._generated.Channel_Type_Room_List \
@@ -208,18 +192,19 @@ from telepathy._generated.Channel_Type_Room_List \
 class ChannelTypeRoomList(Channel, _ChannelTypeRoomListIface):
     __doc__ = _ChannelTypeRoomListIface.__doc__
 
-    def __init__(self, connection, manager, props):
+    def __init__(self, connection, manager, props, object_path=None):
         """
         Initialise the channel.
 
         Parameters:
         connection - the parent Telepathy Connection object
         """
-        Channel.__init__(self, connection, manager, props)
+        Channel.__init__(self, connection, manager, props,
+            object_path=object_path)
         self._listing_rooms = False
         self._rooms = {}
 
-        self._add_immutables(self, {'Server': CHANNEL_TYPE_ROOM_LIST})
+        self._add_immutables({'Server': CHANNEL_TYPE_ROOM_LIST})
 
     @dbus.service.method(CHANNEL_TYPE_ROOM_LIST, in_signature='', out_signature='b')
     def GetListingRooms(self):
@@ -236,14 +221,15 @@ from telepathy._generated.Channel_Type_Text \
 class ChannelTypeText(Channel, _ChannelTypeTextIface):
     __doc__ = _ChannelTypeTextIface.__doc__
 
-    def __init__(self, connection, manager, props):
+    def __init__(self, connection, manager, props, object_path=None):
         """
         Initialise the channel.
 
         Parameters:
         connection - the parent Telepathy Connection object
         """
-        Channel.__init__(self, connection, manager, props)
+        Channel.__init__(self, connection, manager, props,
+            object_path=object_path)
 
         self._pending_messages = {}
         self._message_types = [CHANNEL_TEXT_MESSAGE_TYPE_NORMAL]

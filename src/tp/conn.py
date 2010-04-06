@@ -200,9 +200,12 @@ class Connection(_Connection, DBusProperties):
     def set_self_handle(self, handle):
         self._self_handle = handle
 
-    def get_channel_path(self):
-        ret = '%s/channel%d' % (self._object_path, self._next_channel_id)
-        self._next_channel_id += 1
+    def get_channel_path(self, suffix):
+        if not suffix:
+            ret = '%s/channel%d' % (self._object_path, self._next_channel_id)
+            self._next_channel_id += 1
+        else:
+            ret = '%s/%s' % (self._object_path, suffix)
         return ret
 
     def add_channels(self, channels, signal=True):
@@ -321,7 +324,7 @@ class Connection(_Connection, DBusProperties):
         self.check_connected()
         ret = []
         for channel in self._channels:
-            chan = (channel._object_path, channel._type, channel._get_handle_type(), channel._handle)
+            chan = (channel._object_path, channel._type, channel._handle.get_type(), channel._handle.get_id())
             ret.append(chan)
         return ret
 
@@ -428,7 +431,7 @@ class ConnectionInterfaceRequests(
 
         # Allow TargetHandleType to be missing, but not to be otherwise broken.
         check_valid_type_if_exists('TargetHandleType',
-            lambda p: p > 0 and p < (2**32)-1)
+            lambda p: p >= 0 and p <= LAST_HANDLE_TYPE)
 
         # Allow TargetType to be missing, but not to be otherwise broken.
         check_valid_type_if_exists('TargetHandle',
@@ -459,9 +462,9 @@ class ConnectionInterfaceRequests(
         target_id = props.get(CHANNEL_INTERFACE + '.TargetID', None)
 
         # Handle type 0 cannot have a handle.
-        if target_handle_type == HANDLE_TYPE_NONE and target_handle != None:
+        if target_handle_type == HANDLE_TYPE_NONE and target_handle not in (None, 0):
             raise InvalidArgument('When TargetHandleType is NONE, ' +
-                'TargetHandle must be omitted')
+                'TargetHandle must be omitted or 0')
 
         # Handle type 0 cannot have a TargetID.
         if target_handle_type == HANDLE_TYPE_NONE and target_id != None:

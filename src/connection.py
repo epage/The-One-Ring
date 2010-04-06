@@ -6,7 +6,6 @@ import telepathy
 
 import constants
 import tp
-import util.go_utils as gobject_utils
 import util.misc as misc_utils
 
 import gvoice
@@ -140,7 +139,6 @@ class TheOneRingConnection(
 			autogv.AutoDisconnect(weakref.ref(self)),
 			autogv.DelayEnableContactIntegration(constants._telepathy_implementation_name_),
 		]
-		self._delayedConnect = gobject_utils.Async(self._delayed_connect)
 
 		_moduleLogger.info("Connection to the account %s created" % account)
 		self._timedDisconnect = autogv.TimedDisconnect(weakref.ref(self))
@@ -189,23 +187,27 @@ class TheOneRingConnection(
 		if self._status != telepathy.CONNECTION_STATUS_DISCONNECTED:
 			_moduleLogger.info("Attempting connect when not disconnected")
 			return
-		_moduleLogger.info("Kicking off connect")
-		self._delayedConnect.start()
-		self._timedDisconnect.stop()
-
-	@misc_utils.log_exception(_moduleLogger)
-	def _delayed_connect(self):
 		_moduleLogger.info("Connecting...")
 		self.StatusChanged(
 			telepathy.CONNECTION_STATUS_CONNECTING,
 			telepathy.CONNECTION_STATUS_REASON_REQUESTED
 		)
+		self._timedDisconnect.stop()
+		self.session.login(
+			self.__credentials[0],
+			self.__credentials[1],
+			self._on_login,
+			self._on_login_error,
+		)
+
+	@misc_utils.log_exception(_moduleLogger)
+	def _on_login(self, *args):
+		_moduleLogger.info("Connected, setting up...")
 		try:
 			self.__session.load(self.__cachePath)
 
 			for plumber in self._plumbing:
 				plumber.start()
-			self.session.login(*self.__credentials)
 			if not self.__callbackNumberParameter:
 				callback = gvoice.backend.get_sane_callback(
 					self.session.backend
@@ -219,20 +221,24 @@ class TheOneRingConnection(
 			publishHandle = self.get_handle_by_name(telepathy.HANDLE_TYPE_LIST, "publish")
 			publishProps = self.generate_props(telepathy.CHANNEL_TYPE_CONTACT_LIST, publishHandle, False)
 			self.__channelManager.channel_for_props(publishProps, signal=True)
-		except gvoice.backend.NetworkError:
-			_moduleLogger.exception("Connection Failed")
-			self.disconnect(telepathy.CONNECTION_STATUS_REASON_NETWORK_ERROR)
-			return
 		except Exception:
-			_moduleLogger.exception("Connection Failed")
+			_moduleLogger.exception("Setup failed")
 			self.disconnect(telepathy.CONNECTION_STATUS_REASON_AUTHENTICATION_FAILED)
 			return
 
-		_moduleLogger.info("Connected")
+		_moduleLogger.info("Connected and set up")
 		self.StatusChanged(
 			telepathy.CONNECTION_STATUS_CONNECTED,
 			telepathy.CONNECTION_STATUS_REASON_REQUESTED
 		)
+
+	@misc_utils.log_exception(_moduleLogger)
+	def _on_login_error(self, error):
+		_moduleLogger.error(error)
+		if isinstance(error, gvoice.backend.NetworkError):
+			self.disconnect(telepathy.CONNECTION_STATUS_REASON_NETWORK_ERROR)
+		else:
+			self.disconnect(telepathy.CONNECTION_STATUS_REASON_AUTHENTICATION_FAILED)
 
 	@misc_utils.log_exception(_moduleLogger)
 	def Disconnect(self):
@@ -282,7 +288,6 @@ class TheOneRingConnection(
 	def disconnect(self, reason):
 		_moduleLogger.info("Disconnecting")
 
-		self._delayedConnect.cancel()
 		self._timedDisconnect.stop()
 
 		# Not having the disconnect first can cause weird behavior with clients

@@ -73,6 +73,8 @@ def run_theonering(persist):
 
 	mainloop = gobject.MainLoop(is_running=True)
 
+	gobject.threads_init()
+	dbus.glib.init_threads()
 	while mainloop.is_running():
 		try:
 			mainloop.run()
@@ -88,17 +90,18 @@ def main(logToFile):
 			raise
 
 	telepathy_utils.debug_divert_messages(os.getenv('THEONERING_LOGFILE'))
+	logFormat = '(%(asctime)s) %(levelname)-5s %(threadName)s.%(name)s: %(message)s'
 	if logToFile:
 		logging.basicConfig(
 			level=logging.DEBUG,
 			filename=constants._user_logpath_,
-			format='(%(asctime)s) %(levelname)s:%(name)s:%(message)s',
+			format=logFormat,
 			datefmt='%H:%M:%S',
 		)
 	else:
 		logging.basicConfig(
 			level=logging.DEBUG,
-			format='(%(asctime)s) %(levelname)s:%(name)s:%(message)s',
+			format=logFormat,
 			datefmt='%H:%M:%S',
 		)
 	logging.info("telepathy-theonering %s-%s" % (constants.__version__, constants.__build__))

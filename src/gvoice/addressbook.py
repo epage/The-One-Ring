@@ -5,6 +5,7 @@ import logging
 
 import util.coroutines as coroutines
 import util.misc as misc_utils
+import util.go_utils as gobject_utils
 
 
 _moduleLogger = logging.getLogger(__name__)
@@ -15,20 +16,32 @@ class Addressbook(object):
 	_RESPONSE_GOOD = 0
 	_RESPONSE_BLOCKED = 3
 
-	def __init__(self, backend):
+	def __init__(self, backend, asyncPool):
 		self._backend = backend
 		self._numbers = {}
+		self._asyncPool = asyncPool
 
 		self.updateSignalHandler = coroutines.CoTee()
 
 	def update(self, force=False):
 		if not force and self._numbers:
 			return
+
+		le = gobject_utils.AsyncLinearExecution(self._asyncPool, self._update)
+		le.start()
+
+	@misc_utils.log_exception(_moduleLogger)
+	def _update(self):
+		contacts = yield (
+			self._backend.get_contacts,
+			(),
+			{},
+		)
+
 		oldContacts = self._numbers
 		oldContactNumbers = set(self.get_numbers())
 
-		self._numbers = {}
-		self._populate_contacts()
+		self._numbers = self._populate_contacts(contacts)
 		newContactNumbers = set(self.get_numbers())
 
 		addedContacts = newContactNumbers - oldContactNumbers
@@ -64,10 +77,8 @@ class Addressbook(object):
 		except KeyError:
 			return False
 
-	def _populate_contacts(self):
-		if self._numbers:
-			return
-		contacts = self._backend.get_contacts()
+	def _populate_contacts(self, contacts):
+		numbers = {}
 		for contactId, contactDetails in contacts:
 			contactName = contactDetails["name"]
 			contactNumbers = (
@@ -77,7 +88,8 @@ class Addressbook(object):
 				)
 				for numberDetails in contactDetails["numbers"]
 			)
-			self._numbers.update(
+			numbers.update(
 				(number, (contactName, phoneType, contactDetails))
 				for (number, phoneType) in contactNumbers
 			)
+		return numbers

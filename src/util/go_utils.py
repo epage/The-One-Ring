@@ -158,14 +158,18 @@ class AsyncPool(object):
 		self.__workQueue.put(task)
 
 	@misc.log_exception(_moduleLogger)
-	def __trampoline_callback(self, callback, result):
-		if self.__isRunning:
-			try:
-				callback(result)
-			except Exception:
-				pass
-		else:
-			_moduleLogger.info("Blocked call to %r" % (callback, ))
+	def __trampoline_callback(self, on_success, on_error, isError, result):
+		if not self.__isRunning:
+			if isError:
+				_moduleLogger.error("Masking: %s" % (result, ))
+			isError = True
+			result = StopIteration("Cancelling all callbacks")
+		callback = on_success if not isError else on_error
+		try:
+			callback(result)
+		except Exception:
+			_moduleLogger.exception("Callback errored")
+			pass
 		return False
 
 	@misc.log_exception(_moduleLogger)
@@ -180,12 +184,64 @@ class AsyncPool(object):
 				result = func(*args, **kwds)
 				isError = False
 			except Exception, e:
+				_moduleLogger.error("Error, passing it back to the main thread")
 				result = e
 				isError = True
 			self.__workQueue.task_done()
 
-			callback = on_success if not isError else on_error
-			gobject.idle_add(self.__trampoline_callback, callback, result)
+			gobject.idle_add(self.__trampoline_callback, on_success, on_error, isError, result)
+
+
+class AsyncLinearExecution(object):
+
+	def __init__(self, pool, func):
+		self._pool = pool
+		self._func = func
+		self._run = None
+
+	def start(self, *args, **kwds):
+		assert self._run is None
+		self._run = self._func(*args, **kwds)
+		trampoline, args, kwds = self._run.send(None) # priming the function
+		self._pool.add_task(
+			trampoline,
+			args,
+			kwds,
+			self.on_success,
+			self.on_error,
+		)
+
+	@misc.log_exception(_moduleLogger)
+	def on_success(self, result):
+		_moduleLogger.debug("Processing success for: %r", self._func)
+		try:
+			trampoline, args, kwds = self._run.send(result)
+		except StopIteration, e:
+			pass
+		else:
+			self._pool.add_task(
+				trampoline,
+				args,
+				kwds,
+				self.on_success,
+				self.on_error,
+			)
+
+	@misc.log_exception(_moduleLogger)
+	def on_error(self, error):
+		_moduleLogger.debug("Processing error for: %r", self._func)
+		try:
+			trampoline, args, kwds = self._run.throw(error)
+		except StopIteration, e:
+			pass
+		else:
+			self._pool.add_task(
+				trampoline,
+				args,
+				kwds,
+				self.on_success,
+				self.on_error,
+			)
 
 
 def throttled(minDelay, queue):

@@ -16,47 +16,78 @@ class ChannelManager(tp.ChannelManager):
 	def __init__(self, connection):
 		tp.ChannelManager.__init__(self, connection)
 
-		fixed = {
-			telepathy.CHANNEL_INTERFACE + '.ChannelType': telepathy.CHANNEL_TYPE_CONTACT_LIST
-		}
-		self._implement_channel_class(
+		classes = [
+			(
+				{
+					telepathy.CHANNEL_INTERFACE + '.ChannelType': telepathy.CHANNEL_TYPE_CONTACT_LIST,
+					telepathy.CHANNEL_INTERFACE + '.TargetHandleType': dbus.UInt32(telepathy.HANDLE_TYPE_LIST),
+				},
+				[
+					telepathy.CHANNEL_INTERFACE + '.TargetHandle',
+					telepathy.CHANNEL_INTERFACE + '.TargetID',
+				],
+			),
+		]
+		self.implement_channel_classes(
 			telepathy.CHANNEL_TYPE_CONTACT_LIST,
 			self._get_list_channel,
-			fixed,
-			[]
+			classes,
 		)
 
-		fixed = {
-			telepathy.CHANNEL_INTERFACE + '.ChannelType': telepathy.CHANNEL_TYPE_TEXT,
-			telepathy.CHANNEL_INTERFACE + '.TargetHandleType': dbus.UInt32(telepathy.HANDLE_TYPE_CONTACT)
-		}
-		self._implement_channel_class(
+		classes = [
+			(
+				{
+					telepathy.CHANNEL_INTERFACE + '.ChannelType': telepathy.CHANNEL_TYPE_TEXT,
+					telepathy.CHANNEL_INTERFACE + '.TargetHandleType': dbus.UInt32(telepathy.HANDLE_TYPE_CONTACT)
+				},
+				[
+					telepathy.CHANNEL_INTERFACE + '.TargetHandle',
+					telepathy.CHANNEL_INTERFACE + '.TargetID',
+				],
+			),
+		]
+		self.implement_channel_classes(
 			telepathy.CHANNEL_TYPE_TEXT,
 			self._get_text_channel,
-			fixed,
-			[]
+			classes,
 		)
 
-		fixed = {
-			telepathy.CHANNEL_INTERFACE + '.ChannelType': telepathy.CHANNEL_TYPE_FILE_TRANSFER,
-			telepathy.CHANNEL_INTERFACE + '.TargetHandleType': dbus.UInt32(telepathy.HANDLE_TYPE_CONTACT)
-		}
-		self._implement_channel_class(
+		classes = [
+			(
+				{
+					telepathy.CHANNEL_INTERFACE + '.ChannelType': telepathy.CHANNEL_TYPE_FILE_TRANSFER,
+					telepathy.CHANNEL_INTERFACE + '.TargetHandleType': dbus.UInt32(telepathy.HANDLE_TYPE_CONTACT)
+				},
+				[
+					telepathy.CHANNEL_INTERFACE + '.TargetHandle',
+					telepathy.CHANNEL_INTERFACE + '.TargetID',
+				],
+			),
+		]
+		self.implement_channel_classes(
 			telepathy.CHANNEL_TYPE_FILE_TRANSFER,
 			self._get_file_transfer_channel,
-			fixed,
-			[]
+			classes,
 		)
 
-		fixed = {
-			telepathy.CHANNEL_INTERFACE + '.ChannelType': telepathy.CHANNEL_TYPE_STREAMED_MEDIA,
-			telepathy.CHANNEL_INTERFACE + '.TargetHandleType': dbus.UInt32(telepathy.HANDLE_TYPE_CONTACT)
-		}
-		self._implement_channel_class(
+		classes = [
+			(
+				{
+					telepathy.CHANNEL_INTERFACE + '.ChannelType': telepathy.CHANNEL_TYPE_STREAMED_MEDIA,
+					telepathy.CHANNEL_INTERFACE + '.TargetHandleType': dbus.UInt32(telepathy.HANDLE_TYPE_CONTACT)
+				},
+				[
+					telepathy.CHANNEL_INTERFACE + '.TargetHandle',
+					telepathy.CHANNEL_INTERFACE + '.TargetID',
+					telepathy.CHANNEL_TYPE_STREAMED_MEDIA + '.InitialAudio',
+					telepathy.CHANNEL_TYPE_STREAMED_MEDIA + '.InitialVideo',
+				],
+			),
+		]
+		self.implement_channel_classes(
 			telepathy.CHANNEL_TYPE_STREAMED_MEDIA,
 			self._get_media_channel,
-			fixed,
-			[telepathy.CHANNEL_INTERFACE + '.TargetHandle']
+			classes,
 		)
 
 	def _get_list_channel(self, props):

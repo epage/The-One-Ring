@@ -1,4 +1,5 @@
 import time
+import datetime
 import logging
 
 import telepathy
@@ -6,6 +7,7 @@ import telepathy
 import tp
 import util.coroutines as coroutines
 import util.misc as misc_utils
+import util.go_utils as gobject_utils
 import gvoice
 
 
@@ -14,13 +16,14 @@ _moduleLogger = logging.getLogger(__name__)
 
 class TextChannel(tp.ChannelTypeText):
 
+	OLDEST_MESSAGE_WINDOW = datetime.timedelta(days=1)
+
 	def __init__(self, connection, manager, props, contactHandle):
 		self.__manager = manager
 		self.__props = props
 
 		tp.ChannelTypeText.__init__(self, connection, manager, props)
 		self.__nextRecievedId = 0
-		self.__hasServerBeenPolled = False
 
 		self.__otherHandle = contactHandle
 
@@ -55,29 +58,32 @@ class TextChannel(tp.ChannelTypeText):
 
 	@misc_utils.log_exception(_moduleLogger)
 	def Send(self, messageType, text):
+		le = gobject_utils.AsyncLinearExecution(self._conn.session.pool, self._send)
+		le.start(messageType, text)
+
+	@misc_utils.log_exception(_moduleLogger)
+	def _send(self, messageType, text):
 		if messageType != telepathy.CHANNEL_TEXT_MESSAGE_TYPE_NORMAL:
 			raise telepathy.errors.NotImplemented("Unhandled message type: %r" % messageType)
 
-		if not self.__hasServerBeenPolled:
-			# Hack: GV marks messages as read when they are replied to.  If GV
-			# marks them as read than we ignore them.  So reduce the window for
-			# them being marked as read.  Oh and Conversations already handles
-			# it if the message was already part of a thread, so we can limit
-			# this to if we are trying to start a thread.  You might say a
-			# voicemail could be what is being replied to and that doesn't mean
-			# anything.  Oh well.
-			try:
-				self._conn.session.texts.update(force=True)
-			except Exception:
-				_moduleLogger.exception(
-					"Update failed when proactively checking for texts"
-				)
-
 		_moduleLogger.info("Sending message to %r" % (self.__otherHandle, ))
-		self._conn.session.backend.send_sms([self.__otherHandle.phoneNumber], text)
+		try:
+			result = yield (
+				self._conn.session.backend.send_sms,
+				([self.__otherHandle.phoneNumber], text),
+				{},
+			)
+		except Exception:
+			_moduleLogger.exception(result)
+			return
+
 		self._conn.session.textsStateMachine.reset_timers()
 
 		self.Sent(int(time.time()), messageType, text)
+
+	@misc_utils.log_exception(_moduleLogger)
+	def _on_send_sms_failed(self, error):
+		_moduleLogger.error(error)
 
 	@misc_utils.log_exception(_moduleLogger)
 	def Close(self):
@@ -120,9 +126,9 @@ class TextChannel(tp.ChannelTypeText):
 		# Can't filter out messages in a texting conversation that came in
 		# before the last one sent because that creates a race condition of two
 		# people sending at about the same time, which happens quite a bit
+		newConversations = gvoice.conversations.filter_out_self(newConversations)
 		newConversations = self._filter_out_reported(newConversations)
 		newConversations = gvoice.conversations.filter_out_read(newConversations)
-		newConversations = gvoice.conversations.filter_out_self(newConversations)
 		newConversations = list(newConversations)
 		if not newConversations:
 			_moduleLogger.debug(
@@ -131,7 +137,7 @@ class TextChannel(tp.ChannelTypeText):
 			return
 
 		messages = [
-			newMessage
+			(newMessage, newConversation)
 			for newConversation in newConversations
 			for newMessage in newConversation.messages
 			if not gvoice.conversations.is_message_from_self(newMessage)
@@ -141,20 +147,24 @@ class TextChannel(tp.ChannelTypeText):
 				"How did this happen for %r?" % (self._contactKey, )
 			)
 			return
-		for newMessage in messages:
-			formattedMessage = self._format_message(newMessage)
-			self._report_new_message(formattedMessage)
 
-		for conv in newConversations:
+		now = datetime.datetime.now()
+		for newMessage, conv in messages:
+			if self.OLDEST_MESSAGE_WINDOW < (now - conv.time):
+				_moduleLogger.warning("Why are we reporting a message that is so old?")
+				_moduleLogger.warning("\t%r %r (%r) with %r messages" % (conv.number, conv.id, conv.time, len(conv.messages)))
+			formattedMessage = self._format_message(newMessage)
+			self._report_new_message(formattedMessage, conv.time)
+
+		for conv in mergedConversations.conversations:
 			conv.isRead = True
-		self.__hasServerBeenPolled = True
 
 	def _format_message(self, message):
 		return " ".join(part.text.strip() for part in message.body)
 
-	def _report_new_message(self, message):
+	def _report_new_message(self, message, convTime):
 		currentReceivedId = self.__nextRecievedId
-		timestamp = int(time.time())
+		timestamp = time.mktime(convTime.timetuple())
 		type = telepathy.CHANNEL_TEXT_MESSAGE_TYPE_NORMAL
 
 		_moduleLogger.info("Received message from User %r" % self.__otherHandle)
