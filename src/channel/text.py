@@ -1,4 +1,5 @@
 import time
+import datetime
 import logging
 
 import telepathy
@@ -14,6 +15,8 @@ _moduleLogger = logging.getLogger(__name__)
 
 
 class TextChannel(tp.ChannelTypeText):
+
+	OLDEST_MESSAGE_WINDOW = datetime.timedelta(days=1)
 
 	def __init__(self, connection, manager, props, contactHandle):
 		self.__manager = manager
@@ -134,7 +137,7 @@ class TextChannel(tp.ChannelTypeText):
 			return
 
 		messages = [
-			(newMessage, newConversation.time)
+			(newMessage, newConversation)
 			for newConversation in newConversations
 			for newMessage in newConversation.messages
 			if not gvoice.conversations.is_message_from_self(newMessage)
@@ -144,9 +147,14 @@ class TextChannel(tp.ChannelTypeText):
 				"How did this happen for %r?" % (self._contactKey, )
 			)
 			return
-		for newMessage, convTime in messages:
+
+		now = datetime.datetime.now()
+		for newMessage, conv in messages:
+			if self.OLDEST_MESSAGE_WINDOW < (now - conv.time):
+				_moduleLogger.warning("Why are we reporting a message that is so old?")
+				_moduleLogger.warning("\t%r %r (%r) with %r messages" % (conv.number, conv.id, conv.time, len(conv.messages)))
 			formattedMessage = self._format_message(newMessage)
-			self._report_new_message(formattedMessage, convTime)
+			self._report_new_message(formattedMessage, conv.time)
 
 		for conv in mergedConversations.conversations:
 			conv.isRead = True
