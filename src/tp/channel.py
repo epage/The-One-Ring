@@ -71,9 +71,9 @@ class Channel(_Channel, DBusProperties):
         if tht == HANDLE_TYPE_NONE:
             self._handle = NoneHandle()
         else:
-			self._handle = self._conn.get_handle_by_id(
-				props[CHANNEL_INTERFACE + '.TargetHandleType'],
-				props[CHANNEL_INTERFACE + '.TargetHandle'])
+            self._handle = self._conn.get_handle_by_id(
+                props[CHANNEL_INTERFACE + '.TargetHandleType'],
+                props[CHANNEL_INTERFACE + '.TargetHandle'])
 
         self._interfaces = set()
 
