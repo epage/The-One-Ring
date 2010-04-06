@@ -23,7 +23,6 @@ _moduleLogger = logging.getLogger(__name__)
 class Conversations(object):
 
 	OLDEST_COMPATIBLE_FORMAT_VERSION = misc_utils.parse_version("0.8.0")
-	OLDEST_MESSAGE_WINDOW = datetime.timedelta(days=60)
 
 	def __init__(self, getter, asyncPool):
 		self._get_raw_conversations = getter
@@ -58,7 +57,10 @@ class Conversations(object):
 			for key, mergedConv in self._conversations.iteritems():
 				_moduleLogger.debug("%s \tLoaded %s" % (self._name, key))
 				for conv in mergedConv.conversations:
-					_moduleLogger.debug("%s \t\tLoaded %s (%r) %r %r %r" % (self._name, conv.id, conv.time, conv.isRead, conv.isArchived, len(conv.messages)))
+					message = "%s \t\tLoaded %s (%r) %r %r %r" % (
+						self._name, conv.id, conv.time, conv.isRead, conv.isArchived, len(conv.messages)
+					)
+					_moduleLogger.debug(message)
 		else:
 			_moduleLogger.debug(
 				"%s Skipping cache due to version mismatch (%s-%s)" % (
@@ -67,21 +69,22 @@ class Conversations(object):
 			)
 
 	def save(self, path):
+		_moduleLogger.info("%s Saving cache" % (self._name, ))
 		try:
-			_moduleLogger.info("%s Saving cache" % (self._name, ))
-			#for conv in self._conversations.itervalues():
-			#	conv.compress(self.OLDEST_MESSAGE_WINDOW)
-
-			for key, mergedConv in self._conversations.iteritems():
-				_moduleLogger.debug("%s \tSaving %s" % (self._name, key))
-				for conv in mergedConv.conversations:
-					_moduleLogger.debug("%s \t\tSaving %s (%r) %r %r %r" % (self._name, conv.id, conv.time, conv.isRead, conv.isArchived, len(conv.messages)))
-
 			dataToDump = (constants.__version__, constants.__build__, self._conversations)
 			with open(path, "wb") as f:
 				pickle.dump(dataToDump, f, pickle.HIGHEST_PROTOCOL)
 		except (pickle.PickleError, IOError):
 			_moduleLogger.exception("While saving for %s" % self._name)
+
+		for key, mergedConv in self._conversations.iteritems():
+			_moduleLogger.debug("%s \tSaving %s" % (self._name, key))
+			for conv in mergedConv.conversations:
+				message = "%s \t\tSaving %s (%r) %r %r %r" % (
+					self._name, conv.id, conv.time, conv.isRead, conv.isArchived, len(conv.messages)
+				)
+				_moduleLogger.debug(message)
+
 		_moduleLogger.info("%s Cache saved" % (self._name, ))
 
 	def update(self, force=False):
@@ -131,7 +134,10 @@ class Conversations(object):
 			mergedConv = self._conversations[key]
 			_moduleLogger.debug("%s \tUpdated %s" % (self._name, key))
 			for conv in mergedConv.conversations:
-				_moduleLogger.debug("%s \t\tUpdated %s (%r) %r %r %r" % (self._name, conv.id, conv.time, conv.isRead, conv.isArchived, len(conv.messages)))
+				message = "%s \t\tUpdated %s (%r) %r %r %r" % (
+					self._name, conv.id, conv.time, conv.isRead, conv.isArchived, len(conv.messages)
+				)
+				_moduleLogger.debug(message)
 
 		if updateConversationIds:
 			message = (self, updateConversationIds, )
@@ -193,21 +199,6 @@ class MergedConversations(object):
 	@property
 	def conversations(self):
 		return self._conversations
-
-	def compress(self, timedelta):
-		now = datetime.datetime.now()
-		oldNumConvs = len(self._conversations)
-		oldConvs = self._conversations
-		self._conversations = [
-			conv
-			for conv in self._conversations
-			if (now - conv.time) < timedelta
-		]
-		newNumConvs = len(self._conversations)
-		if oldNumConvs != newNumConvs:
-			_moduleLogger.debug("Compressed conversations from %s to %s" % (oldNumConvs, newNumConvs))
-		else:
-			_moduleLogger.debug("Did not compress, %s" % (newNumConvs))
 
 	def _validate(self, newConversation):
 		if not self._conversations:
