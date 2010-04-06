@@ -34,6 +34,9 @@ __email__ = "eopage@byu.net"
 __version__ = constants.__version__
 __build__ = constants.__build__
 __changelog__ = """
+0.8.10
+* More improvements to the logging
+
 0.8.9
 * For now removing "removing of old conversations" in case that is contributing to people's problems
 * Attempting to use the messages actual time stamp rather than the time when we received it
