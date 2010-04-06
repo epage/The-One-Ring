@@ -16,23 +16,32 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
+import warnings
+
 from telepathy.errors import NotImplemented
 
 from telepathy.interfaces import (CHANNEL_INTERFACE,
-                                 CHANNEL_TYPE_CONTACT_LIST)
+                                  CHANNEL_TYPE_CONTACT_LIST)
+
+from telepathy.constants import HANDLE_TYPE_NONE
+
+from handle import NoneHandle
 
 class ChannelManager(object):
     def __init__(self, connection):
         self._conn = connection
 
-        self._requestable_channel_classes = dict()
+        self._requestable_channels = dict()
         self._channels = dict()
+
         self._fixed_properties = dict()
         self._available_properties = dict()
 
+        self._requestables = dict()
+
     def close(self):
         """Close channel manager and all the existing channels."""
-        for channel_type in self._requestable_channel_classes:
+        for channel_type in self._requestable_channels:
             for channels in self._channels[channel_type].values():
                 for channel in channels:
                     if channel._type == CHANNEL_TYPE_CONTACT_LIST:
@@ -42,7 +51,7 @@ class ChannelManager(object):
 
     def remove_channel(self, channel):
         "Remove channel from the channel manager"
-        for channel_type in self._requestable_channel_classes:
+        for channel_type in self._requestable_channels:
             for handle, channels in self._channels[channel_type].items():
                 if channel in channels :
                     channels.remove(channel)
@@ -52,10 +61,15 @@ class ChannelManager(object):
         properties"""
         type = props[CHANNEL_INTERFACE + '.ChannelType']
         requested = props[CHANNEL_INTERFACE + '.Requested']
-        target_handle = int(props[CHANNEL_INTERFACE + '.TargetHandle'])
-        target_handle_type = int(props[CHANNEL_INTERFACE + '.TargetHandleType'])
 
-        handle = self._conn._handles[target_handle_type, target_handle]
+        target_handle_type = \
+            props.get(CHANNEL_INTERFACE + '.TargetHandleType', HANDLE_TYPE_NONE)
+
+        if target_handle_type == HANDLE_TYPE_NONE:
+            handle = NoneHandle()
+        else:
+            target_handle = props[CHANNEL_INTERFACE + '.TargetHandle']
+            handle = self._conn._handles[target_handle_type, target_handle]
 
         return (type, requested, handle)
 
@@ -84,14 +98,14 @@ class ChannelManager(object):
         """Create a new channel with theses properties"""
         type, _, handle = self._get_type_requested_handle(props)
 
-        if type not in self._requestable_channel_classes:
+        if type not in self._requestable_channels:
             raise NotImplemented('Unknown channel type "%s"' % type)
 
-        channel = self._requestable_channel_classes[type](
+        channel = self._requestable_channels[type](
             props, **args)
 
         self._conn.add_channels([channel], signal=signal)
-        if type in self._channels:
+        if handle.get_type() != HANDLE_TYPE_NONE and type in self._channels:
             self._channels[type].setdefault(handle, []).append(channel)
 
         return channel
@@ -105,20 +119,54 @@ class ChannelManager(object):
         else:
             return self.create_channel_for_props(props, signal, **args)
 
+    # Should use implement_channel_classes instead.
     def _implement_channel_class(self, type, make_channel, fixed, available):
-        """Notify channel manager a channel with these properties can be created"""
-        self._requestable_channel_classes[type] = make_channel
+        """Implement channel types in the channel manager, and add one channel
+        class that is retrieved in RequestableChannelClasses.
+
+        self.implement_channel_classes should be used instead, as it allows
+        implementing multiple channel classes."""
+        warnings.warn('deprecated in favour of implement_channel_classes',
+            DeprecationWarning)
+
+        self._requestable_channels[type] = make_channel
         self._channels.setdefault(type, {})
 
         self._fixed_properties[type] = fixed
         self._available_properties[type] = available
 
+    # Use this function instead of _implement_channel_class.
+    def implement_channel_classes(self, type, make_channel, classes):
+        """Implement channel types in the channel manager, and add channel
+        classes that are retrieved in RequestableChannelClasses.
+
+          @type: the channel type
+          @make_channel: a function to call which returns a Channel object
+          @classes: a list of channel classes. E.g.
+
+            [ ( { '...ChannelType': '...Text', '...TargetHandleType': HANDLE_TYPE_CONTACT },
+                ['...TargetHandle'] )
+            ]
+
+            See the spec for more documentation on the
+            Requestable_Channel_Class struct.
+        """
+        self._requestable_channels[type] = make_channel
+        self._channels.setdefault(type, {})
+
+        self._requestables[type] = classes
+
     def get_requestable_channel_classes(self):
         """Return all the channel types that can be created"""
         retval = []
 
-        for channel_type in self._requestable_channel_classes:
-            retval.append((self._fixed_properties[channel_type],
-                self._available_properties[channel_type]))
+        for channel_type in self._requestable_channels:
+            retval.extend(self._requestables.get(channel_type, []))
+
+            # _implement_channel_class was used.
+            if channel_type in self._fixed_properties:
+                retval.append((self._fixed_properties[channel_type],
+                    self._available_properties.get(channel_type, [])))
+
 
         return retval
