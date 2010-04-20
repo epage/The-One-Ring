@@ -34,6 +34,9 @@ __email__ = "eopage@byu.net"
 __version__ = constants.__version__
 __build__ = constants.__build__
 __changelog__ = """
+0.8.11
+* Various improvements to gathering debug information to assist with several outstanding issues
+
 0.8.10
 * More improvements to the logging
 
