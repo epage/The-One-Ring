@@ -34,9 +34,6 @@ import constants
 import connection_manager
 
 
-IDLE_TIMEOUT = 10
-
-
 def run_theonering(persist):
 	linux_utils.set_process_name(constants.__app_name__)
 
@@ -60,7 +57,10 @@ def run_theonering(persist):
 	if persist:
 		shutdown_callback = None
 	else:
-		gobject_utils.timeout_add_seconds(IDLE_TIMEOUT, timeout_cb)
+		gobject_utils.timeout_add_seconds(
+			connection_manager.TheOneRingConnectionManager.IDLE_TIMEOUT,
+			timeout_cb
+		)
 		shutdown_callback = on_quit
 
 	signal.signal(signal.SIGTERM, lambda: on_quit)
