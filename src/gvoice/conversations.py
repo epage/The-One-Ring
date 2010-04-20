@@ -96,11 +96,15 @@ class Conversations(object):
 
 	@misc_utils.log_exception(_moduleLogger)
 	def _update(self):
-		conversationResult = yield (
-			self._get_raw_conversations,
-			(),
-			{},
-		)
+		try:
+			conversationResult = yield (
+				self._get_raw_conversations,
+				(),
+				{},
+			)
+		except Exception:
+			_moduleLogger.exception("%s While updating conversations" % (self._name, ))
+			return
 
 		oldConversationIds = set(self._conversations.iterkeys())
 

@@ -166,6 +166,7 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 			self._report_new_message(str(isAuthed))
 		except Exception, e:
 			self._report_new_message(str(e))
+			return
 
 	def help_is_authed(self):
 		self._report_new_message("Print whether logged in to Google Voice")
@@ -189,6 +190,7 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 			self._report_new_message(str(isDnd))
 		except Exception, e:
 			self._report_new_message(str(e))
+			return
 
 	def help_is_dnd(self):
 		self._report_new_message("Print whether Do-Not-Disturb mode enabled on the Google Voice account")

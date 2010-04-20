@@ -169,7 +169,6 @@ class AsyncPool(object):
 			callback(result)
 		except Exception:
 			_moduleLogger.exception("Callback errored")
-			pass
 		return False
 
 	@misc.log_exception(_moduleLogger)
@@ -190,6 +189,7 @@ class AsyncPool(object):
 			self.__workQueue.task_done()
 
 			gobject.idle_add(self.__trampoline_callback, on_success, on_error, isError, result)
+		_moduleLogger.debug("Shutting down worker thread")
 
 
 class AsyncLinearExecution(object):

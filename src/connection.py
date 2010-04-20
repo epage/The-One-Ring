@@ -235,7 +235,9 @@ class TheOneRingConnection(
 	@misc_utils.log_exception(_moduleLogger)
 	def _on_login_error(self, error):
 		_moduleLogger.error(error)
-		if isinstance(error, gvoice.backend.NetworkError):
+		if isinstance(error, StopIteration):
+			pass
+		elif isinstance(error, gvoice.backend.NetworkError):
 			self.disconnect(telepathy.CONNECTION_STATUS_REASON_NETWORK_ERROR)
 		else:
 			self.disconnect(telepathy.CONNECTION_STATUS_REASON_AUTHENTICATION_FAILED)

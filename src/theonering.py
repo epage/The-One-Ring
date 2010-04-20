@@ -91,6 +91,7 @@ def main(logToFile):
 
 	telepathy_utils.debug_divert_messages(os.getenv('THEONERING_LOGFILE'))
 	logFormat = '(%(asctime)s) %(levelname)-5s %(threadName)s.%(name)s: %(message)s'
+	logging.raiseExceptions = True # Getting funky shutdown behavior, checking it out
 	if logToFile:
 		logging.basicConfig(
 			level=logging.DEBUG,

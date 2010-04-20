@@ -32,11 +32,15 @@ class Addressbook(object):
 
 	@misc_utils.log_exception(_moduleLogger)
 	def _update(self):
-		contacts = yield (
-			self._backend.get_contacts,
-			(),
-			{},
-		)
+		try:
+			contacts = yield (
+				self._backend.get_contacts,
+				(),
+				{},
+			)
+		except Exception:
+			_moduleLogger.exception("While updating the addressbook")
+			return
 
 		oldContacts = self._numbers
 		oldContactNumbers = set(self.get_numbers())

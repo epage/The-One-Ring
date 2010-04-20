@@ -186,7 +186,7 @@ class CallChannel(
 				{},
 			)
 		except Exception:
-			_moduleLogger.exception(result)
+			_moduleLogger.exception("While placing call to %s" % (self.__calledNumber, ))
 			return
 
 		self._delayedClose.start(seconds=0)
@@ -202,7 +202,7 @@ class CallChannel(
 				{},
 			)
 		except Exception:
-			_moduleLogger.exception(result)
+			_moduleLogger.exception("While canceling a call to %s" % (self.__calledNumber, ))
 			return
 
 	@misc_utils.log_exception(_moduleLogger)
