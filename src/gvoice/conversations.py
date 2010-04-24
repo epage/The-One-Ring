@@ -47,7 +47,7 @@ class Conversations(object):
 			_moduleLogger.exception("While loading for %s" % self._name)
 			return
 
-		if misc_utils.compare_versions(
+		if convs and misc_utils.compare_versions(
 			self.OLDEST_COMPATIBLE_FORMAT_VERSION,
 			misc_utils.parse_version(fileVersion),
 		) <= 0:
@@ -70,6 +70,10 @@ class Conversations(object):
 
 	def save(self, path):
 		_moduleLogger.info("%s Saving cache" % (self._name, ))
+		if not self._conversations:
+			_moduleLogger.info("%s Odd, no conversations to cache.  Did we never load the cache?" % (self._name, ))
+			return
+
 		try:
 			dataToDump = (constants.__version__, constants.__build__, self._conversations)
 			with open(path, "wb") as f:
