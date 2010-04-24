@@ -166,6 +166,12 @@ class TheOneRingConnection(
 
 	def get_handle_by_name(self, handleType, handleName):
 		requestedHandleName = handleName.encode('utf-8')
+
+		# We need to return an existing or create a new handle.  Unfortunately
+		# handle init's take care of normalizing the handle name.  So we have
+		# to create a new handle regardless and burn some handle id's and burn
+		# some extra memory of creating objects we throw away if the handle
+		# already exists.
 		if handleType == telepathy.HANDLE_TYPE_CONTACT:
 			h = handle.create_handle(self, 'contact', requestedHandleName)
 		elif handleType == telepathy.HANDLE_TYPE_LIST:
@@ -173,6 +179,13 @@ class TheOneRingConnection(
 			h = handle.create_handle(self, 'list', requestedHandleName)
 		else:
 			raise telepathy.errors.NotAvailable('Handle type unsupported %d' % handleType)
+
+		for candidate in self._handles.itervalues():
+			if candidate.get_name() == h.get_name():
+				h = candidate
+				_moduleLogger.debug("Re-used handle for %s, I hoped this helped" % handleName)
+				break
+
 		return h
 
 	@property
