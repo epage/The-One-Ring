@@ -272,4 +272,7 @@ class DelayEnableContactIntegration(object):
 
 	@misc_utils.log_exception(_moduleLogger)
 	def _on_delayed_enable(self):
-		self.__enableSystemContactSupport.start()
+		try:
+			self.__enableSystemContactSupport.start()
+		except dbus.DBusException, e:
+			_moduleLogger.info("Contact integration seems to not be supported (%s)" % e)
