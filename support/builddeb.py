@@ -34,6 +34,10 @@ __email__ = "eopage@byu.net"
 __version__ = constants.__version__
 __build__ = constants.__build__
 __changelog__ = """
+0.8.12
+* Re-using handles to hopefully reduce potential funky issues
+* Fixing a bug where the conversation cache was lost when switching networks, causing old messages to be displayed as new
+
 0.8.11
 * Various improvements to gathering debug information to assist with several outstanding issues
 
