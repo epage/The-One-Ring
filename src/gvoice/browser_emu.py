@@ -33,7 +33,7 @@ import socket
 
 
 _moduleLogger = logging.getLogger(__name__)
-socket.setdefaulttimeout(30)
+socket.setdefaulttimeout(45)
 
 
 class MozillaEmulator(object):
