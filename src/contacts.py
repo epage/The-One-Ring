@@ -39,11 +39,12 @@ class ContactsMixin(telepathy.server.ConnectionInterfaceContacts):
 							out_signature='a{ua{sv}}', sender_keyword='sender')
 	def GetContactAttributes(self, handles, interfaces, hold, sender):
 		#InspectHandle already checks we're connected, the handles and handle type.
+		supportedInterfaces = set()
 		for interface in interfaces:
-			if interface not in self.ATTRIBUTES:
-				raise telepathy.errors.InvalidArgument(
-					'Interface %s is not supported by GetContactAttributes' % (interface)
-				)
+			if interface in self.ATTRIBUTES:
+				supportedInterfaces.add(interface)
+			else:
+				_moduleLogger.debug("Ignoring unsupported interface %s" % interface)
 
 		handle_type = telepathy.HANDLE_TYPE_CONTACT
 		ret = dbus.Dictionary(signature='ua{sv}')
@@ -67,8 +68,9 @@ class ContactsMixin(telepathy.server.ConnectionInterfaceContacts):
 
 		# Attributes from the interface org.freedesktop.Telepathy.Connection
 		# are always returned, and need not be requested explicitly.
-		interfaces = set(interfaces + [telepathy.CONNECTION])
-		for interface in interfaces:
+		supportedInterfaces.add(telepathy.CONNECTION)
+
+		for interface in supportedInterfaces:
 			interface_attribute = interface + '/' + self.ATTRIBUTES[interface]
 			results = functions[interface](handles)
 			for handle, value in results:
