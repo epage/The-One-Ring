@@ -42,7 +42,7 @@ from telepathy.interfaces import (CONN_INTERFACE,
 from handle import Handle
 from properties import DBusProperties
 
-from telepathy._generated.Connection import Connection as _Connection
+from _generated.Connection import Connection as _Connection
 
 _BAD = re.compile(r'(?:^[0-9])|(?:[^A-Za-z0-9])')
 
@@ -332,15 +332,15 @@ class Connection(_Connection, DBusProperties):
         return ret
 
 
-from telepathy._generated.Connection_Interface_Aliasing \
+from _generated.Connection_Interface_Aliasing \
         import ConnectionInterfaceAliasing
 
 
-from telepathy._generated.Connection_Interface_Avatars \
+from _generated.Connection_Interface_Avatars \
         import ConnectionInterfaceAvatars
 
 
-from telepathy._generated.Connection_Interface_Capabilities \
+from _generated.Connection_Interface_Capabilities \
         import ConnectionInterfaceCapabilities \
         as _ConnectionInterfaceCapabilities
 
@@ -398,7 +398,7 @@ class ConnectionInterfaceCapabilities(_ConnectionInterfaceCapabilities):
         # return all my capabilities
         return [(ctype, caps[1]) for ctype, caps in my_caps.iteritems()]
 
-from telepathy._generated.Connection_Interface_Requests \
+from _generated.Connection_Interface_Requests \
         import ConnectionInterfaceRequests \
         as _ConnectionInterfaceRequests
 
@@ -550,11 +550,11 @@ class ConnectionInterfaceRequests(
 
         self.signal_new_channels([channel])
 
-from telepathy._generated.Connection_Interface_Presence \
+from _generated.Connection_Interface_Presence \
         import ConnectionInterfacePresence
 
-from telepathy._generated.Connection_Interface_Simple_Presence \
+from _generated.Connection_Interface_Simple_Presence \
         import ConnectionInterfaceSimplePresence
 
-from telepathy._generated.Connection_Interface_Contacts \
+from _generated.Connection_Interface_Contacts \
         import ConnectionInterfaceContacts

@@ -39,7 +39,7 @@ from telepathy.interfaces import (CHANNEL_INTERFACE,
                                   MEDIA_SESSION_HANDLER,
                                   MEDIA_STREAM_HANDLER)
 
-from telepathy._generated.Channel import Channel as _Channel
+from _generated.Channel import Channel as _Channel
 
 from properties import DBusProperties
 
@@ -135,7 +135,7 @@ class Channel(_Channel, DBusProperties):
         """
         return self._interfaces
 
-from telepathy._generated.Channel_Type_Contact_List \
+from _generated.Channel_Type_Contact_List \
         import ChannelTypeContactList as _ChannelTypeContactListIface
 
 class ChannelTypeContactList(Channel, _ChannelTypeContactListIface):
@@ -152,7 +152,7 @@ class ChannelTypeContactList(Channel, _ChannelTypeContactListIface):
             object_path=object_path)
 
 
-from telepathy._generated.Channel_Type_File_Transfer \
+from _generated.Channel_Type_File_Transfer \
         import ChannelTypeFileTransfer as _ChannelTypeFileTransferIface
 
 class ChannelTypeFileTransfer(Channel, _ChannelTypeFileTransferIface):
@@ -169,7 +169,7 @@ class ChannelTypeFileTransfer(Channel, _ChannelTypeFileTransferIface):
             object_path=object_path)
 
 
-from telepathy._generated.Channel_Type_Streamed_Media \
+from _generated.Channel_Type_Streamed_Media \
         import ChannelTypeStreamedMedia as _ChannelTypeStreamedMediaIface
 
 class ChannelTypeStreamedMedia(Channel, _ChannelTypeStreamedMediaIface):
@@ -186,7 +186,7 @@ class ChannelTypeStreamedMedia(Channel, _ChannelTypeStreamedMediaIface):
             object_path=object_path)
 
 
-from telepathy._generated.Channel_Type_Room_List \
+from _generated.Channel_Type_Room_List \
         import ChannelTypeRoomList as _ChannelTypeRoomListIface
 
 class ChannelTypeRoomList(Channel, _ChannelTypeRoomListIface):
@@ -215,7 +215,7 @@ class ChannelTypeRoomList(Channel, _ChannelTypeRoomListIface):
         self._listing_rooms = listing
 
 
-from telepathy._generated.Channel_Type_Text \
+from _generated.Channel_Type_Text \
         import ChannelTypeText as _ChannelTypeTextIface
 
 class ChannelTypeText(Channel, _ChannelTypeTextIface):
@@ -300,14 +300,14 @@ class ChannelTypeText(Channel, _ChannelTypeTextIface):
             self._pending_messages[id] = (timestamp, sender, type, flags, text)
 
 
-from telepathy._generated.Channel_Interface_Chat_State \
+from _generated.Channel_Interface_Chat_State \
         import ChannelInterfaceChatState
 
 
-from telepathy._generated.Channel_Interface_DTMF import ChannelInterfaceDTMF
+from _generated.Channel_Interface_DTMF import ChannelInterfaceDTMF
 
 
-from telepathy._generated.Channel_Interface_Group \
+from _generated.Channel_Interface_Group \
         import ChannelInterfaceGroup as _ChannelInterfaceGroup
 
 class ChannelInterfaceGroup(_ChannelInterfaceGroup, DBusProperties):
@@ -377,13 +377,13 @@ class ChannelInterfaceGroup(_ChannelInterfaceGroup, DBusProperties):
         self._remote_pending.difference_update(removed)
 
 
-from telepathy._generated.Channel_Interface_Hold import ChannelInterfaceHold
+from _generated.Channel_Interface_Hold import ChannelInterfaceHold
 
 
 # ChannelInterfaceMediaSignalling is in telepathy.server.media
 
 
-from telepathy._generated.Channel_Interface_Password \
+from _generated.Channel_Interface_Password \
         import ChannelInterfacePassword as _ChannelInterfacePassword
 
 class ChannelInterfacePassword(_ChannelInterfacePassword):
@@ -402,4 +402,4 @@ class ChannelInterfacePassword(_ChannelInterfacePassword):
         self._password_flags &= ~removed
 
 
-from telepathy._generated.Channel_Interface_Call_State import ChannelInterfaceCallState
+from _generated.Channel_Interface_Call_State import ChannelInterfaceCallState

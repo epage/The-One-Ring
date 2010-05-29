@@ -24,7 +24,7 @@ import dbus.service
 from telepathy.interfaces import PROPERTIES_INTERFACE
 import telepathy.errors
 
-from telepathy._generated.Properties_Interface import PropertiesInterface
+from _generated.Properties_Interface import PropertiesInterface
 
 class DBusProperties(dbus.service.Interface):
     def __init__(self):

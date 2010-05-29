@@ -22,7 +22,7 @@ import dbus.service
 from telepathy import *
 
 
-from telepathy._generated.Channel_Interface_Media_Signalling \
+from _generated.Channel_Interface_Media_Signalling \
         import ChannelInterfaceMediaSignalling
-from telepathy._generated.Media_Session_Handler import MediaSessionHandler
-from telepathy._generated.Media_Stream_Handler import MediaStreamHandler
+from _generated.Media_Session_Handler import MediaSessionHandler
+from _generated.Media_Stream_Handler import MediaStreamHandler

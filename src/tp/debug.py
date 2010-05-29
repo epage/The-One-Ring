@@ -23,7 +23,7 @@ from telepathy.constants import (DEBUG_LEVEL_ERROR,
                                  DEBUG_LEVEL_INFO,
                                  DEBUG_LEVEL_DEBUG)
 
-from telepathy._generated.Debug import Debug as _Debug
+from _generated.Debug import Debug as _Debug
 from properties import DBusProperties
 
 import dbus.service

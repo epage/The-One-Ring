@@ -23,7 +23,7 @@ import dbus.service
 from telepathy.errors import NotImplemented
 from telepathy.interfaces import CONN_MGR_INTERFACE
 
-from telepathy._generated.Connection_Manager \
+from _generated.Connection_Manager \
         import ConnectionManager as _ConnectionManager
 
 class ConnectionManager(_ConnectionManager):

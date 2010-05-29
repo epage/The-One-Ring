@@ -33,10 +33,10 @@ from media import *
 from properties import *
 
 try:
-    from telepathy._generated.Client_Observer import ClientObserver as Observer
-    from telepathy._generated.Client_Approver import ClientApprover as Approver
-    from telepathy._generated.Client_Handler import ClientHandler as Handler
-    from telepathy._generated.Client_Interface_Requests import ClientInterfaceRequests
+    from _generated.Client_Observer import ClientObserver as Observer
+    from _generated.Client_Approver import ClientApprover as Approver
+    from _generated.Client_Handler import ClientHandler as Handler
+    from _generated.Client_Interface_Requests import ClientInterfaceRequests
 except ImportError:
     pass
 
