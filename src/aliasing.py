@@ -1,5 +1,6 @@
 import logging
 
+import dbus
 import telepathy
 
 import tp
@@ -127,9 +128,12 @@ class AliasingMixin(tp.ConnectionInterfaceAliasing):
 	def GetAliases(self, contactHandleIds):
 		_moduleLogger.debug("Called GetAliases")
 
-		idToAlias = dict(
-			(handleId, self._get_alias(handleId))
-			for handleId in contactHandleIds
+		idToAlias = dbus.Dictionary(
+			(
+				(handleId, self._get_alias(handleId))
+				for handleId in contactHandleIds
+			),
+			signature="us",
 		)
 		return idToAlias
 

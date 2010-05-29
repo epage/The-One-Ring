@@ -1,5 +1,6 @@
 import logging
 
+import dbus
 import telepathy
 
 import util.misc as misc_utils
@@ -20,10 +21,10 @@ class TheOneRingPresence(object):
 	OFFLINE = 'offline'
 
 	TO_PRESENCE_TYPE = {
-		ONLINE: telepathy.constants.CONNECTION_PRESENCE_TYPE_AVAILABLE,
-		AWAY: telepathy.constants.CONNECTION_PRESENCE_TYPE_AWAY,
-		HIDDEN: telepathy.constants.CONNECTION_PRESENCE_TYPE_HIDDEN,
-		OFFLINE: telepathy.constants.CONNECTION_PRESENCE_TYPE_OFFLINE,
+		ONLINE: dbus.UInt32(telepathy.constants.CONNECTION_PRESENCE_TYPE_AVAILABLE),
+		AWAY: dbus.UInt32(telepathy.constants.CONNECTION_PRESENCE_TYPE_AWAY),
+		HIDDEN: dbus.UInt32(telepathy.constants.CONNECTION_PRESENCE_TYPE_HIDDEN),
+		OFFLINE: dbus.UInt32(telepathy.constants.CONNECTION_PRESENCE_TYPE_OFFLINE),
 	}
 
 	@property
@@ -104,9 +105,12 @@ class SimplePresenceMixin(tp.ConnectionInterfaceSimplePresence, TheOneRingPresen
 		@return {ContactHandle: (Status, Presence Type, Message)}
 		"""
 		personalMessage = u""
-		return dict(
-			(h, (presenceType, presence, personalMessage))
-			for (h, (presenceType, presence)) in self.get_presences(contacts).iteritems()
+		return dbus.Dictionary(
+			(
+				(h, dbus.Struct((presenceType, presence, personalMessage), signature="uss"))
+				for (h, (presenceType, presence)) in self.get_presences(contacts).iteritems()
+			),
+			signature="u(uss)"
 		)
 
 	@misc_utils.log_exception(_moduleLogger)
