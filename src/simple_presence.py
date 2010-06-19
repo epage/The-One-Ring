@@ -27,6 +27,9 @@ class TheOneRingPresence(object):
 		OFFLINE: dbus.UInt32(telepathy.constants.CONNECTION_PRESENCE_TYPE_OFFLINE),
 	}
 
+	def __init__(self, ignoreDND):
+		self.__ignoreDND = ignoreDND
+
 	@property
 	def session(self):
 		"""
@@ -54,7 +57,7 @@ class TheOneRingPresence(object):
 		for handleId in contactIds:
 			h = self.get_handle_by_id(telepathy.HANDLE_TYPE_CONTACT, handleId)
 			if isinstance(h, handle.ConnectionHandle):
-				isDnd = self.session.is_dnd()
+				isDnd = self.session.is_dnd() if not self.__ignoreDND else False
 				if isDnd:
 					presence = TheOneRingPresence.HIDDEN
 				else:
@@ -75,12 +78,14 @@ class TheOneRingPresence(object):
 
 	def set_presence(self, status):
 		if status == self.ONLINE:
-			self.session.set_dnd(False)
+			if not self.__ignoreDND:
+				self.session.set_dnd(False)
 			self.session.stateMachine.set_state(state_machine.StateMachine.STATE_ACTIVE)
 		elif status == self.AWAY:
 			self.session.stateMachine.set_state(state_machine.StateMachine.STATE_IDLE)
 		elif status == self.HIDDEN:
-			self.session.set_dnd(True)
+			if not self.__ignoreDND:
+				self.session.set_dnd(True)
 		elif status == self.OFFLINE:
 			self.Disconnect()
 		else:
@@ -88,11 +93,11 @@ class TheOneRingPresence(object):
 		_moduleLogger.info("Setting Presence to '%s'" % status)
 
 
-class SimplePresenceMixin(tp.ConnectionInterfaceSimplePresence, TheOneRingPresence):
+class SimplePresenceMixin(tp.ConnectionInterfaceSimplePresence):
 
-	def __init__(self):
+	def __init__(self, torPresence):
 		tp.ConnectionInterfaceSimplePresence.__init__(self)
-		TheOneRingPresence.__init__(self)
+		self.__torPresence = torPresence
 
 		self._implement_property_get(
 			tp.CONNECTION_INTERFACE_SIMPLE_PRESENCE,
@@ -108,7 +113,8 @@ class SimplePresenceMixin(tp.ConnectionInterfaceSimplePresence, TheOneRingPresen
 		return dbus.Dictionary(
 			(
 				(h, dbus.Struct((presenceType, presence, personalMessage), signature="uss"))
-				for (h, (presenceType, presence)) in self.get_presences(contacts).iteritems()
+				for (h, (presenceType, presence)) in
+					self.__torPresence.get_presences(contacts).iteritems()
 			),
 			signature="u(uss)"
 		)
@@ -118,7 +124,7 @@ class SimplePresenceMixin(tp.ConnectionInterfaceSimplePresence, TheOneRingPresen
 		if message:
 			raise telepathy.errors.InvalidArgument("Messages aren't supported")
 
-		self.set_presence(status)
+		self.__torPresence.set_presence(status)
 
 	def _get_statuses(self):
 		"""
@@ -128,5 +134,5 @@ class SimplePresenceMixin(tp.ConnectionInterfaceSimplePresence, TheOneRingPresen
 		"""
 		return dict(
 			(localType, (telepathyType, True, False))
-			for (localType, telepathyType) in self.TO_PRESENCE_TYPE.iteritems()
+			for (localType, telepathyType) in self.__torPresence.TO_PRESENCE_TYPE.iteritems()
 		)

@@ -2,17 +2,16 @@ import logging
 
 import tp
 import util.misc as misc_utils
-import simple_presence
 
 
 _moduleLogger = logging.getLogger(__name__)
 
 
-class PresenceMixin(tp.ConnectionInterfacePresence, simple_presence.TheOneRingPresence):
+class PresenceMixin(tp.ConnectionInterfacePresence):
 
-	def __init__(self):
+	def __init__(self, torPresence):
 		tp.ConnectionInterfacePresence.__init__(self)
-		simple_presence.TheOneRingPresence.__init__(self)
+		self.__torPresence = torPresence
 
 	@misc_utils.log_exception(_moduleLogger)
 	def GetStatuses(self):
@@ -21,7 +20,7 @@ class PresenceMixin(tp.ConnectionInterfacePresence, simple_presence.TheOneRingPr
 
 		return dict(
 			(localType, (telepathyType, True, True, arguments))
-			for (localType, telepathyType) in self.TO_PRESENCE_TYPE.iteritems()
+			for (localType, telepathyType) in self.__torPresence.TO_PRESENCE_TYPE.iteritems()
 		)
 
 	@misc_utils.log_exception(_moduleLogger)
@@ -38,11 +37,11 @@ class PresenceMixin(tp.ConnectionInterfacePresence, simple_presence.TheOneRingPr
 		assert len(statuses) == 1
 		status, arguments = statuses.items()[0]
 		assert len(arguments) == 0
-		self.set_presence(status)
+		self.__torPresence.set_presence(status)
 
 	def __get_presences(self, contacts):
 		arguments = {}
 		return dict(
 			(h, (0, {presence: arguments}))
-			for (h, (presenceType, presence)) in self.get_presences(contacts).iteritems()
+			for (h, (presenceType, presence)) in self.__torPresence.get_presences(contacts).iteritems()
 		)

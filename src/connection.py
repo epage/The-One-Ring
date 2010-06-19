@@ -28,6 +28,8 @@ _moduleLogger = logging.getLogger(__name__)
 
 class TheOneRingOptions(object):
 
+	ignoreDND = True
+
 	useGVContacts = True
 
 	assert gvoice.session.Session._DEFAULTS["contacts"][1] == "hours"
@@ -42,6 +44,7 @@ class TheOneRingOptions(object):
 	def __init__(self, parameters = None):
 		if parameters is None:
 			return
+		self.ignoreDND = parameters["ignore-dnd"]
 		self.useGVContacts = parameters["use-gv-contacts"]
 		self.contactsPollPeriodInHours = parameters['contacts-poll-period-in-hours']
 		self.voicemailPollPeriodInMinutes = parameters['voicemail-poll-period-in-minutes']
@@ -54,9 +57,10 @@ class TheOneRingConnection(
 	avatars.AvatarsMixin,
 	capabilities.CapabilitiesMixin,
 	contacts.ContactsMixin,
-	presence.PresenceMixin,
 	requests.RequestsMixin,
+	simple_presence.TheOneRingPresence,
 	simple_presence.SimplePresenceMixin,
+	presence.PresenceMixin,
 ):
 
 	# overiding base class variable
@@ -67,6 +71,7 @@ class TheOneRingConnection(
 	# overiding base class variable
 	_optional_parameters = {
 		'forward': 's',
+		'ignore-dnd': 'b',
 		'use-gv-contacts': 'b',
 		'contacts-poll-period-in-hours': 'i',
 		'voicemail-poll-period-in-minutes': 'i',
@@ -74,6 +79,7 @@ class TheOneRingConnection(
 	}
 	_parameter_defaults = {
 		'forward': '',
+		'ignore-dnd': TheOneRingOptions.ignoreDND,
 		'use-gv-contacts': TheOneRingOptions.useGVContacts,
 		'contacts-poll-period-in-hours': TheOneRingOptions.contactsPollPeriodInHours,
 		'voicemail-poll-period-in-minutes': TheOneRingOptions.voicemailPollPeriodInMinutes,
@@ -115,9 +121,10 @@ class TheOneRingConnection(
 		avatars.AvatarsMixin.__init__(self)
 		capabilities.CapabilitiesMixin.__init__(self)
 		contacts.ContactsMixin.__init__(self)
-		presence.PresenceMixin.__init__(self)
 		requests.RequestsMixin.__init__(self)
-		simple_presence.SimplePresenceMixin.__init__(self)
+		simple_presence.TheOneRingPresence.__init__(self, self.__options.ignoreDND)
+		simple_presence.SimplePresenceMixin.__init__(self, self)
+		presence.PresenceMixin.__init__(self, self)
 
 		self.__manager = weakref.proxy(manager)
 		self.__credentials = (

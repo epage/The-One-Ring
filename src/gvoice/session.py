@@ -218,8 +218,9 @@ class Session(object):
 			return isLoggedIn
 
 	def set_dnd(self, doNotDisturb):
-		self._backend.set_dnd(doNotDisturb)
-		self._cachedIsDnd = doNotDisturb
+		if self._cachedIsDnd != doNotDisturb:
+			self._backend.set_dnd(doNotDisturb)
+			self._cachedIsDnd = doNotDisturb
 
 	def is_dnd(self):
 		# To throttle checking with the server, use a 30s cache
