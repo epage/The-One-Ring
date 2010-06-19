@@ -148,7 +148,7 @@ class TimedDisconnect(object):
 		self.__delayedDisconnect = gobject_utils.Timeout(self._on_delayed_disconnect)
 
 	def start(self):
-		self.__delayedDisconnect.start(seconds=20)
+		self.__delayedDisconnect.start(seconds=60)
 
 	def stop(self):
 		self.__delayedDisconnect.cancel()
