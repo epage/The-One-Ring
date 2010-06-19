@@ -48,10 +48,11 @@ class MozillaEmulator(object):
 		self.trycount = trycount
 		self._cookies = cookielib.LWPCookieJar()
 		self._loadedFromCookies = False
+		self._usingCookies = False
 
 	def load_cookies(self, path):
 		assert not self._loadedFromCookies, "Load cookies only once"
-		if path is None:
+		if not path:
 			return
 
 		self._cookies.filename = path
@@ -66,14 +67,15 @@ class MozillaEmulator(object):
 		else:
 			self._loadedFromCookies = True
 
+		self._usingCookies = True
 		return self._loadedFromCookies
 
 	def save_cookies(self):
-		if self._loadedFromCookies:
+		if self._usingCookies:
 			self._cookies.save()
 
 	def clear_cookies(self):
-		if self._loadedFromCookies:
+		if self._usingCookies:
 			self._cookies.clear()
 
 	def download(self, url,

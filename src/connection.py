@@ -98,7 +98,7 @@ class TheOneRingConnection(
 		# Connection init must come first
 		self.__options = TheOneRingOptions(parameters)
 		self.__session = gvoice.session.Session(
-			cookiePath = None,
+			cookiePath = os.path.join(constants._data_path_, "%s.cookies" % account),
 			defaults = {
 				"contacts": (self.__options.contactsPollPeriodInHours, "hours"),
 				"voicemail": (self.__options.voicemailPollPeriodInMinutes, "minutes"),
@@ -331,7 +331,7 @@ class TheOneRingConnection(
 		self.manager.disconnected(self)
 
 		self.session.save(self.__cachePath)
-		self.session.logout()
+		self.session.shutdown()
 		self.session.close()
 
 		# In case one of the above items takes too long (which it should never

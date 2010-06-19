@@ -159,18 +159,45 @@ class Session(object):
 	def _login(self, username, password, on_success, on_error):
 		self._username = username
 		self._password = password
-		try:
-			isLoggedIn = yield (
-				self._backend.login,
-				(self._username, self._password),
-				{},
-			)
-		except Exception, e:
-			on_error(e)
-			return
+
+		isLoggedIn = False
+
+		if not isLoggedIn and self._backend.is_quick_login_possible():
+			try:
+				isLoggedIn = yield (
+					self._backend.is_authed,
+					(),
+					{},
+				)
+			except Exception, e:
+				on_error(e)
+				return
+			if isLoggedIn:
+				_moduleLogger.info("Logged in through cookies")
+
+		if not isLoggedIn:
+			try:
+				isLoggedIn = yield (
+					self._backend.login,
+					(self._username, self._password),
+					{},
+				)
+			except Exception, e:
+				on_error(e)
+				return
+			if isLoggedIn:
+				_moduleLogger.info("Logged in through credentials")
 
 		self._masterStateMachine.start()
 		on_success(isLoggedIn)
+
+	def shutdown(self):
+		self._asyncPool.stop()
+		self._masterStateMachine.stop()
+		self._backend.shutdown()
+
+		self._username = None
+		self._password = None
 
 	def logout(self):
 		self._asyncPool.stop()

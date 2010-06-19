@@ -304,6 +304,11 @@ class GVoiceBackend(object):
 		self._lastAuthed = time.time()
 		return True
 
+	def shutdown(self):
+		self._browser.save_cookies()
+		self._token = None
+		self._lastAuthed = 0.0
+
 	def logout(self):
 		self._browser.clear_cookies()
 		self._browser.save_cookies()
