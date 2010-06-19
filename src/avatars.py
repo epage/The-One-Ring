@@ -20,6 +20,7 @@ class AvatarsMixin(tp.server.ConnectionInterfaceAvatars):
 	__OTHER_AVATAR = "tor_question"
 
 	__LOOKUP_PATHS = (
+		"/opt/theonering/share",
 		"/usr/share/theonering",
 		os.path.join(os.path.dirname(__file__), "../support/icons"),
 	)

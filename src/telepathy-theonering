@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import sys
-sys.path.insert(0, "/usr/lib/theonering")
+sys.path.insert(0, "/opt/theonering/lib")
 
 
 import theonering
