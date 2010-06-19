@@ -3,6 +3,13 @@
 
 import logging
 
+try:
+	import cPickle
+	pickle = cPickle
+except ImportError:
+	import pickle
+
+import constants
 import util.coroutines as coroutines
 import util.misc as misc_utils
 import util.go_utils as gobject_utils
@@ -16,12 +23,52 @@ class Addressbook(object):
 	_RESPONSE_GOOD = 0
 	_RESPONSE_BLOCKED = 3
 
+	OLDEST_COMPATIBLE_FORMAT_VERSION = misc_utils.parse_version("0.8.0")
+
 	def __init__(self, backend, asyncPool):
 		self._backend = backend
 		self._numbers = {}
 		self._asyncPool = asyncPool
 
 		self.updateSignalHandler = coroutines.CoTee()
+
+	def load(self, path):
+		_moduleLogger.debug("Loading cache")
+		assert not self._numbers
+		try:
+			with open(path, "rb") as f:
+				fileVersion, fileBuild, contacts = pickle.load(f)
+		except (pickle.PickleError, IOError, EOFError, ValueError):
+			_moduleLogger.exception("While loading")
+			return
+
+		if contacts and misc_utils.compare_versions(
+			self.OLDEST_COMPATIBLE_FORMAT_VERSION,
+			misc_utils.parse_version(fileVersion),
+		) <= 0:
+			_moduleLogger.info("Loaded cache")
+			self._numbers = contacts
+			self._loadedFromCache = True
+		else:
+			_moduleLogger.debug(
+				"Skipping cache due to version mismatch (%s-%s)" % (
+					fileVersion, fileBuild
+				)
+			)
+
+	def save(self, path):
+		_moduleLogger.info("Saving cache")
+		if not self._numbers:
+			_moduleLogger.info("Odd, no conversations to cache.  Did we never load the cache?")
+			return
+
+		try:
+			dataToDump = (constants.__version__, constants.__build__, self._numbers)
+			with open(path, "wb") as f:
+				pickle.dump(dataToDump, f, pickle.HIGHEST_PROTOCOL)
+		except (pickle.PickleError, IOError):
+			_moduleLogger.exception("While saving for %s" % self._name)
+		_moduleLogger.info("Cache saved")
 
 	def update(self, force=False):
 		if not force and self._numbers:
