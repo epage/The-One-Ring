@@ -32,6 +32,7 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 		self.__lastMessageTimestamp = datetime.datetime(1, 1, 1)
 
 		self.__otherHandle = contactHandle
+		self._conn.add_logger(self)
 
 	@misc_utils.log_exception(_moduleLogger)
 	def Send(self, messageType, text):
@@ -60,6 +61,11 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 		_moduleLogger.debug("Closing debug")
 		tp.ChannelTypeText.Close(self)
 		self.remove_from_connection()
+		self._conn.remove_logger(self)
+
+	def log_message(self, component, message):
+		formattedMessage = "LOG: %s\n%s" % (component, message)
+		self._report_new_message(formattedMessage)
 
 	def _report_new_message(self, message):
 		currentReceivedId = self.__nextRecievedId

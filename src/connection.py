@@ -85,6 +85,8 @@ class TheOneRingConnection(
 
 	@misc_utils.log_exception(_moduleLogger)
 	def __init__(self, manager, parameters):
+		self._loggers = []
+
 		self.check_parameters(parameters)
 		account = unicode(parameters['account'])
 		encodedAccount = parameters['account'].encode('utf-8')
@@ -187,6 +189,16 @@ class TheOneRingConnection(
 				break
 
 		return h
+
+	def log_to_user(self, component, message):
+		for logger in self._loggers:
+			logger.log_message(component, message)
+
+	def add_logger(self, logger):
+		self._loggers.append(logger)
+
+	def remove_logger(self, logger):
+		self._loggers.remove(logger)
 
 	@property
 	def _channel_manager(self):
