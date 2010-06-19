@@ -54,13 +54,6 @@ class Conversations(object):
 			_moduleLogger.info("%s Loaded cache" % (self._name, ))
 			self._conversations = convs
 			self._loadedFromCache = True
-			for key, mergedConv in self._conversations.iteritems():
-				_moduleLogger.debug("%s \tLoaded %s" % (self._name, key))
-				for conv in mergedConv.conversations:
-					message = "%s \t\tLoaded %s (%r) %r %r %r" % (
-						self._name, conv.id, conv.time, conv.isRead, conv.isArchived, len(conv.messages)
-					)
-					_moduleLogger.debug(message)
 		else:
 			_moduleLogger.debug(
 				"%s Skipping cache due to version mismatch (%s-%s)" % (
@@ -80,15 +73,6 @@ class Conversations(object):
 				pickle.dump(dataToDump, f, pickle.HIGHEST_PROTOCOL)
 		except (pickle.PickleError, IOError):
 			_moduleLogger.exception("While saving for %s" % self._name)
-
-		for key, mergedConv in self._conversations.iteritems():
-			_moduleLogger.debug("%s \tSaving %s" % (self._name, key))
-			for conv in mergedConv.conversations:
-				message = "%s \t\tSaving %s (%r) %r %r %r" % (
-					self._name, conv.id, conv.time, conv.isRead, conv.isArchived, len(conv.messages)
-				)
-				_moduleLogger.debug(message)
-
 		_moduleLogger.info("%s Cache saved" % (self._name, ))
 
 	def update(self, force=False):

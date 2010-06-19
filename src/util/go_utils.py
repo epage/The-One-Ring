@@ -213,7 +213,7 @@ class AsyncLinearExecution(object):
 
 	@misc.log_exception(_moduleLogger)
 	def on_success(self, result):
-		_moduleLogger.debug("Processing success for: %r", self._func)
+		#_moduleLogger.debug("Processing success for: %r", self._func)
 		try:
 			trampoline, args, kwds = self._run.send(result)
 		except StopIteration, e:
@@ -229,7 +229,7 @@ class AsyncLinearExecution(object):
 
 	@misc.log_exception(_moduleLogger)
 	def on_error(self, error):
-		_moduleLogger.debug("Processing error for: %r", self._func)
+		#_moduleLogger.debug("Processing error for: %r", self._func)
 		try:
 			trampoline, args, kwds = self._run.throw(error)
 		except StopIteration, e:
