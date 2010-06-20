@@ -34,14 +34,7 @@ __email__ = "eopage@byu.net"
 __version__ = constants.__version__
 __build__ = constants.__build__
 __changelog__ = """
-* Speed up: login through cookies
-* Speed up: by default TOR disallows DND.  When DND is allowed TOR will not do duplicate work now
-* Adjusted the timeout for hung connections
-* Allowing longer phone calls to kick off a voicemail check (accounted for rejected but not ignored calls originally)
-* Lengthened auto-disconnect from 20-60 seconds
-* Imitating telepathy-butterfly in some changes that have been made
-* Reduced some log noise
-* Optified
+* Fixing a bug introduced in the previous build that prevented launching
 """.strip()
 
 
@@ -125,7 +118,7 @@ def build_package(distribution):
 		p["/usr/share/mission-control/profiles"] = ["theonering.profile.%s|theonering.profile"% distribution]
 	elif distribution in ("diablo", "fremantle"):
 		p["/usr/share/osso-rtcom"] = ["theonering.profile.%s|theonering.profile"% distribution]
-	p["/opt/theonering/bin"] = ["telepathy-theonering"]
+	p["/usr/lib/telepathy"] = ["telepathy-theonering"]
 	p["/usr/share/telepathy/managers"] = ["theonering.manager"]
 	if distribution in ("debian", ):
 		iconBasePath = "/usr/share/icons/gnome/%s/apps"
