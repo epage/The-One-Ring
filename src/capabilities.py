@@ -86,6 +86,7 @@ class CapabilitiesMixin(
 				ret.append([handleId, type, gen, spec])
 		return ret
 
+	@misc_utils.log_exception(_moduleLogger)
 	def GetContactCapabilities(self, handles):
 		if 0 in handles:
 			raise telepathy.InvalidHandle('Contact handle list contains zero')
@@ -98,5 +99,6 @@ class CapabilitiesMixin(
 
 		return ret
 
+	@misc_utils.log_exception(_moduleLogger)
 	def UpdateCapabilities(self, caps):
 		_moduleLogger.info("Ignoring updating contact capabilities")
