@@ -15,11 +15,11 @@ __appname__ = constants.__app_name__
 __description__ = """Send/receive texts and initiate GV callbacks all through Conversations and Phone
 Features:
 .
-* Send Texts and Receive both Texts and Voicemail through your chat window (buggy on Maemo 4.1)
+* Send Texts and Receive both Texts and Voicemail through your chat window
 .
 * Initiate Google Voice callbacks from the dialpad or your contacts
 .
-* Access to all of your Google Voice contacts (Maemo 4.1 only for now)
+* Access to all of your Google Voice contacts
 .
 * Reduce battery drain by setting your status to "Away"
 .
