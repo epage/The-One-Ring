@@ -1,5 +1,6 @@
 from __future__ import with_statement
 
+import os
 import socket
 import logging
 
@@ -7,6 +8,7 @@ import telepathy
 
 import constants
 import tp
+import util.go_utils as gobject_utils
 import util.misc as misc_utils
 
 
@@ -19,6 +21,9 @@ class DebugLogChannel(tp.ChannelTypeFileTransfer):
 		self.__manager = manager
 		self.__props = props
 		self.__otherHandle = contactHandle
+		self.__socket = None
+		self.__socketName = ""
+		self.__delayWrite = gobject_utils.Timeout(self._on_write)
 
 		tp.ChannelTypeFileTransfer.__init__(self, connection, manager, props)
 
@@ -81,35 +86,24 @@ class DebugLogChannel(tp.ChannelTypeFileTransfer):
 
 	@misc_utils.log_exception(_moduleLogger)
 	def AcceptFile(self, addressType, accessControl, accessControlParam, offset):
+		# @bug All wrong
 		_moduleLogger.info("%r %r %r %r" % (addressType, accessControl, accessControlParam, offset))
-		self.InitialOffsetDefined(0)
+		assert not self.__socketName, self.__socketName
+		self.__socketName = os.tempnam()
+
+		assert self.__socket is None, self.__socket
+		self.__socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+		self.__socket.bind(self.__socketName)
+
 		self._state = telepathy.constants.FILE_TRANSFER_STATE_ACCEPTED
 		self.FileTransferStateChanged(
 			self._state,
 			telepathy.constants.FILE_TRANSFER_STATE_CHANGE_REASON_REQUESTED,
 		)
 
-		self._state = telepathy.constants.FILE_TRANSFER_STATE_OPEN
-		self.FileTransferStateChanged(
-			self._state,
-			telepathy.constants.FILE_TRANSFER_STATE_CHANGE_REASON_NONE,
-		)
+		self.__delayWrite.start(seconds=0)
 
-		sockittome = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-		sockittome.connect(accessControlParam)
-		try:
-			sockittome.send(self._log)
-		finally:
-			sockittome.close()
-
-		self._transferredBytes = len(self._log)
-		self.TransferredBytesChanged(self._transferredBytes)
-
-		self._state = telepathy.constants.FILE_TRANSFER_STATE_COMPLETED
-		self.FileTransferStateChanged(
-			self._state,
-			telepathy.constants.FILE_TRANSFER_STATE_CHANGE_REASON_NONE,
-		)
+		return self.__socketName
 
 	@misc_utils.log_exception(_moduleLogger)
 	def ProvideFile(self, addressType, accessControl, accessControlParam):
@@ -121,5 +115,30 @@ class DebugLogChannel(tp.ChannelTypeFileTransfer):
 
 	def close(self):
 		_moduleLogger.debug("Closing log")
+		if self.__socket is not None:
+			self.__socket.close()
 		tp.ChannelTypeFileTransfer.Close(self)
 		self.remove_from_connection()
+
+	@misc_utils.log_exception(_moduleLogger)
+	def _on_write(self):
+		self.__socket.listen(1)
+		conn, addr = self.__socket.accept()
+
+		self.InitialOffsetDefined(0)
+		self._state = telepathy.constants.FILE_TRANSFER_STATE_OPEN
+		self.FileTransferStateChanged(
+			self._state,
+			telepathy.constants.FILE_TRANSFER_STATE_CHANGE_REASON_NONE,
+		)
+
+		conn.send(self._log)
+
+		self._transferredBytes = len(self._log)
+		self.TransferredBytesChanged(self._transferredBytes)
+
+		self._state = telepathy.constants.FILE_TRANSFER_STATE_COMPLETED
+		self.FileTransferStateChanged(
+			self._state,
+			telepathy.constants.FILE_TRANSFER_STATE_CHANGE_REASON_NONE,
+		)
