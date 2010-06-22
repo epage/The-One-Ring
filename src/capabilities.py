@@ -93,10 +93,7 @@ class CapabilitiesMixin(
 		ret = dbus.Dictionary({}, signature='ua(a{sv}as)')
 		for i in handles:
 			handle = self.get_handle_by_id(telepathy.HANDLE_TYPE_CONTACT, i)
-			contactCapabilities = dbus.Dictionary(
-				(self.text_chat_class, self.audio_chat_class),
-				signature="sv",
-			)
+			contactCapabilities = (self.text_chat_class, self.audio_chat_class)
 			ret[handle] = dbus.Array(contactCapabilities, signature='(a{sv}as)')
 
 		return ret
