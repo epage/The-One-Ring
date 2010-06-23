@@ -23,8 +23,6 @@ Features:
 .
 * Reduce battery drain by setting your status to "Away"
 .
-* Block incoming calls by switching your status to "Hidden"
-.
 Note: Google and Google Voice are probably trademarks of Google.  This software nor the author has any affiliation with Google
 .
 Homepage: http://theonering.garage.maemo.org
@@ -34,7 +32,8 @@ __email__ = "eopage@byu.net"
 __version__ = constants.__version__
 __build__ = constants.__build__
 __changelog__ = """
-* Fixing a bug introduced in the previous build that prevented launching
+* Fixing a bug in Ubuntu support that prevented calls from being made
+* Adding some logging to help track down lost messages
 """.strip()
 
 
