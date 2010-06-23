@@ -65,6 +65,7 @@ class NewGVConversations(object):
 			# Just let the TextChannel decide whether it should be reported to the user or not
 			props = self._connRef().generate_props(telepathy.CHANNEL_TYPE_TEXT, h, False)
 			if self._connRef()._channel_manager.channel_exists(props):
+				_moduleLogger.debug("Chat box already open for texting conversation with %s" % phoneNumber)
 				continue
 
 			# Maemo 4.1's RTComm opens a window for a chat regardless if a
@@ -75,6 +76,7 @@ class NewGVConversations(object):
 			newConversations = gvoice.conversations.filter_out_self(newConversations)
 			newConversations = list(newConversations)
 			if not newConversations:
+				_moduleLogger.debug("Not opening chat box for %s, all new messages are either read or from yourself" % phoneNumber)
 				continue
 
 			chan = self._connRef()._channel_manager.channel_for_props(props, signal=True)

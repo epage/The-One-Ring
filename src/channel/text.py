@@ -127,7 +127,21 @@ class TextChannel(tp.ChannelTypeText):
 		# before the last one sent because that creates a race condition of two
 		# people sending at about the same time, which happens quite a bit
 		newConversations = gvoice.conversations.filter_out_self(newConversations)
+		newConversations = list(newConversations)
+		if not newConversations:
+			_moduleLogger.debug(
+				"New messages for %r are from yourself" % (self._contactKey, )
+			)
+			return
+
 		newConversations = self._filter_out_reported(newConversations)
+		newConversations = list(newConversations)
+		if not newConversations:
+			_moduleLogger.debug(
+				"New messages for %r have already been reported" % (self._contactKey, )
+			)
+			return
+
 		newConversations = gvoice.conversations.filter_out_read(newConversations)
 		newConversations = list(newConversations)
 		if not newConversations:
