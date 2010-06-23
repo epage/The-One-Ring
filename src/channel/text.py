@@ -126,8 +126,12 @@ class TextChannel(tp.ChannelTypeText):
 		# Can't filter out messages in a texting conversation that came in
 		# before the last one sent because that creates a race condition of two
 		# people sending at about the same time, which happens quite a bit
+		postUpdateLen = len(newConversations)
 		newConversations = gvoice.conversations.filter_out_self(newConversations)
 		newConversations = list(newConversations)
+		postSelfLen = len(newConversations)
+		if postSelfLen < postUpdateLen:
+			self._conn.log_to_user(__name__, "Dropped %s messages due to being from self" % (postUpdateLen - postSelfLen))
 		if not newConversations:
 			_moduleLogger.debug(
 				"New messages for %r are from yourself" % (self._contactKey, )
@@ -136,6 +140,9 @@ class TextChannel(tp.ChannelTypeText):
 
 		newConversations = self._filter_out_reported(newConversations)
 		newConversations = list(newConversations)
+		postReportedLen = len(newConversations)
+		if postReportedLen < postSelfLen:
+			self._conn.log_to_user(__name__, "Dropped %s messages due to already being reported" % (postSelfLen - postReportedLen))
 		if not newConversations:
 			_moduleLogger.debug(
 				"New messages for %r have already been reported" % (self._contactKey, )
@@ -144,6 +151,9 @@ class TextChannel(tp.ChannelTypeText):
 
 		newConversations = gvoice.conversations.filter_out_read(newConversations)
 		newConversations = list(newConversations)
+		postReadLen = len(newConversations)
+		if postReadLen < postReportedLen:
+			self._conn.log_to_user(__name__, "Dropped %s messages due to already being read" % (postReportedLen - postReadLen))
 		if not newConversations:
 			_moduleLogger.debug(
 				"New messages for %r have already been read externally" % (self._contactKey, )
