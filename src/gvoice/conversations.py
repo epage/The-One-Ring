@@ -20,6 +20,11 @@ import util.go_utils as gobject_utils
 _moduleLogger = logging.getLogger(__name__)
 
 
+class ConversationError(RuntimeError):
+
+	pass
+
+
 class Conversations(object):
 
 	OLDEST_COMPATIBLE_FORMAT_VERSION = misc_utils.parse_version("0.8.0")
@@ -111,12 +116,17 @@ class Conversations(object):
 				markAllAsRead = False
 			else:
 				markAllAsRead = True
+
 			try:
 				mergedConversations.append_conversation(conversation, markAllAsRead)
 				isConversationUpdated = True
+			except ConversationError, e:
+				isConversationUpdated = False
+			except AssertionError, e:
+				_moduleLogger.debug("%s Skipping conversation for %r because '%s'" % (self._name, key, e))
+				isConversationUpdated = False
 			except RuntimeError, e:
-				if False:
-					_moduleLogger.debug("%s Skipping conversation for %r because '%s'" % (self._name, key, e))
+				_moduleLogger.debug("%s Skipping conversation for %r because '%s'" % (self._name, key, e))
 				isConversationUpdated = False
 
 			if isConversationUpdated:
@@ -203,7 +213,7 @@ class MergedConversations(object):
 			)
 
 		if newConversation.time <= self._conversations[-1].time:
-			raise RuntimeError("Conversations got out of order")
+			raise ConversationError("Conversations got out of order")
 
 	def _find_related_conversation(self, convId):
 		similarConversations = (
