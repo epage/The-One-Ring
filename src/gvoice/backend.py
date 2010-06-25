@@ -775,7 +775,7 @@ def google_strptime(time):
 	"""
 	abbrevTime = time[:-3]
 	parsedTime = datetime.datetime.strptime(abbrevTime, "%m/%d/%y %I:%M")
-	if time[-2] == "PN":
+	if time.endswith("PM"):
 		parsedTime += datetime.timedelta(hours=12)
 	return parsedTime
 
