@@ -39,8 +39,6 @@ class TextChannel(tp.ChannelTypeText):
 			self.__callback
 		)
 
-		self._filter_out_reported = gvoice.conversations.FilterOutReported()
-
 		# The only reason there should be anything in the conversation is if
 		# its new, so report it all
 		try:
@@ -135,17 +133,6 @@ class TextChannel(tp.ChannelTypeText):
 		if not newConversations:
 			_moduleLogger.debug(
 				"New messages for %r are from yourself" % (self._contactKey, )
-			)
-			return
-
-		newConversations = self._filter_out_reported(newConversations)
-		newConversations = list(newConversations)
-		postReportedLen = len(newConversations)
-		if postReportedLen < postSelfLen:
-			self._conn.log_to_user(__name__, "Dropped %s messages due to already being reported" % (postSelfLen - postReportedLen))
-		if not newConversations:
-			_moduleLogger.debug(
-				"New messages for %r have already been reported" % (self._contactKey, )
 			)
 			return
 
