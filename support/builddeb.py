@@ -33,7 +33,6 @@ __version__ = constants.__version__
 __build__ = constants.__build__
 __changelog__ = """
 * Fixing the loss of messages (AM/PM time recognition issue)
-* Logging even more details (Requires having an open debug prompt)
 """.strip()
 
 
