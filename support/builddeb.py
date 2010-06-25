@@ -32,8 +32,8 @@ __email__ = "eopage@byu.net"
 __version__ = constants.__version__
 __build__ = constants.__build__
 __changelog__ = """
-* Fixing a bug in Ubuntu support that prevented calls from being made
-* Adding some logging to help track down lost messages
+* Fixing the loss of messages (AM/PM time recognition issue)
+* Logging even more details (Requires having an open debug prompt)
 """.strip()
 
 
