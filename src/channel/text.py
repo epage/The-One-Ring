@@ -139,8 +139,8 @@ class TextChannel(tp.ChannelTypeText):
 		newConversations = gvoice.conversations.filter_out_read(newConversations)
 		newConversations = list(newConversations)
 		postReadLen = len(newConversations)
-		if postReadLen < postReportedLen:
-			self._conn.log_to_user(__name__, "Dropped %s messages due to already being read" % (postReportedLen - postReadLen))
+		if postReadLen < postSelfLen:
+			self._conn.log_to_user(__name__, "Dropped %s messages due to already being read" % (postSelfLen- postReadLen))
 		if not newConversations:
 			_moduleLogger.debug(
 				"New messages for %r have already been read externally" % (self._contactKey, )
