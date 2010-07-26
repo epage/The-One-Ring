@@ -275,7 +275,7 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 			number = args
 			yield (
 				self._conn.session.backend.call,
-				(number),
+				(number, ),
 				{}
 			)
 		except Exception, e:
