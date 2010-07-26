@@ -32,7 +32,7 @@ __email__ = "eopage@byu.net"
 __version__ = constants.__version__
 __build__ = constants.__build__
 __changelog__ = """
-* Fixing the loss of messages (AM/PM time recognition issue)
+* Fixing a bug with channel creation caused by not patching things up when removing unnecessary code
 """.strip()
 
 
