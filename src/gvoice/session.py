@@ -4,7 +4,6 @@ import os
 import time
 import logging
 
-import backend
 import addressbook
 import conversations
 import state_machine
@@ -37,9 +36,14 @@ class Session(object):
 					defaults[key] = (state_machine.UpdateStateMachine.INFINITE_PERIOD, unit)
 		self._username = None
 		self._password = None
+		self._cookiePath = cookiePath
+
+		self._lastDndCheck = 0
+		self._cachedIsDnd = False
 
 		self._asyncPool = gobject_utils.AsyncPool()
-		self._backend = backend.GVoiceBackend(cookiePath)
+		import backend
+		self._backend = backend.GVoiceBackend(self._cookiePath)
 
 		if defaults["contacts"][0] == state_machine.UpdateStateMachine.INFINITE_PERIOD:
 			contactsPeriodInSeconds = state_machine.UpdateStateMachine.INFINITE_PERIOD
@@ -128,9 +132,6 @@ class Session(object):
 		self._masterStateMachine.append_machine(self._addressbookStateMachine)
 		self._masterStateMachine.append_machine(self._voicemailsStateMachine)
 		self._masterStateMachine.append_machine(self._textsStateMachine)
-
-		self._lastDndCheck = 0
-		self._cachedIsDnd = False
 
 	def load(self, path):
 		self._texts.load(os.sep.join((path, "texts.cache")))
