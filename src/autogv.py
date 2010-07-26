@@ -85,10 +85,11 @@ class NewGVConversations(object):
 class RefreshVoicemail(object):
 
 	def __init__(self, connRef):
+		self._isStarted = False
 		self._connRef = connRef
+
 		self._newChannelSignaller = telepathy_utils.NewChannelSignaller(self._on_new_channel)
 		self._outstandingRequests = []
-		self._isStarted = False
 
 	def start(self):
 		self._newChannelSignaller.start()
@@ -141,6 +142,78 @@ class RefreshVoicemail(object):
 	def _on_error_for_missed(self, missDetection, reason):
 		_moduleLogger.debug("Error: %r claims %r" % (missDetection, reason))
 		self._outstandingRequests.remove(missDetection)
+
+
+class AutoAcceptGVCall(object):
+
+	def __init__(self, connRef):
+		self._connRef = connRef
+		self._isStarted = False
+		self._incomingCall = False
+		self._incomingChannel = False
+
+		self._newChannelSignaller = telepathy_utils.NewChannelSignaller(self._on_new_channel)
+
+		self._bus = dbus.SystemBus()
+		self._bus.add_signal_receiver(
+			self._on_incoming,
+			path='/com/nokia/csd/call',
+			dbus_interface='com.nokia.csd.Call',
+			signal_name='Coming'
+		)
+		self._callObject = self._bus.get_object('com.nokia.csd.Call', '/com/nokia/csd/call/1')
+		self._callInstance = dbus.Interface(self._callObject, 'com.nokia.csd.Call.Instance')
+
+	def start(self):
+		self._newChannelSignaller.start()
+		self._isStarted = True
+
+	def stop(self):
+		if not self._isStarted:
+			_moduleLogger.info("auto-accept monitor stopped without starting")
+			return
+		_moduleLogger.info("Stopping auto-accepting")
+		self._newChannelSignaller.stop()
+
+		self._incomingCall = False
+		self._incomingChannel = False
+		self._isStarted = False
+
+	@misc_utils.log_exception(_moduleLogger)
+	def _on_new_channel(self, bus, serviceName, connObjectPath, channelObjectPath, channelType):
+		if channelType != telepathy.interfaces.CHANNEL_TYPE_STREAMED_MEDIA:
+			return
+
+		cmName = telepathy_utils.cm_from_path(connObjectPath)
+		if cmName == constants._telepathy_implementation_name_:
+			_moduleLogger.debug("Ignoring channels from self to prevent deadlock")
+			return
+
+		conn = telepathy.client.Connection(serviceName, connObjectPath)
+		try:
+			chan = telepathy.client.Channel(serviceName, channelObjectPath)
+		except dbus.exceptions.UnknownMethodException:
+			_moduleLogger.exception("Client might not have implemented a deprecated method")
+			return
+
+		chan[telepathy.interfaces.CHANNEL].connect_to_signal(
+			"Closed",
+			self._on_closed,
+		)
+
+		self._incomingChannel = True
+		self._accept_if_ready()
+
+	@misc_utils.log_exception(_moduleLogger)
+	def _on_incoming(self, objPath, callerNumber):
+		if self._isStarted:
+			self._incomingCall = True
+			self._accept_if_ready()
+
+	@misc_utils.log_exception(_moduleLogger)
+	def _on_closed(self):
+		self._incomingCall = False
+		self._incomingChannel = False
 
 
 class TimedDisconnect(object):

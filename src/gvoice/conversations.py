@@ -286,3 +286,18 @@ class FilterOutReported(object):
 		if filteredConversations and self._lastMessageTimestamp < filteredConversations[0].time:
 			self._lastMessageTimestamp = filteredConversations[0].time
 		return filteredConversations
+
+
+def print_conversations(path):
+	import pprint
+
+	try:
+		with open(path, "rb") as f:
+			fileVersion, fileBuild, convs = pickle.load(f)
+	except (pickle.PickleError, IOError, EOFError, ValueError):
+		_moduleLogger.exception("")
+	else:
+		for key, value in convs.iteritems():
+			convs[key] = value.to_dict()
+		pprint.pprint((fileVersion, fileBuild))
+		pprint.pprint(convs)

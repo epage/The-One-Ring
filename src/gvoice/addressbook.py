@@ -146,3 +146,16 @@ class Addressbook(object):
 				for (number, phoneType) in contactNumbers
 			)
 		return numbers
+
+
+def print_addressbook(path):
+	import pprint
+
+	try:
+		with open(path, "rb") as f:
+			fileVersion, fileBuild, contacts = pickle.load(f)
+	except (pickle.PickleError, IOError, EOFError, ValueError):
+		_moduleLogger.exception("")
+	else:
+		pprint.pprint((fileVersion, fileBuild))
+		pprint.pprint(contacts)
