@@ -103,14 +103,8 @@ class TheOneRingConnection(
 
 		# Connection init must come first
 		self.__options = TheOneRingOptions(parameters)
-		self.__session = gvoice.session.Session(
-			cookiePath = os.path.join(constants._data_path_, "%s.cookies" % account),
-			defaults = {
-				"contacts": (self.__options.contactsPollPeriodInHours, "hours"),
-				"voicemail": (self.__options.voicemailPollPeriodInMinutes, "minutes"),
-				"texts": (self.__options.textsPollPeriodInMinutes, "minutes"),
-			},
-		)
+		self.__accountName = account
+		self.__session = None
 		tp.Connection.__init__(
 			self,
 			constants._telepathy_protocol_name_,
@@ -216,6 +210,16 @@ class TheOneRingConnection(
 		"""
 		For org.freedesktop.telepathy.Connection
 		"""
+		if self.__session is None:
+			self.__session = gvoice.session.Session(
+				cookiePath = os.path.join(constants._data_path_, "%s.cookies" % self.__accountName),
+				defaults = {
+					"contacts": (self.__options.contactsPollPeriodInHours, "hours"),
+					"voicemail": (self.__options.voicemailPollPeriodInMinutes, "minutes"),
+					"texts": (self.__options.textsPollPeriodInMinutes, "minutes"),
+				},
+			)
+
 		if self._status != telepathy.CONNECTION_STATUS_DISCONNECTED:
 			_moduleLogger.info("Attempting connect when not disconnected")
 			return
@@ -236,7 +240,7 @@ class TheOneRingConnection(
 	def _on_login(self, *args):
 		_moduleLogger.info("Connected, setting up...")
 		try:
-			self.__session.load(self.__cachePath)
+			self.session.load(self.__cachePath)
 
 			for plumber in self._plumbing:
 				plumber.start()
