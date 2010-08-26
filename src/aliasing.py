@@ -70,12 +70,14 @@ def make_pretty(phonenumber):
 	>>> make_pretty("+1234")
 	'+1 (234)'
 	"""
-	if phonenumber is None or phonenumber is "":
+	if phonenumber is None or phonenumber == "":
 		return ""
 
 	phonenumber = misc_utils.normalize_number(phonenumber)
 
-	if phonenumber[0] == "+":
+	if phonenumber == "":
+		return ""
+	elif phonenumber[0] == "+":
 		prettynumber = _make_pretty_international(phonenumber[1:])
 		if not prettynumber.startswith("+"):
 			prettynumber = "+"+prettynumber
