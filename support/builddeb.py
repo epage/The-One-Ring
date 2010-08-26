@@ -32,7 +32,8 @@ __email__ = "eopage@byu.net"
 __version__ = constants.__version__
 __build__ = constants.__build__
 __changelog__ = """
-* Fixing a bug with channel creation caused by not patching things up when removing unnecessary code
+* Shaving 300ms off of startup time
+* Making the alias code a bit more robust, taken from a fix for an issue that breaks dialcentral
 """.strip()
 
 
