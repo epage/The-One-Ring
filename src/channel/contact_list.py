@@ -145,7 +145,7 @@ _LIST_TO_FACTORY = {
 	# The group of contacts for whom you receive presence
 	'subscribe': AllContactsListChannel,
 	# The group of contacts who may receive your presence
-	'publish': AllContactsListChannel,
+	'publish': None,
 	# A group of contacts who are on the publish list but are temporarily
 	# disallowed from receiving your presence
 	# This doesn't make sense to support
@@ -157,7 +157,7 @@ _LIST_TO_FACTORY = {
 	'deny': DenyContactsListChannel,
 	# On protocols where the user's contacts are stored, this contact list
 	# contains all stored contacts regardless of subscription status.
-	'stored': AllContactsListChannel,
+	'stored': None,
 }
 
 

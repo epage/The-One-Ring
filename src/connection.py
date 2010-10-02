@@ -254,9 +254,6 @@ class TheOneRingConnection(
 			subscribeHandle = self.get_handle_by_name(telepathy.HANDLE_TYPE_LIST, "subscribe")
 			subscribeProps = self.generate_props(telepathy.CHANNEL_TYPE_CONTACT_LIST, subscribeHandle, False)
 			self.__channelManager.channel_for_props(subscribeProps, signal=True)
-			publishHandle = self.get_handle_by_name(telepathy.HANDLE_TYPE_LIST, "publish")
-			publishProps = self.generate_props(telepathy.CHANNEL_TYPE_CONTACT_LIST, publishHandle, False)
-			self.__channelManager.channel_for_props(publishProps, signal=True)
 		except Exception:
 			_moduleLogger.exception("Setup failed")
 			self.disconnect(telepathy.CONNECTION_STATUS_REASON_AUTHENTICATION_FAILED)

@@ -34,13 +34,17 @@ class DebugLogChannel(tp.ChannelTypeFileTransfer):
 				'State': self.get_state,
 				"ContentType": self.get_content_type,
 				"Filename": self.get_filename,
-				"Size": self.get_state,
+				"Size": self.get_size,
 				"Description": self.get_description,
 				"AvailableSocketTypes": self.get_available_socket_types,
 				"TransferredBytes": self.get_transferred_bytes,
 				"InitialOffset": self.get_initial_offset,
 			},
 		)
+		self._add_immutables({
+			'Filename': dbus_interface,
+			'Size': dbus_interface,
+		})
 
 		# grab a snapshot of the log so that we are always in a consistent
 		# state between calls
@@ -49,14 +53,24 @@ class DebugLogChannel(tp.ChannelTypeFileTransfer):
 			self._log = "".join(logLines)
 		self._transferredBytes = 0
 
-		self._state = telepathy.constants.FILE_TRANSFER_STATE_PENDING
-		self.FileTransferStateChanged(
-			self._state,
-			telepathy.constants.FILE_TRANSFER_STATE_CHANGE_REASON_NONE,
+		self._state = 0
+		self.set_state(
+			telepathy.constants.FILE_TRANSFER_STATE_PENDING,
+			telepathy.constants.FILE_TRANSFER_STATE_CHANGE_REASON_REQUESTED,
 		)
 
 	def get_state(self):
 		return self._state
+
+	def set_state(self, state, reason):
+		if self._state == state:
+			return
+		self._state = state
+
+		self.FileTransferStateChanged(
+			self._state,
+			reason,
+		)
 
 	def get_content_type(self):
 		return "application/octet-stream"
@@ -115,8 +129,15 @@ class DebugLogChannel(tp.ChannelTypeFileTransfer):
 
 	def close(self):
 		_moduleLogger.debug("Closing log")
+		if self._state != telepathy.FILE_TRANSFER_STATE_COMPLETED:
+			self.set_state(
+				telepathy.FILE_TRANSFER_STATE_CANCELLED,
+				telepathy.FILE_TRANSFER_STATE_CHANGE_REASON_LOCAL_STOPPED
+			)
+
 		if self.__socket is not None:
 			self.__socket.close()
+
 		tp.ChannelTypeFileTransfer.Close(self)
 		self.remove_from_connection()
 
