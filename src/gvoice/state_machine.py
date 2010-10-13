@@ -293,8 +293,23 @@ class UpdateStateMachine(StateMachine):
 	def state(self):
 		return self._state
 
-	def reset_timers(self):
-		self._reset_timers()
+	def reset_timers(self, initialize=False):
+		self._reset_timers(initialize)
+
+	def update_now(self):
+		if not self._isActive:
+			return # not started yet
+		_moduleLogger.info("%s Forcing immediate update of state machine" % (self._name, ))
+		self._onTimeout.cancel()
+		self._strategy.initialize_state()
+		self._strategy.increment_state()
+		nextTimeout = self._strategy.timeout
+		if nextTimeout != self.INFINITE_PERIOD and nextTimeout < self._maxTime:
+			nextTimeout = 0
+			self._onTimeout.start(seconds=nextTimeout)
+			_moduleLogger.info("%s Marked for update" % (self._name, ))
+		else:
+			_moduleLogger.info("%s Disabled, skipping update (timeout is %s seconds)" % (self._name, nextTimeout, ))
 
 	@property
 	def request_reset_timers(self):

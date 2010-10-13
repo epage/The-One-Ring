@@ -77,6 +77,19 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 
 		self.__nextRecievedId += 1
 
+	def do_quit(self, args):
+		if args:
+			self._report_new_message("No arguments supported")
+			return
+
+		try:
+			self._conn.manager.quit_now()
+		except Exception, e:
+			self._report_new_message(str(e))
+
+	def help_quit(self):
+		self._report_new_message("Shutdown the connection manager immediately, forcing it to be relaunched on reconnect")
+
 	def do_reset_state_machine(self, args):
 		try:
 			args = args.strip().lower()
@@ -84,13 +97,13 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 				args  = "all"
 			if args == "all":
 				for machine in self._conn.session.stateMachine._machines:
-					machine.reset_timers()
+					machine.reset_timers(True)
 			elif args == "contacts":
-				self._conn.session.addressbookStateMachine.reset_timers()
+				self._conn.session.addressbookStateMachine.reset_timers(True)
 			elif args == "voicemail":
-				self._conn.session.voicemailsStateMachine.reset_timers()
+				self._conn.session.voicemailsStateMachine.reset_timers(True)
 			elif args == "texts":
-				self._conn.session.textsStateMachine.reset_timers()
+				self._conn.session.textsStateMachine.reset_timers(True)
 			else:
 				self._report_new_message('Unknown machine "%s"' % (args, ))
 		except Exception, e:
@@ -103,6 +116,34 @@ class DebugPromptChannel(tp.ChannelTypeText, cmd.Cmd):
 "reset_state_machine contacts"
 "reset_state_machine voicemail"
 "reset_state_machine texts"
+""")
+
+	def do_update_now(self, args):
+		try:
+			args = args.strip().lower()
+			if not args:
+				args  = "all"
+			if args == "all":
+				for machine in self._conn.session.stateMachine._machines:
+					machine.update_now()
+			elif args == "contacts":
+				self._conn.session.addressbookStateMachine.update_now()
+			elif args == "voicemail":
+				self._conn.session.voicemailsStateMachine.update_now()
+			elif args == "texts":
+				self._conn.session.textsStateMachine.update_now()
+			else:
+				self._report_new_message('Unknown machine "%s"' % (args, ))
+		except Exception, e:
+			self._report_new_message(str(e))
+
+	def help_update_now(self):
+		self._report_new_message("""Updates all the state machines now skipping there initialization time.
+"update_now" - for all
+"update_now all"
+"update_now contacts"
+"update_now voicemail"
+"update_now texts"
 """)
 
 	def do_get_state(self, args):

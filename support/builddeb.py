@@ -34,6 +34,9 @@ __build__ = constants.__build__
 __changelog__ = """
 * Shaving 300ms off of startup time
 * Making the alias code a bit more robust, taken from a fix for an issue that breaks dialcentral
+* Adding a quit command to the debug prompt
+* Adding a update_now command to the debug prompt
+* Fixing a bug with reset_timers debug prompt
 """.strip()
 
 

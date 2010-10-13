@@ -22,6 +22,7 @@ class TheOneRingConnectionManager(tp.ConnectionManager):
 		# self._protos is from super
 		self._protos[constants._telepathy_protocol_name_] = connection.TheOneRingConnection
 		self._on_shutdown = shutdown_func
+		self._quitImmediately = False
 		_moduleLogger.info("Connection manager created")
 
 	@misc_utils.log_exception(_moduleLogger)
@@ -62,7 +63,10 @@ class TheOneRingConnectionManager(tp.ConnectionManager):
 		return result
 
 	def disconnect_completed(self):
-		gobject_utils.timeout_add_seconds(self.IDLE_TIMEOUT, self._shutdown)
+		if self._quitImmediately:
+			self._shutdown()
+		else:
+			gobject_utils.timeout_add_seconds(self.IDLE_TIMEOUT, self._shutdown)
 
 	def quit(self):
 		"""
@@ -71,6 +75,10 @@ class TheOneRingConnectionManager(tp.ConnectionManager):
 		for conn in self._connections:
 			conn.Disconnect()
 		_moduleLogger.info("Connection manager quitting")
+
+	def quit_now(self):
+		self._quitImmediately = True
+		self.quit()
 
 	@misc_utils.log_exception(_moduleLogger)
 	def _shutdown(self):
