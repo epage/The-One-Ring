@@ -37,6 +37,7 @@ import itertools
 import logging
 import inspect
 
+from xml.sax import saxutils
 from xml.etree import ElementTree
 
 try:
@@ -503,6 +504,8 @@ class GVoiceBackend(object):
 		voicemailPage = self._get_page(self._XML_VOICEMAIL_URL)
 		voicemailHtml = self._grab_html(voicemailPage)
 		voicemailJson = self._grab_json(voicemailPage)
+		if voicemailJson is None:
+			return ()
 		parsedVoicemail = self._parse_voicemail(voicemailHtml)
 		voicemails = self._merge_conversation_sources(parsedVoicemail, voicemailJson)
 		return voicemails
@@ -514,6 +517,8 @@ class GVoiceBackend(object):
 		smsPage = self._get_page(self._XML_SMS_URL)
 		smsHtml = self._grab_html(smsPage)
 		smsJson = self._grab_json(smsPage)
+		if smsJson is None:
+			return ()
 		parsedSms = self._parse_sms(smsHtml)
 		smss = self._merge_conversation_sources(parsedSms, smsJson)
 		return smss
@@ -620,12 +625,12 @@ class GVoiceBackend(object):
 			yield {
 				"id": messageId.strip(),
 				"contactId": contactId,
-				"name": name,
+				"name": unescape(name),
 				"time": exactTime,
 				"relTime": relativeTime,
 				"prettyNumber": prettyNumber,
 				"number": number,
-				"location": location,
+				"location": unescape(location),
 			}
 
 	@staticmethod
@@ -654,10 +659,10 @@ class GVoiceBackend(object):
 			relativeTimeGroup = self._relativeVoicemailTimeRegex.search(messageHtml)
 			conv.relTime = relativeTimeGroup.group(1).strip() if relativeTimeGroup else ""
 			locationGroup = self._voicemailLocationRegex.search(messageHtml)
-			conv.location = locationGroup.group(1).strip() if locationGroup else ""
+			conv.location = unescape(locationGroup.group(1).strip() if locationGroup else "")
 
 			nameGroup = self._voicemailNameRegex.search(messageHtml)
-			conv.name = nameGroup.group(1).strip() if nameGroup else ""
+			conv.name = unescape(nameGroup.group(1).strip() if nameGroup else "")
 			numberGroup = self._voicemailNumberRegex.search(messageHtml)
 			conv.number = numberGroup.group(1).strip() if numberGroup else ""
 			prettyNumberGroup = self._prettyVoicemailNumberRegex.search(messageHtml)
@@ -706,7 +711,7 @@ class GVoiceBackend(object):
 			conv.location = ""
 
 			nameGroup = self._voicemailNameRegex.search(messageHtml)
-			conv.name = nameGroup.group(1).strip() if nameGroup else ""
+			conv.name = unescape(nameGroup.group(1).strip() if nameGroup else "")
 			numberGroup = self._voicemailNumberRegex.search(messageHtml)
 			conv.number = numberGroup.group(1).strip() if numberGroup else ""
 			prettyNumberGroup = self._prettyVoicemailNumberRegex.search(messageHtml)
@@ -767,6 +772,18 @@ class GVoiceBackend(object):
 		return json
 
 
+_UNESCAPE_ENTITIES = {
+ "&quot;": '"',
+ "&nbsp;": " ",
+ "&#39;": "'",
+}
+
+
+def unescape(text):
+	plain = saxutils.unescape(text, _UNESCAPE_ENTITIES)
+	return plain
+
+
 def google_strptime(time):
 	"""
 	Hack: Google always returns the time in the same locale.  Sadly if the
@@ -816,9 +833,16 @@ def itergroup(iterator, count, padValue = None):
 def safe_eval(s):
 	_TRUE_REGEX = re.compile("true")
 	_FALSE_REGEX = re.compile("false")
+	_COMMENT_REGEX = re.compile("^\s+//.*$", re.M)
 	s = _TRUE_REGEX.sub("True", s)
 	s = _FALSE_REGEX.sub("False", s)
-	return eval(s, {}, {})
+	s = _COMMENT_REGEX.sub("#", s)
+	try:
+		results = eval(s, {}, {})
+	except SyntaxError:
+		_moduleLogger.exception("Oops")
+		results = None
+	return results
 
 
 def _fake_parse_json(flattened):
@@ -853,7 +877,9 @@ def validate_response(response):
 	Validates that the JSON response is A-OK
 	"""
 	try:
-		assert 'ok' in response and response['ok']
+		assert response is not None
+		assert 'ok' in response
+		assert response['ok']
 	except AssertionError:
 		raise RuntimeError('There was a problem with GV: %s' % response)
 
