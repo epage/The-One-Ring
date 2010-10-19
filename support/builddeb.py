@@ -37,6 +37,7 @@ __changelog__ = """
 * Adding a quit command to the debug prompt
 * Adding a update_now command to the debug prompt
 * Fixing a bug with reset_timers debug prompt
+* Adding a utility to send debug commands from the command prompt
 """.strip()
 
 
