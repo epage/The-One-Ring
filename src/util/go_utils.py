@@ -183,7 +183,7 @@ class AsyncPool(object):
 				result = func(*args, **kwds)
 				isError = False
 			except Exception, e:
-				_moduleLogger.error("Error, passing it back to the main thread")
+				_moduleLogger.exception("Error, passing it back to the main thread")
 				result = e
 				isError = True
 			self.__workQueue.task_done()

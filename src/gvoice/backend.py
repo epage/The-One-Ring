@@ -87,7 +87,7 @@ class Message(object):
 		return "%s (%s): %s" % (
 			self.whoFrom,
 			self.when,
-			"".join(str(part) for part in self.body)
+			"".join(unicode(part) for part in self.body)
 		)
 
 	def to_dict(self):
@@ -393,7 +393,7 @@ class GVoiceBackend(object):
 			self._sendSmsURL,
 			{
 				'phoneNumber': flattenedPhoneNumbers,
-				'text': message
+				'text': unicode(message).encode("utf-8"),
 			},
 		)
 		self._parse_with_validation(page)

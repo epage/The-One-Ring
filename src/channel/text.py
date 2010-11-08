@@ -72,7 +72,7 @@ class TextChannel(tp.ChannelTypeText):
 				{},
 			)
 		except Exception:
-			_moduleLogger.exception(result)
+			_moduleLogger.exception("Oh no, what happened?")
 			return
 
 		self._conn.session.textsStateMachine.reset_timers()
