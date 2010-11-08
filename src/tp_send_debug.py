@@ -110,13 +110,21 @@ def _on_ensure(acct, conn, message, yours, channelObjectPath, properties):
 	channel[telepathy.server.CHANNEL_TYPE_TEXT].Send(
 		telepathy.CHANNEL_TEXT_MESSAGE_TYPE_NORMAL,
 		message,
-		reply_handler = lambda: _on_send(acct, conn, channel),
+		reply_handler = lambda: _on_send(channel),
 		error_handler = _on_error,
 	)
 
 
-def _on_send(acct, conn, channel):
+def _on_send(channel):
 	print "Message sent"
+	channel[telepathy.server.CHANNEL].Close(
+		reply_handler = _on_channel_closed,
+		error_handler = _on_error,
+	)
+
+
+def _on_channel_closed():
+	print "Channel Closed"
 	loop.quit()
 
 

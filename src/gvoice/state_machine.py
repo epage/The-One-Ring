@@ -301,7 +301,7 @@ class UpdateStateMachine(StateMachine):
 			return # not started yet
 		_moduleLogger.info("%s Forcing immediate update of state machine" % (self._name, ))
 		self._onTimeout.cancel()
-		self._strategy.initialize_state()
+		self._strategy.reinitialize_state()
 		self._strategy.increment_state()
 		nextTimeout = self._strategy.timeout
 		if nextTimeout != self.INFINITE_PERIOD and nextTimeout < self._maxTime:
