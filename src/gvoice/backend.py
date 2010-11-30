@@ -188,6 +188,7 @@ class GVoiceBackend(object):
 		self._XML_ACCOUNT_URL = SECURE_URL_BASE + "contacts/"
 		# HACK really this redirects to the main pge and we are grabbing some javascript
 		self._XML_CONTACTS_URL = "http://www.google.com/voice/inbox/search/contact"
+		self._CSV_CONTACTS_URL = "http://mail.google.com/mail/contacts/data/export"
 		self._XML_RECENT_URL = SECURE_URL_BASE + "inbox/recent/"
 
 		self.XML_FEEDS = (
@@ -304,6 +305,9 @@ class GVoiceBackend(object):
 		self._browser.save_cookies()
 		self._lastAuthed = time.time()
 		return True
+
+	def persist(self):
+		self._browser.save_cookies()
 
 	def shutdown(self):
 		self._browser.save_cookies()
@@ -496,6 +500,15 @@ class GVoiceBackend(object):
 		"""
 		page = self._get_page(self._XML_CONTACTS_URL)
 		return self._process_contacts(page)
+
+	def get_csv_contacts(self):
+		data = {
+			"groupToExport": "mine",
+			"exportType": "ALL",
+			"out": "OUTLOOK_CSV",
+		}
+		contacts = self._get_page(self._CSV_CONTACTS_URL, data)
+		return contacts
 
 	def get_voicemails(self):
 		"""
@@ -965,6 +978,7 @@ def grab_debug_info(username, password):
 		("isdnd", backend._isDndURL),
 		("account", backend._XML_ACCOUNT_URL),
 		("contacts", backend._XML_CONTACTS_URL),
+		("csv", backend._CSV_CONTACTS_URL),
 
 		("voicemail", backend._XML_VOICEMAIL_URL),
 		("sms", backend._XML_SMS_URL),
