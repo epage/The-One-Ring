@@ -184,10 +184,11 @@ class MergedConversations(object):
 		# * We cache to disk the history of messages sent/received
 		# * On first run we mark all server messages as read due to no cache
 		# * If not first load or from cache (disk or in-memory) then it must be unread
-		if markAllAsRead:
-			newConversation.isRead = True
-		else:
-			newConversation.isRead = False
+		if newConversation.type != newConversation.TYPE_VOICEMAIL:
+			if markAllAsRead:
+				newConversation.isRead = True
+			else:
+				newConversation.isRead = False
 
 		if newConversation.messages:
 			# must not have had all items removed due to duplicates
