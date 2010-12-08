@@ -189,6 +189,7 @@ class GVoiceBackend(object):
 		# HACK really this redirects to the main pge and we are grabbing some javascript
 		self._XML_CONTACTS_URL = "http://www.google.com/voice/inbox/search/contact"
 		self._CSV_CONTACTS_URL = "http://mail.google.com/mail/contacts/data/export"
+		self._JSON_CONTACTS_URL = SECURE_URL_BASE + "b/0/request/user"
 		self._XML_RECENT_URL = SECURE_URL_BASE + "inbox/recent/"
 
 		self.XML_FEEDS = (
@@ -202,6 +203,8 @@ class GVoiceBackend(object):
 		self._XML_TRASH_URL = SECURE_URL_BASE + "inbox/recent/trash"
 		self._XML_VOICEMAIL_URL = SECURE_URL_BASE + "inbox/recent/voicemail/"
 		self._XML_SMS_URL = SECURE_URL_BASE + "inbox/recent/sms/"
+		self._JSON_SMS_URL = SECURE_URL_BASE + "b/0/request/messages/"
+		self._JSON_SMS_COUNT_URL = SECURE_URL_BASE + "b/0/request/unread"
 		self._XML_RECORDED_URL = SECURE_URL_BASE + "inbox/recent/recorded/"
 		self._XML_PLACED_URL = SECURE_URL_BASE + "inbox/recent/placed/"
 		self._XML_RECEIVED_URL = SECURE_URL_BASE + "inbox/recent/received/"
@@ -212,7 +215,6 @@ class GVoiceBackend(object):
 		self._accountNumRe = re.compile(r"""<b class="ms\d">(.{14})</b></div>""")
 		self._callbackRe = re.compile(r"""\s+(.*?):\s*(.*?)<br\s*/>\s*$""", re.M)
 
-		self._contactsBodyRe = re.compile(r"""gcData\s*=\s*({.*?});""", re.MULTILINE | re.DOTALL)
 		self._seperateVoicemailsRegex = re.compile(r"""^\s*<div id="(\w+)"\s* class=".*?gc-message.*?">""", re.MULTILINE | re.DOTALL)
 		self._exactVoicemailTimeRegex = re.compile(r"""<span class="gc-message-time">(.*?)</span>""", re.MULTILINE)
 		self._relativeVoicemailTimeRegex = re.compile(r"""<span class="gc-message-relative">(.*?)</span>""", re.MULTILINE)
@@ -498,7 +500,7 @@ class GVoiceBackend(object):
 		@returns Iterable of (contact id, contact name)
 		@blocks
 		"""
-		page = self._get_page(self._XML_CONTACTS_URL)
+		page = self._get_page(self._JSON_CONTACTS_URL)
 		return self._process_contacts(page)
 
 	def get_csv_contacts(self):
@@ -536,6 +538,12 @@ class GVoiceBackend(object):
 		parsedSms = self._parse_sms(smsHtml)
 		smss = self._merge_conversation_sources(parsedSms, smsJson)
 		return smss
+
+	def get_unread_counts(self):
+		countPage = self._get_page(self._JSON_SMS_COUNT_URL)
+		counts = parse_json(countPage)
+		counts = counts["unreadCounts"]
+		return counts
 
 	def mark_message(self, messageId, asRead):
 		"""
@@ -607,10 +615,7 @@ class GVoiceBackend(object):
 				yield recentCallData
 
 	def _process_contacts(self, page):
-		contactsBody = self._contactsBodyRe.search(page)
-		if contactsBody is None:
-			raise RuntimeError("Could not extract contact information")
-		accountData = _fake_parse_json(contactsBody.group(1))
+		accountData = parse_json(page)
 		for contactId, contactDetails in accountData["contacts"].iteritems():
 			# A zero contact id is the catch all for unknown contacts
 			if contactId != "0":
@@ -978,11 +983,14 @@ def grab_debug_info(username, password):
 		("login", backend._loginURL),
 		("isdnd", backend._isDndURL),
 		("account", backend._XML_ACCOUNT_URL),
-		("contacts", backend._XML_CONTACTS_URL),
+		("html_contacts", backend._XML_CONTACTS_URL),
+		("contacts", backend._JSON_CONTACTS_URL),
 		("csv", backend._CSV_CONTACTS_URL),
 
 		("voicemail", backend._XML_VOICEMAIL_URL),
-		("sms", backend._XML_SMS_URL),
+		("html_sms", backend._XML_SMS_URL),
+		("sms", backend._JSON_SMS_URL),
+		("count", backend._JSON_SMS_COUNT_URL),
 
 		("recent", backend._XML_RECENT_URL),
 		("placed", backend._XML_PLACED_URL),
