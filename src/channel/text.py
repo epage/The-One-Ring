@@ -129,7 +129,7 @@ class TextChannel(tp.ChannelTypeText):
 		newConversations = list(newConversations)
 		postSelfLen = len(newConversations)
 		if postSelfLen < postUpdateLen:
-			self._conn.log_to_user(__name__, "Dropped %s messages due to being from self" % (postUpdateLen - postSelfLen))
+			_moduleLogger.info("Dropped %s messages due to being from self" % (postUpdateLen - postSelfLen))
 		if not newConversations:
 			_moduleLogger.debug(
 				"New messages for %r are from yourself" % (self._contactKey, )
@@ -140,7 +140,7 @@ class TextChannel(tp.ChannelTypeText):
 		newConversations = list(newConversations)
 		postReadLen = len(newConversations)
 		if postReadLen < postSelfLen:
-			self._conn.log_to_user(__name__, "Dropped %s messages due to already being read" % (postSelfLen- postReadLen))
+			_moduleLogger.info("Dropped %s messages due to already being read" % (postSelfLen- postReadLen))
 		if not newConversations:
 			_moduleLogger.debug(
 				"New messages for %r have already been read externally" % (self._contactKey, )

@@ -191,6 +191,15 @@ class TheOneRingConnection(
 
 		return h
 
+	def force_log_display(self):
+		accountNumber = misc_utils.normalize_number(self.session.backend.get_account_number())
+		debugHandle = self.get_handle_by_name(
+			telepathy.HANDLE_TYPE_CONTACT,
+			accountNumber,
+		)
+		debugPromptProps = self.generate_props(telepathy.CHANNEL_TYPE_TEXT, debugHandle, False)
+		self.__channelManager.channel_for_props(debugPromptProps, signal=True)
+
 	def log_to_user(self, component, message):
 		for logger in self._loggers:
 			logger.log_message(component, message)

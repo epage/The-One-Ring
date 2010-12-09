@@ -103,10 +103,6 @@ class CallChannel(
 		tp.ChannelTypeStreamedMedia.Close(self)
 		self.remove_from_connection()
 
-		if self.__calledNumber is not None:
-			le = gobject_utils.AsyncLinearExecution(self._conn.session.pool, self._cancel)
-			le.start()
-
 	@misc_utils.log_exception(_moduleLogger)
 	def GetLocalPendingMembersWithInfo(self):
 		info = dbus.Array([], signature="(uuus)")
@@ -179,30 +175,25 @@ class CallChannel(
 		self.__calledNumber = contactNumber
 		self.CallStateChanged(self.__contactHandle, telepathy.constants.CHANNEL_CALL_STATE_RINGING)
 
+		self._delayedClose.start(seconds=0)
+		self.CallStateChanged(self.__contactHandle, telepathy.constants.CHANNEL_CALL_STATE_FORWARDED)
+
 		try:
 			result = yield (
 				self._conn.session.backend.call,
 				(contactNumber, ),
 				{},
 			)
-		except Exception:
+		except Exception, e:
 			_moduleLogger.exception("While placing call to %s" % (self.__calledNumber, ))
-			return
-
-		self._delayedClose.start(seconds=0)
-		self.CallStateChanged(self.__contactHandle, telepathy.constants.CHANNEL_CALL_STATE_FORWARDED)
-
-	@misc_utils.log_exception(_moduleLogger)
-	def _cancel(self):
-		_moduleLogger.debug("Cancelling call")
-		try:
-			result = yield (
-				self._conn.session.backend.cancel,
-				(self.__calledNumber, ),
-				{},
+			self._conn.force_log_display()
+			accountNumber = misc_utils.normalize_number(self._conn.session.backend.get_account_number())
+			self._conn.log_to_user(
+				__name__,
+				"Error while placing call from %s to %s:\n%s" % (
+					accountNumber, self.__calledNumber, str(e)
+				)
 			)
-		except Exception:
-			_moduleLogger.exception("While canceling a call to %s" % (self.__calledNumber, ))
 			return
 
 	@misc_utils.log_exception(_moduleLogger)
@@ -236,11 +227,9 @@ class CallChannel(
 		if not Hold:
 			return
 		_moduleLogger.debug("Closing without cancel to get out of users way")
-		self.__calledNumber = None
 		self.close()
 
 	@misc_utils.log_exception(_moduleLogger)
 	def _on_close_requested(self, *args):
 		_moduleLogger.debug("Cancel now disallowed")
-		self.__calledNumber = None
 		self.close()
