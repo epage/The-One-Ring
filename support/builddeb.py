@@ -32,9 +32,8 @@ __email__ = "eopage@byu.net"
 __version__ = constants.__version__
 __build__ = constants.__build__
 __changelog__ = """
-* Making "calls" end immediately rather than waiting for the callback request to complete to fix issues with the waiting blocking accepting the callback if it comes in too quickly.  Reporting errors through the debug prompt now.
-* Respecting the servers "read" status for voicemail
-* Using a newer contacts "API" which should speed things up a big (more improvements possible)
+* Providing a more descriptive error message on most failed calls
+* Working around an issue when pulling data from GV
 """.strip()
 
 
