@@ -40,7 +40,7 @@ class Addressbook(object):
 		try:
 			with open(path, "rb") as f:
 				fileVersion, fileBuild, contacts = pickle.load(f)
-		except (pickle.PickleError, IOError, EOFError, ValueError):
+		except (pickle.PickleError, IOError, EOFError, ValueError, Exception):
 			_moduleLogger.exception("While loading")
 			return
 
