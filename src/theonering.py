@@ -23,6 +23,7 @@ import os
 import sys
 import signal
 import logging
+import logging.handlers
 import gobject
 
 import dbus.glib
@@ -91,20 +92,16 @@ def main(logToFile):
 
 	telepathy_utils.debug_divert_messages(os.getenv('THEONERING_LOGFILE'))
 	logFormat = '(%(asctime)s) %(levelname)-5s %(threadName)s.%(name)s: %(message)s'
+	logging.basicConfig(
+		level=logging.DEBUG,
+		format=logFormat,
+		datefmt='%H:%M:%S',
+	)
 	logging.raiseExceptions = True # Getting funky shutdown behavior, checking it out
-	if logToFile:
-		logging.basicConfig(
-			level=logging.DEBUG,
-			filename=constants._user_logpath_,
-			format=logFormat,
-			datefmt='%H:%M:%S',
-		)
-	else:
-		logging.basicConfig(
-			level=logging.DEBUG,
-			format=logFormat,
-			datefmt='%H:%M:%S',
-		)
+	rotating = logging.handlers.RotatingFileHandler(constants._user_logpath_, maxBytes=512*1024, backupCount=1)
+	rotating.setFormatter(logging.Formatter(logFormat))
+	root = logging.getLogger()
+	root.addHandler(rotating)
 	logging.info("telepathy-theonering %s-%s" % (constants.__version__, constants.__build__))
 	logging.debug("OS: %s" % (os.uname()[0], ))
 	logging.debug("Kernel: %s (%s) for %s" % os.uname()[2:])
