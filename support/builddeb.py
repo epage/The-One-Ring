@@ -32,8 +32,8 @@ __email__ = "eopage@byu.net"
 __version__ = constants.__version__
 __build__ = constants.__build__
 __changelog__ = """
-* Providing a more descriptive error message on most failed calls
-* Working around an issue when pulling data from GV
+* Limiting the size of log files
+* Blocking the caches from preventing log in
 """.strip()
 
 
